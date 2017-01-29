@@ -1,0 +1,5 @@
+rootProject.name = 'blockchain-benchmarking'
+include 'test-manager'
+include 'load-generator'
+include 'observer'
+
