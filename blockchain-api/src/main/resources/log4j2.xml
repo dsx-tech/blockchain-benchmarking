@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration monitorInterval="3">
+    <appenders>
+        <File name="FILE" fileName="logs/info.log">
+            <PatternLayout pattern="%d{ISO8601} [%-5p] (%F:%L) - %m%n"/>
+        </File>
+        <File name="FABRIC_PEER" fileName="logs/peer.log">
+            <PatternLayout pattern="%d{ISO8601} [%-5p] (%F:%L) - %m%n"/>
+        </File>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{ABSOLUTE} [%-5p] (%F:%L) - %m%n"/>
+        </Console>
+    </appenders>
+    <loggers>
+        <Logger name="uk.uk.dsxt.fabric.FabricLogger">
+            <level value="debug"/>
+            <appender-ref ref="FABRIC_PEER"/>
+        </Logger>
+        <Logger name="uk.uk.dsxt.fabric.FabricManager">
+            <level value="debug"/>
+            <appender-ref ref = "FILE"/>
+        </Logger>
+        <root level="debug">
+            <appender-ref ref="STDOUT"/>
+        </root>
+    </loggers>
+</configuration>
