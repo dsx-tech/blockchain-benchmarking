@@ -42,15 +42,22 @@ public class BlockchainManager implements Manager {
 
     private Manager manager;
 
-    BlockchainManager(String blockchainType) {
+    BlockchainManager(Properties properties, String blockchainType) {
         this.blockchainType = blockchainType;
         switch (blockchainType) {
             case "fabric":
-                manager = new FabricManager(
-                        getProperty("chainCodePath"),
-                        getProperty("memberServiceUrl"),
-                        getProperty("peer"),
-                        Boolean.parseBoolean(getProperty("isInit")));
+                try {
+                    manager = new FabricManager(
+                            getProperty("admin"),
+                            getProperty("passphrase"),
+                            getProperty("memberServiceUrl"),
+                            getProperty("peer"),
+                            Boolean.parseBoolean(getProperty("isInit")),
+                            Integer.parseInt(getProperty("validatingPeerID")),
+                            getProperty("peerToConnect"));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 break;
             case "bitcoin":
                 manager = new BitcoinManager(

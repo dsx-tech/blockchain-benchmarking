@@ -54,13 +54,13 @@ public class FabricLogger {
         return diffTimestamp;
     }
 
-    public void log(FabricManager fabricManager, String mainPeer) throws IOException {
-        FabricChain fabricChain = fabricManager.getChain(mainPeer);
+    public void log(FabricManager fabricManager) throws IOException {
+        FabricChain fabricChain = fabricManager.getChain();
         List<FabricTimestamp> timestamps = new LinkedList<>();
 
         if (fabricChain.getHeight() - 1 > counterForHeight) {
 
-            FabricPeer[] fabricPeers = fabricManager.getPeers(mainPeer);
+            FabricPeer[] fabricPeers = fabricManager.getPeers();
             counterForHeight++;
             long finalCounterForHeight = counterForHeight;
 
@@ -69,11 +69,11 @@ public class FabricLogger {
                     String peerStr = peer.getAddress();
                     peerStr = peerStr.replaceFirst(".$", "0");
                     String peerURL = String.join("", "http://", peerStr, "/");
-                    FabricBlock fabricBlock = fabricManager.getBlock(peerURL, finalCounterForHeight);
+                    FabricBlock fabricBlock = fabricManager.getBlock(finalCounterForHeight);
 
                     if (fabricBlock != null) {
                         timestamps.add(getTimestampDiff(fabricBlock,
-                                fabricManager.getBlock(mainPeer, finalCounterForHeight)));
+                                fabricManager.getBlock(finalCounterForHeight)));
                     } else {
                         log.info(String.format("block %d not added to %s yet", finalCounterForHeight, peer.getAddress()));
                     }

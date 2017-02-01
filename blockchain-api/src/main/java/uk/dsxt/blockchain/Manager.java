@@ -40,9 +40,9 @@ public interface Manager {
 
     List<Message> getNewMessages();
 
-    BlockchainBlock getBlock(String peerURL, long id) throws IOException;
+    BlockchainBlock getBlock(long id) throws IOException;
 
-    BlockchainPeer[] getPeers(String peerURL) throws IOException;
+    BlockchainPeer[] getPeers() throws IOException;
 
-    BlockchainChainInfo getChain(String peerURL) throws IOException;
+    BlockchainChainInfo getChain() throws IOException;
 }

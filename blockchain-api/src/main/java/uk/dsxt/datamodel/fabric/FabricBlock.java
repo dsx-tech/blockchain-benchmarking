@@ -50,4 +50,9 @@ public class FabricBlock implements BlockchainBlock {
     public FabricTransaction[] getTransactions() {
         return transactions.toArray(new FabricTransaction[transactions.size()]);
     }
+
+    @Override
+    public long getTime() {
+        return nonHashData.getLocalLedgerCommitTimestamp().getNanos();
+    }
 }

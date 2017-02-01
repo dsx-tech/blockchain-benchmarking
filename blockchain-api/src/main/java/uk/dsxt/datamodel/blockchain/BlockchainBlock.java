@@ -29,6 +29,7 @@ public interface BlockchainBlock {
     String hash = Strings.EMPTY;
     String previousBlockHash = Strings.EMPTY;
     BlockchainTransaction[] transactions = new BlockchainTransaction[0];
+    long time = 0L;
 
     default String getHash() {
         return hash;
@@ -40,5 +41,9 @@ public interface BlockchainBlock {
 
     default Object[] getTransactions() {
         return transactions;
+    }
+
+    default long getTime() {
+        return time;
     }
 }

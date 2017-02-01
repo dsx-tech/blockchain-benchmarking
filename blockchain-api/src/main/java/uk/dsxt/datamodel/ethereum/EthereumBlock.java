@@ -63,4 +63,9 @@ public class EthereumBlock implements BlockchainBlock {
     public EthereumTransaction[] getTransactions() {
         return transactions;
     }
+
+    @Override
+    public long getTime() {
+        return Long.parseLong(timestamp);
+    }
 }

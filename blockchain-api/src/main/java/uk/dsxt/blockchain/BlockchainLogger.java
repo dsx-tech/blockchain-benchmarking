@@ -21,51 +21,10 @@
  *  *****************************************************************************
  */
 
-package uk.dsxt.datamodel.bitcoin;
+package uk.dsxt.blockchain;
 
-import lombok.Data;
-import uk.dsxt.datamodel.blockchain.BlockchainBlock;
+public class BlockchainLogger {
+    public void log (Manager blockchainManager) {
 
-import java.math.BigDecimal;
-
-@Data
-public class BitcoinBlock implements BlockchainBlock {
-    String hash;
-    long confirmations;
-    long strippedsize;
-    long size;
-    long weight;
-    long height;
-    long version;
-    String versionHex;
-    String merkleroot;
-    String[] tx;
-    long time;
-    long mediantime;
-    long nonce;
-    String bits;
-    BigDecimal difficulty;
-    String chainwork;
-    String previousblockhash;
-    String nextblockhash;
-
-    @Override
-    public String getHash() {
-        return hash;
-    }
-
-    @Override
-    public String getPreviousBlockHash() {
-        return previousblockhash;
-    }
-
-    @Override
-    public String[] getTransactions() {
-        return tx;
-    }
-
-    @Override
-    public long getTime() {
-        return time;
     }
 }

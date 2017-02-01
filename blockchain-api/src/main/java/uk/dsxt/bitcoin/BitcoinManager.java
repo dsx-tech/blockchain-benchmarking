@@ -173,33 +173,33 @@ public class BitcoinManager implements Manager {
     }
 
     @Override
-    public BitcoinBlock getBlock(String peerURL, long blockId) throws IOException {
+    public BitcoinBlock getBlock(long blockId) throws IOException {
         String blockHash = null;
         try {
-            blockHash = JSONRPCHelper.post(peerURL, BitcoinMethods.GETBLOCKHASH.name().toLowerCase(), blockId);
+            blockHash = JSONRPCHelper.post(url, BitcoinMethods.GETBLOCKHASH.name().toLowerCase(), blockId);
             if (blockHash != null) {
                 blockHash = blockHash.replaceAll("^.|.$", "");
             }
         } catch (InternalLogicException e) {
             log.error("Cannot get block", e);
         }
-        return JSONRPCHelper.post(peerURL, BitcoinMethods.GETBLOCK.name().toLowerCase(), BitcoinBlock.class, blockHash);
+        return JSONRPCHelper.post(url, BitcoinMethods.GETBLOCK.name().toLowerCase(), BitcoinBlock.class, blockHash);
     }
 
     @Override
-    public BitcoinPeer[] getPeers(String peerURL) throws IOException {
-        return JSONRPCHelper.post(peerURL, BitcoinMethods.GETPEERINFO.name().toLowerCase(),
+    public BitcoinPeer[] getPeers() throws IOException {
+        return JSONRPCHelper.post(url, BitcoinMethods.GETPEERINFO.name().toLowerCase(),
                 BitcoinPeer[].class);
     }
 
     @Override
-    public BitcoinChain getChain(String peerURL) throws IOException {
-        return JSONRPCHelper.post(peerURL, BitcoinMethods.GETINFO.name().toLowerCase(), BitcoinChain.class);
+    public BitcoinChain getChain() throws IOException {
+        return JSONRPCHelper.post(url, BitcoinMethods.GETINFO.name().toLowerCase(), BitcoinChain.class);
     }
 
-    public String getNewAddress(String peerURL) throws IOException {
+    public String getNewAddress() throws IOException {
         try {
-            String postResult = JSONRPCHelper.post(peerURL, BitcoinMethods.GETNEWADDRESS.name().toLowerCase());
+            String postResult = JSONRPCHelper.post(url, BitcoinMethods.GETNEWADDRESS.name().toLowerCase());
             if (postResult != null) {
                 return postResult.replaceAll("^.|.$", "");
             }

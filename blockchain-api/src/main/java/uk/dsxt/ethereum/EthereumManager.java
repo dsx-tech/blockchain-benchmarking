@@ -140,7 +140,7 @@ public class EthereumManager implements Manager {
         return Strings.EMPTY;
     }
 
-    public String sendTransaction(String url, String from, String to, byte[] amount) {
+    public String sendTransaction(String from, String to, byte[] amount) {
         try {
             return JSONRPCHelper.postToSendMessageEthereum(url, EthereumMethods.SEND_TRANSACTION.getMethod(), from, to,
                     new String(amount));
@@ -194,19 +194,19 @@ public class EthereumManager implements Manager {
         return transactionsHash;
     }
 
-    public EthereumTransaction[] getTransactionsFromBlock(String peerURL, long id) throws IOException {
-        return getBlock(peerURL, id).getTransactions();
+    public EthereumTransaction[] getTransactionsFromBlock(long id) throws IOException {
+        return getBlock(id).getTransactions();
     }
 
     @Override
-    public EthereumBlock getBlock(String peerURL, long id) throws IOException {
-        return JSONRPCHelper.post(peerURL, EthereumMethods.GET_BLOCK_BY_NUMBER.getMethod(), EthereumBlock.class,
+    public EthereumBlock getBlock(long id) throws IOException {
+        return JSONRPCHelper.post(url, EthereumMethods.GET_BLOCK_BY_NUMBER.getMethod(), EthereumBlock.class,
                 Long.toString(id), true);
     }
 
     @Override
-    public EthereumPeer[] getPeers(String peerURL) throws IOException {
-        return JSONRPCHelper.post(peerURL, EthereumMethods.GET_PEERS.getMethod(), EthereumPeer[].class);
+    public EthereumPeer[] getPeers() throws IOException {
+        return JSONRPCHelper.post(url, EthereumMethods.GET_PEERS.getMethod(), EthereumPeer[].class);
     }
 
     public EthereumTransaction[] getTransactionsFromTxPool() throws IOException {
@@ -218,7 +218,7 @@ public class EthereumManager implements Manager {
     }
 
     @Override
-    public EthereumInfo getChain(String peerURL) throws IOException {
+    public EthereumInfo getChain() throws IOException {
         String numberOfPeers = null;
         String numberOfBlock = null;
 
@@ -226,13 +226,11 @@ public class EthereumManager implements Manager {
         int amountOfBlocks = 0;
 
         try {
-            numberOfPeers = JSONRPCHelper.post(peerURL,
-                    EthereumMethods.GET_AMOUNT_OF_PEERS.getMethod());
+            numberOfPeers = JSONRPCHelper.post(url, EthereumMethods.GET_AMOUNT_OF_PEERS.getMethod());
             if (numberOfPeers != null) {
                 numberOfPeers = numberOfPeers.replaceAll("^.|.$", "");
             }
-            numberOfBlock = JSONRPCHelper.post(peerURL,
-                    EthereumMethods.GET_LAST_BLOCK_NUMBER.getMethod());
+            numberOfBlock = JSONRPCHelper.post(url, EthereumMethods.GET_LAST_BLOCK_NUMBER.getMethod());
             if (numberOfBlock != null) {
                 numberOfBlock = numberOfBlock.replaceAll("^.|.$", "");
             }
