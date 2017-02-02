@@ -27,6 +27,7 @@ import lombok.Getter;
 import uk.dsxt.datamodel.blockchain.BlockchainBlock;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 public class FabricBlock implements BlockchainBlock {
@@ -53,6 +54,6 @@ public class FabricBlock implements BlockchainBlock {
 
     @Override
     public long getTime() {
-        return nonHashData.getLocalLedgerCommitTimestamp().getNanos();
+        return nonHashData.getLocalLedgerCommitTimestamp().getSeconds();
     }
 }

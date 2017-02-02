@@ -23,8 +23,64 @@
 
 package uk.dsxt.blockchain;
 
-public class BlockchainLogger {
-    public void log (Manager blockchainManager) {
+import lombok.extern.log4j.Log4j2;
 
+import java.io.*;
+import java.util.concurrent.TimeUnit;
+
+@Log4j2
+public class BlockchainLogger {
+
+    private BlockchainManager blockchainManager;
+    private long counterForHeight = 0;
+    private FileWriter fw = new FileWriter("block.csv", true);
+
+    BlockchainLogger(BlockchainManager blockchainManager) throws IOException {
+        this.blockchainManager = blockchainManager;
+    }
+
+    private void log() throws IOException {
+
+        long timeMillis = System.currentTimeMillis();
+        long startTime = TimeUnit.MILLISECONDS.toSeconds(timeMillis);
+        long blockNumber = blockchainManager.getChain().getLastBlockNumber();
+        if (blockNumber - 1 > counterForHeight) {
+            counterForHeight++;
+            long time = blockchainManager.getBlock(blockNumber-1).getTime();
+            String str = String.valueOf(counterForHeight) +
+                    "," +
+                    startTime +
+                    "," +
+                    time +
+                    "\n";
+            fw.write(str);
+            fw.flush();
+            log.info(counterForHeight + " Start time: " + startTime);
+
+            log.info(counterForHeight + " Block committed: " + time);
+        }
+    }
+
+    public void logInLoop() throws IOException {
+        try {
+            counterForHeight = blockchainManager.getChain().getLastBlockNumber();
+            String str = "id" +
+                    "," +
+                    "Start time" +
+                    "," +
+                    "Block commited" +
+                    "\n";
+            fw.write(str);
+            fw.flush();
+            while (true) {
+                log();
+            }
+        } catch (Exception e) {
+            log.error("Exception while logging to csv");
+        }
+        finally {
+            fw.flush();
+            fw.close();
+        }
     }
 }

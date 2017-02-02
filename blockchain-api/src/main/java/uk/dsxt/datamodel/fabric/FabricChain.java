@@ -31,4 +31,9 @@ public class FabricChain implements BlockchainChainInfo {
     long height;
     String currentBlockHash;
     String previousBlockHash;
+
+    @Override
+    public long getLastBlockNumber() {
+        return height;
+    }
 }

@@ -38,7 +38,7 @@ import java.util.Properties;
 public class BlockchainManager implements Manager {
 
     private String blockchainType = "fabric";
-    private Properties properties = PropertiesHelper.loadProperties("blockchain");
+    private static Properties properties = PropertiesHelper.loadProperties("blockchain");
 
     private Manager manager;
 
@@ -97,18 +97,18 @@ public class BlockchainManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlock(String peerURL, long id) throws IOException {
-        return manager.getBlock(peerURL, id);
+    public BlockchainBlock getBlock(long id) throws IOException {
+        return manager.getBlock(id);
     }
 
     @Override
-    public BlockchainPeer[] getPeers(String peerURL) throws IOException {
-         return manager.getPeers(peerURL);
+    public BlockchainPeer[] getPeers() throws IOException {
+         return manager.getPeers();
     }
 
     @Override
-    public BlockchainChainInfo getChain(String peerURL) throws IOException {
-        return manager.getChain(peerURL);
+    public BlockchainChainInfo getChain() throws IOException {
+        return manager.getChain();
     }
 
     @Override
@@ -119,5 +119,23 @@ public class BlockchainManager implements Manager {
     @Override
     public void stop() {
         manager.stop();
+    }
+
+    public static void main(String[] args) {
+        BlockchainManager blockchainManager = new BlockchainManager(properties, "fabric");
+
+        blockchainManager.sendMessage("Greeting traveler".getBytes());
+        try {
+            Thread.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        blockchainManager.sendMessage("I will be your death".getBytes());
+        try {
+            Thread.sleep(4);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

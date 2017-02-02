@@ -44,8 +44,6 @@ import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class FabricManager implements Manager {
@@ -121,22 +119,22 @@ public class FabricManager implements Manager {
         this.peerToConnect = peerToConnect;
         FabricManager.setEnv("GOPATH", HOME_PATH.concat("/go"));
         try {
-            Runtime rt = Runtime.getRuntime();
-            if (!isInit) {
-                memberService = rt.exec(String.join(" ", DOCKER_RUN_COMMAND, DOCKER_VOLUME_SOCK, DOCKER_PORT_MEMBERSRVC,
-                        DOCKER_RUN_FABRIC_MEMBERSRVC));
-                fabricProcess = rt.exec(START_FIRST_PEER);
-            } else {
-                int peerID = validatingPeerID + 3;
-                TimeUnit.SECONDS.sleep(validatingPeerID);
-                String stPeer = START_PEER.replaceAll("CORE_PEER_ADDRESS=172.17.0.3:7051",
-                        String.format("CORE_PEER_ADDRESS=172.17.0.%d:7051", peerID))
-                        .replaceFirst("vp0", String.format("vp%d", validatingPeerID));
-                String startAnotherPeer = String.join(" ", stPeer,
-                        DOCKER_PEER_DISCOVERY_ROOTNODE.concat(peerToConnect), DOCKER_PEER_NODE_START);
-                fabricProcess = rt.exec(startAnotherPeer);
-            }
-            start();
+//            Runtime rt = Runtime.getRuntime();
+//            if (!isInit) {
+//                memberService = rt.exec(String.join(" ", DOCKER_RUN_COMMAND, DOCKER_VOLUME_SOCK, DOCKER_PORT_MEMBERSRVC,
+//                        DOCKER_RUN_FABRIC_MEMBERSRVC));
+//                fabricProcess = rt.exec(START_FIRST_PEER);
+//            } else {
+//                int peerID = validatingPeerID + 3;
+//                TimeUnit.SECONDS.sleep(validatingPeerID);
+//                String stPeer = START_PEER.replaceAll("CORE_PEER_ADDRESS=172.17.0.3:7051",
+//                        String.format("CORE_PEER_ADDRESS=172.17.0.%d:7051", peerID))
+//                        .replaceFirst("vp0", String.format("vp%d", validatingPeerID));
+//                String startAnotherPeer = String.join(" ", stPeer,
+//                        DOCKER_PEER_DISCOVERY_ROOTNODE.concat(peerToConnect), DOCKER_PEER_NODE_START);
+//                fabricProcess = rt.exec(startAnotherPeer);
+//            }
+//            start();
             TimeUnit.SECONDS.sleep(4);
             chain = new Chain(chainName);
 
@@ -151,7 +149,7 @@ public class FabricManager implements Manager {
             }
             chain.setRegistrar(registrar);
             deployResponse = initChaincode();
-        } catch (CertificateException | IOException | EnrollmentException e) {
+        } catch (CertificateException | EnrollmentException e) {
             log.error("Failed to init FabricManager instance", e);
         }
     }
@@ -325,8 +323,9 @@ public class FabricManager implements Manager {
     @Override
     public FabricBlock getBlock(long id) throws IOException {
         try {
-            String block = Request.Get(String.join("", convertGrpcToHttp(peer), BLOCK_REQUEST, Long.toString(id)))
-                    .execute().returnContent().asString();
+            String request = String.join("", convertGrpcToHttp(peer), BLOCK_REQUEST, Long.toString(id));
+            String block = Request.Get(request).execute().returnContent().asString();
+
             return new Gson().fromJson(block, FabricBlock.class);
         } catch (JsonParseException e) {
             log.error("Json parse error", e);
