@@ -1,4 +1,4 @@
-/******************************************************************************
+package uk.dsxt.remote.instance; /******************************************************************************
  * Blockchain benchmarking framework                                          *
  * Copyright (C) 2017 DSX Technologies Limited.                               *
  * *
@@ -19,24 +19,21 @@
  * *
  ******************************************************************************/
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import java.nio.file.Path;
 
 /**
  * @author phd
  */
-public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGeneratorInstance> {
-    private final static Logger logger = LogManager.getLogger(LoadGeneratorInstancesManager.class);
+public class LoadGeneratorInstance extends RemoteInstance {
 
-    @Override
-    protected List<String> resolveCommands(LoadGeneratorInstance remoteInstance, List<String> commands) {
-        return super.resolveCommands(remoteInstance, commands)
-                .stream()
-                .map(command -> command.replace("${LOAD_TARGET}", remoteInstance.getLoadTargetHost()))
-                .peek(command -> logger.debug("command mapped to " + command))
-                .collect(Collectors.toList());
+    private String loadTargetHost;
+
+    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, String loadTarget, Path logPath) {
+        super(userName, host, port, keyPath, logPath);
+        this.loadTargetHost = loadTarget;
+    }
+
+    public String getLoadTargetHost() {
+        return loadTargetHost;
     }
 }

@@ -1,4 +1,4 @@
-/******************************************************************************
+package uk.dsxt.remote.instance; /******************************************************************************
  * Blockchain benchmarking framework                                          *
  * Copyright (C) 2017 DSX Technologies Limited.                               *
  * *
@@ -119,11 +119,13 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
 
     protected List<String> resolveCommands(T remoteInstance, List<String> commands) {
         return commands.stream()
-                .map(command -> command.replace("${ROOT_NODE}", rootInstance.getHost()))
-                .map(command -> command.replace("${NODE}", remoteInstance.getHost()))
-                .map(command -> command.replace("${PEER_ID}", Integer.toString(remoteInstance.getId())))
+                .map(command -> getEnvVariables(remoteInstance) + command)
                 .peek(command -> logger.info("Command mapped to {}", command))
                 .collect(Collectors.toList());
+    }
+
+    protected String getEnvVariables(T remoteInstance) {
+        return String.format("export ROOT_NODE=%s NODE=%s PEER_ID=%d; ", rootInstance.getHost(), remoteInstance.getHost(), remoteInstance.getId());
     }
 
     public void stop() {
