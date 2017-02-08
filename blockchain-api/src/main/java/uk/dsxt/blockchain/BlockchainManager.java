@@ -42,7 +42,7 @@ public class BlockchainManager implements Manager {
 
     private Manager manager;
 
-    BlockchainManager(Properties properties, String blockchainType) {
+    public BlockchainManager(Properties properties, String blockchainType) {
         this.blockchainType = blockchainType;
         switch (blockchainType) {
             case "fabric":
