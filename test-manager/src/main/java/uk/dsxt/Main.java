@@ -1,4 +1,4 @@
-/******************************************************************************
+package uk.dsxt; /******************************************************************************
  * Blockchain benchmarking framework                                          *
  * Copyright (C) 2017 DSX Technologies Limited.                               *
  * *
@@ -21,8 +21,13 @@
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import uk.dsxt.remote.instance.RemoteInstance;
+import uk.dsxt.remote.instance.RemoteInstancesManager;
+import uk.dsxt.remote.instance.LoadGeneratorInstance;
+import uk.dsxt.remote.instance.LoadGeneratorInstancesManager;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,22 +48,25 @@ public class Main {
     private final static String prefix = "hyperledger";
     public static void main(String[] args) throws Exception {
         String pemKeyPath = args[0];
+        Path logPath = Paths.get(prefix, "log");
         logger.debug("pem key path: " + pemKeyPath);
+        final int blockchainInstancesAmount = 4;
+        final int loadGeneratorInstancesAmount = 1;
         if (!Files.exists(Paths.get(prefix, "instances"))) {
             logger.error("File \"instances\" doesn't exists");
             return;
         }
         List<String> allHosts = Files.readAllLines(Paths.get(prefix, "instances"));
 
-        List<RemoteInstance> blockchainInstances = allHosts.subList(0, allHosts.size() / 2)
+        List<RemoteInstance> blockchainInstances = allHosts.subList(0, blockchainInstancesAmount)
                                                             .stream()
-                                                            .map(host -> new RemoteInstance(userNameOnRemoteInstance, host, 22, pemKeyPath))
+                                                            .map(host -> new RemoteInstance(userNameOnRemoteInstance, host, 22, pemKeyPath, logPath))
                                                             .collect(Collectors.toList());
 
         List<LoadGeneratorInstance> loadGeneratorInstances = new ArrayList<>();
-        for (int i = 0; i < blockchainInstances.size(); ++i) {
+        for (int i = 0; i < loadGeneratorInstancesAmount; ++i) {
             loadGeneratorInstances.add(new LoadGeneratorInstance(userNameOnRemoteInstance,
-                    allHosts.get(i + allHosts.size() / 2), 22, pemKeyPath, blockchainInstances.get(i).getHost()));
+                    allHosts.get(i + loadGeneratorInstancesAmount), 22, pemKeyPath, blockchainInstances.get(i).getHost(), logPath));
         }
         runBlockchain(blockchainInstances);
         runLoadGenerators(loadGeneratorInstances, blockchainInstances);
@@ -76,20 +84,23 @@ public class Main {
 
         blockchainInstancesManager.executeCommandsForAll(singletonList("bash initEnv.sh"));
 
-        blockchainInstancesManager.uploadFilesForRoot(singletonList(Paths.get(prefix, "root", "docker-compose.yml")));
+        List<Path> rootFiles = new ArrayList<>();
+        rootFiles.add(Paths.get(prefix, "root", "docker-compose.yml"));
+        rootFiles.add(Paths.get(prefix, "root", "startRoot.sh"));
+        blockchainInstancesManager.uploadFilesForRoot(rootFiles);
         blockchainInstancesManager.executeCommandsForRoot(singletonList(
-                "export HOST_IP=" + blockchainInstancesManager.getRootInstance().getHost() + "; docker-compose up -d;")
+                "bash startRoot.sh && touch startRoot.complete")
         );
 
-        blockchainInstancesManager.uploadFilesForCommon(singletonList(Paths.get(prefix, "common", "docker-compose.yml")));
+        List<Path> commonFiles = new ArrayList<>();
+        commonFiles.add(Paths.get(prefix, "common", "docker-compose.yml"));
+        commonFiles.add(Paths.get(prefix, "common", "startCommon.sh"));
+        blockchainInstancesManager.uploadFilesForCommon(commonFiles);
         blockchainInstancesManager.executeCommandsForCommon(Collections.singletonList(
-                "export HOST_IP=${NODE}; " +
-                        "export ROOT=${ROOT_NODE}; " +
-                        "export PEER_ID=${PEER_ID}; " +
-                        "docker-compose up -d;"
-        ));
+                "bash startCommon.sh && touch startCommon.complete")
+        );
 
-        sleep(10000);
+        sleep(20000);
         blockchainInstancesManager.executeCommandsForAll(singletonList("CORE_CHAINCODE_ID_NAME=mycc " +
                 "CORE_PEER_ADDRESS=0.0.0.0:7051 " +
                 "nohup ./chaincode_example02 >/dev/null 2>chaincode.log &")
