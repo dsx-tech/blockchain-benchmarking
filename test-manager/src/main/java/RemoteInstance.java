@@ -1,4 +1,4 @@
-package uk.dsxt.remote.instance; /******************************************************************************
+/******************************************************************************
  * Blockchain benchmarking framework                                          *
  * Copyright (C) 2017 DSX Technologies Limited.                               *
  * *
@@ -24,10 +24,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -49,7 +47,6 @@ public class RemoteInstance {
     //hyperledger specific
     private final static AtomicInteger globalCounter = new AtomicInteger(0);
     private int id;
-    private Path logPath;
 
     public String getHost() {
         return host;
@@ -61,12 +58,11 @@ public class RemoteInstance {
 
 
 
-    public RemoteInstance(String userName, String host, int port, String keyPath, Path logPath) {
+    public RemoteInstance(String userName, String host, int port, String keyPath) {
         this.userName = userName;
         this.host = host;
         this.port = port;
         this.id = globalCounter.getAndIncrement();
-        this.logPath = logPath;
         jsch = new JSch();
         try {
             jsch.addIdentity(keyPath);
@@ -100,10 +96,10 @@ public class RemoteInstance {
     }
 
     public boolean sendCommands(List<String> commands) {
-        try (FileOutputStream logStream = new FileOutputStream(logPath.resolve(host + "_deploy.log").toFile(), true)){
+        try {
             ChannelShell channel = getOrCreateChannelShell();
             logger.debug("Executing commands on: " + channel.getSession().getHost());
-            channelShell.setOutputStream(logStream);
+            channelShell.setOutputStream(System.out);
             PrintStream shellStream = new PrintStream(channel.getOutputStream());
             channel.connect();
             commands.add("exit");
@@ -115,8 +111,8 @@ public class RemoteInstance {
             }
             while(channel.isConnected())
             {
-                logger.info("----- Executing commads... ----");
-                Thread.sleep(10000);
+                System.out.println("----- Channel On ----");
+                Thread.sleep(1000);
             }
             return true;
         } catch (Exception e) {
@@ -124,8 +120,8 @@ public class RemoteInstance {
         }
         finally {
             channelShell.disconnect();
+            return false;
         }
-        return false;
     }
 
     public boolean uploadFiles(List<Path> files) {
