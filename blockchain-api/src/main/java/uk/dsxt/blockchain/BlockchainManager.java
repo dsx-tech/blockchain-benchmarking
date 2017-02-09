@@ -38,12 +38,13 @@ import java.util.Properties;
 public class BlockchainManager implements Manager {
 
     private String blockchainType = "fabric";
-    private static Properties properties = PropertiesHelper.loadProperties("blockchain");
+    private Properties properties = PropertiesHelper.loadProperties("blockchain");
 
     private Manager manager;
 
-    BlockchainManager(Properties properties, String blockchainType) {
+    public BlockchainManager(Properties properties, String blockchainType) {
         this.blockchainType = blockchainType;
+        this.properties = properties;
         switch (blockchainType) {
             case "fabric":
                 try {
@@ -119,23 +120,5 @@ public class BlockchainManager implements Manager {
     @Override
     public void stop() {
         manager.stop();
-    }
-
-    public static void main(String[] args) {
-        BlockchainManager blockchainManager = new BlockchainManager(properties, "fabric");
-
-        blockchainManager.sendMessage("Greeting traveler".getBytes());
-        try {
-            Thread.sleep(2);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        blockchainManager.sendMessage("I will be your death".getBytes());
-        try {
-            Thread.sleep(4);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }

@@ -42,54 +42,14 @@ import uk.dsxt.utils.PrintOutputToConsole;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static uk.dsxt.fabric.FabricConstants.*;
+
 public class FabricManager implements Manager {
-
-    private static final String HOME_PATH = System.getProperty("user.home");
-
-    private static final String CHAINCODE_PATH = "github.com/hyperledger/fabric/examples/chaincode/go/evoting";
-    private static final String CHAINCODE_NAME = "mycc";
-    private static final String AFFILIATION = "bank_a";
-    private static final String KEY_VALUE_STORE = "/test.properties";
-
-    private static final String DOCKER_VOLUME_SOCK = "-v /var/run/docker.sock:/var/run/docker.sock";
-    private static final String DOCKER_RUN_COMMAND = "docker run --rm -i";
-    private static final String DOCKER_RUN_FABRIC_MEMBERSRVC = "hyperledger/fabric-membersrvc membersrvc";
-    private static final String DOCKER_PORT_MEMBERSRVC = "-p 7054:7054";
-
-    private static final String DOCKER_FIRST_PEER_PORT = "-p 7051:7051";
-    private static final String DOCKER_VOLUME_PATH_TO_CHAINCODE = String.format("-v %s/go/src/github.com/hyperledger/" +
-            "fabric/examples/chaincode:/opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode", HOME_PATH);
-    private static final String DOCKER_CORE_LOGGING_LEVEL = "-e CORE_LOGGING_LEVEL=DEBUG";
-    private static final String DOCKER_CORE_PEER_ID = "-e CORE_PEER_ID=vp0";
-    private static final String DOCKER_CORE_PEER_ADDRESSAUTODETECT = "-e CORE_PEER_ADDRESSAUTODETECT=false";
-    private static final String DOCKER_CORE_PEER_ADDRESS = "-e CORE_PEER_ADDRESS=";
-    private static final String DOCKER_CORE_PBFT_GENERAL_N = "-e CORE_PBFT_GENERAL_N=4";
-    private static final String DOCKER_CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN = "-e CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN=pbft";
-    private static final String DOCKER_CORE_PBFT_GENERAL_MODE = "-e CORE_PBFT_GENERAL_MODE=batch";
-    private static final String DOCKER_CORE_GENERAL_TIMEOUT_REQUEST = "-e CORE_PBFT_GENERAL_TIMEOUT_REQUEST=1.5s";
-    private static final String DOCKER_CORE_PBFT_GENERAL_BATCHSIZE = "-e CORE_PBFT_GENERAL_BATCHSIZE=1";
-    private static final String DOCKER_CORE_PBFT_GENERAL_VIEWCHANGEPERIOD = "-e CORE_PBFT_GENERAL_VIEWCHANGEPERIOD=2";
-    private static final String DOCKER_CORE_PBFT_GENERAL_TIMEOUT_NULLREQUEST = "-e CORE_PBFT_GENERAL_TIMEOUT_NULLREQUEST=2.25s";
-    private static final String DOCKER_PEER_NODE_START = "hyperledger/fabric-peer peer node start";
-    private static final String DOCKER_PEER_DISCOVERY_ROOTNODE = "-e CORE_PEER_DISCOVERY_ROOTNODE=";
-
-    private static final String START_PEER = String.join(" ", DOCKER_RUN_COMMAND, DOCKER_VOLUME_SOCK,
-            DOCKER_VOLUME_PATH_TO_CHAINCODE, DOCKER_CORE_LOGGING_LEVEL, DOCKER_CORE_PEER_ID, DOCKER_CORE_PEER_ADDRESSAUTODETECT,
-            DOCKER_CORE_PEER_ADDRESS + "172.17.0.3:7051",
-            DOCKER_CORE_PBFT_GENERAL_N, DOCKER_CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN, DOCKER_CORE_PBFT_GENERAL_MODE,
-            DOCKER_CORE_GENERAL_TIMEOUT_REQUEST, DOCKER_CORE_PBFT_GENERAL_BATCHSIZE, DOCKER_CORE_PBFT_GENERAL_VIEWCHANGEPERIOD,
-            DOCKER_CORE_PBFT_GENERAL_TIMEOUT_NULLREQUEST );
-
-    private static final String START_FIRST_PEER = String.join(" ", START_PEER,
-            DOCKER_FIRST_PEER_PORT, DOCKER_PEER_NODE_START);
-
-    private static final String CHAIN_REQUEST = "chain";
-    private static final String BLOCK_REQUEST = "chain/blocks/";
-    private static final String PEERS_REQUEST = "network/peers";
 
     private static final Logger log = LogManager.getLogger(FabricManager.class.getName());
 
@@ -107,7 +67,7 @@ public class FabricManager implements Manager {
     private Process memberService;
     private Chain chain;
 
-    enum ChaincodeFunction {INIT, READ, WRITE}
+    private enum ChaincodeFunction {INIT, READ, WRITE}
 
     public FabricManager(String admin, String passphrase, String memberServiceUrl,
                          String peer, boolean isInit, int validatingPeerID, String peerToConnect) throws InterruptedException {
@@ -116,26 +76,12 @@ public class FabricManager implements Manager {
         this.memberServiceUrl = memberServiceUrl;
         this.peer = peer;
         this.isInit = isInit;
+        this.validatingPeerID = validatingPeerID;
         this.peerToConnect = peerToConnect;
-        FabricManager.setEnv("GOPATH", HOME_PATH.concat("/go"));
+        FabricManager.setEnv("GOPATH", Paths.get(HOME_PATH, "go").toString());
         try {
-//            Runtime rt = Runtime.getRuntime();
-//            if (!isInit) {
-//                memberService = rt.exec(String.join(" ", DOCKER_RUN_COMMAND, DOCKER_VOLUME_SOCK, DOCKER_PORT_MEMBERSRVC,
-//                        DOCKER_RUN_FABRIC_MEMBERSRVC));
-//                fabricProcess = rt.exec(START_FIRST_PEER);
-//            } else {
-//                int peerID = validatingPeerID + 3;
-//                TimeUnit.SECONDS.sleep(validatingPeerID);
-//                String stPeer = START_PEER.replaceAll("CORE_PEER_ADDRESS=172.17.0.3:7051",
-//                        String.format("CORE_PEER_ADDRESS=172.17.0.%d:7051", peerID))
-//                        .replaceFirst("vp0", String.format("vp%d", validatingPeerID));
-//                String startAnotherPeer = String.join(" ", stPeer,
-//                        DOCKER_PEER_DISCOVERY_ROOTNODE.concat(peerToConnect), DOCKER_PEER_NODE_START);
-//                fabricProcess = rt.exec(startAnotherPeer);
-//            }
-//            start();
-            TimeUnit.SECONDS.sleep(4);
+            //start function commented in case you don't want to run fabric node instance locally from java code
+            //start();
             chain = new Chain(chainName);
 
             chain.setMemberServicesUrl(memberServiceUrl, null);
@@ -144,11 +90,15 @@ public class FabricManager implements Manager {
             chain.addPeer(peer, null);
 
             Member registrar = chain.getMember(admin);
+
             if (!registrar.isEnrolled()) {
                 registrar = chain.enroll(admin, passphrase);
             }
+
             chain.setRegistrar(registrar);
-            deployResponse = initChaincode();
+
+            //uncomment, if you want to run fabric node instance locally
+            //deployResponse = initChaincode();
         } catch (CertificateException | EnrollmentException e) {
             log.error("Failed to init FabricManager instance", e);
         }
@@ -156,6 +106,27 @@ public class FabricManager implements Manager {
 
     @Override
     public void start() {
+        try {
+            Runtime rt = Runtime.getRuntime();
+            if (!isInit) {
+                memberService = rt.exec(DOCKER_START_MEMBERSERVICE);
+                fabricProcess = rt.exec(START_FIRST_PEER);
+            } else {
+                int peerID = validatingPeerID + 3;
+                TimeUnit.SECONDS.sleep(validatingPeerID);
+                String stPeer = START_PEER.replaceAll("CORE_PEER_ADDRESS=172.17.0.3:7051",
+                        String.format("CORE_PEER_ADDRESS=172.17.0.%d:7051", peerID))
+                        .replaceFirst("vp0", String.format("vp%d", validatingPeerID));
+                String startAnotherPeer = String.join(" ", stPeer,
+                        DOCKER_PEER_DISCOVERY_ROOTNODE.concat(peerToConnect), DOCKER_PEER_NODE_START);
+                fabricProcess = rt.exec(startAnotherPeer);
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to start FabricManager instance", e);
+        }
+
+
         PrintOutputToConsole errorReported = PrintOutputToConsole.getStreamWrapper(fabricProcess.getErrorStream(),
                 "ERROR");
         PrintOutputToConsole outputMessage = PrintOutputToConsole.getStreamWrapper(fabricProcess.getInputStream(),
