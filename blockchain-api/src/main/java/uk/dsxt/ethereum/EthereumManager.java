@@ -23,6 +23,7 @@
 
 package uk.dsxt.ethereum;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Strings;
 import uk.dsxt.blockchain.Manager;
@@ -33,18 +34,18 @@ import uk.dsxt.datamodel.ethereum.EthereumPeer;
 import uk.dsxt.datamodel.ethereum.EthereumTransaction;
 import uk.dsxt.utils.InternalLogicException;
 import uk.dsxt.utils.JSONRPCHelper;
-import uk.dsxt.utils.PrintOutputToConsole;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Log4j2
+@AllArgsConstructor
 public class EthereumManager implements Manager {
+
+    private String url;
 
     private enum EthereumMethods {
         UNLOCK_ACCOUNT("personal_unlockAccount"),
@@ -61,72 +62,6 @@ public class EthereumManager implements Manager {
         private final String method;
         EthereumMethods(String method) { this.method = method; }
         public String getMethod() { return method; }
-    }
-
-    private String url;
-    private int rpcport;
-    private String rpcapi;
-    private String rpccorsdomain;
-    private String datadir;
-    private int networkid;
-    private int port;
-    private int maxpeers;
-    private String genesis_directory;
-
-    public EthereumManager(String url, int rpcport, String rpcapi, String rpccorsdomain, String datadir, int networkid,
-                           int port, int maxpeers, String genesis_directory) {
-        this.url = url;
-        this.rpcport = rpcport;
-        this.rpcapi = rpcapi;
-        this.rpccorsdomain = rpccorsdomain;
-        this.datadir = datadir;
-        this.networkid = networkid;
-        this.port = port;
-        this.maxpeers = maxpeers;
-        this.genesis_directory = genesis_directory;
-    }
-
-    private Process ethereum;
-    private ExecutorService executorService;
-
-    @Override
-    public void start() {
-        Runtime rt = Runtime.getRuntime();
-        String ethereumCommandToStartNode = String.format("geth --rpc --rpcport=%d --rpccorsdomain %s --rpcapi=%s " +
-                        "--datadir=%s --networkid=%d --port %d --maxpeers %d console init %s",
-                rpcport, rpccorsdomain, rpcapi, datadir, networkid, port, maxpeers, genesis_directory);
-        try {
-            ethereum = rt.exec(ethereumCommandToStartNode);
-        } catch (IOException e) {
-            log.error("err", e);
-        }
-
-        executorService = Executors.newFixedThreadPool(2);
-        PrintOutputToConsole errorReported = PrintOutputToConsole.getStreamWrapper(ethereum != null ?
-                ethereum.getErrorStream() : null, "ERROR");
-        PrintOutputToConsole outputMessage = PrintOutputToConsole.getStreamWrapper(ethereum != null ?
-                ethereum.getInputStream() : null, "OUTPUT");
-
-        executorService.execute(errorReported);
-        executorService.execute(outputMessage);
-
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            log.error("Cannot sleep for two seconds", e);
-        }
-    }
-
-    @Override
-    public void stop() {
-        if (ethereum.isAlive()) {
-            try {
-                executorService.shutdownNow();
-                ethereum.destroyForcibly();
-            } catch (Exception e) {
-                log.error("Cannot stop ethereum node", e);
-            }
-        }
     }
 
     public String unlockAccount(String address, String passphrase, Long duration)

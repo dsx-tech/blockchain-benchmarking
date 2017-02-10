@@ -97,14 +97,16 @@ public class FabricManager implements Manager {
 
             chain.setRegistrar(registrar);
 
-            //uncomment, if you want to run fabric node instance locally
-            //deployResponse = initChaincode();
+            deployResponse = initChaincode();
         } catch (CertificateException | EnrollmentException e) {
             log.error("Failed to init FabricManager instance", e);
         }
     }
 
-    @Override
+    public FabricManager(String peer) {
+        this.peer = peer;
+    }
+
     public void start() {
         try {
             Runtime rt = Runtime.getRuntime();
@@ -149,7 +151,6 @@ public class FabricManager implements Manager {
         }
     }
 
-    @Override
     public void stop() {
         try {
             if (fabricProcess.isAlive())
