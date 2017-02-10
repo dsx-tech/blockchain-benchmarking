@@ -103,9 +103,14 @@ public class BlockchainLogger {
                     "block.csv",1000);
             logger.logInLoop();
         } else if (args.length == 4) {
-            BlockchainLogger logger = new BlockchainLogger(args[0], args[1], args[2], Integer.parseInt(args[3]));
-            System.out.println("Started logging to " + args[2]);
-            logger.logInLoop();
+            String pattern = "-?\\d+";
+            if (args[3].matches(pattern)) {
+                BlockchainLogger logger = new BlockchainLogger(args[0], args[1], args[2], Integer.parseInt(args[3]));
+                System.out.println("Started logging to " + args[2]);
+                logger.logInLoop();
+            } else {
+                log.error("4th argument is not a integer. Please, enter correct request frequency parameter.");
+            }
         } else {
             System.out.println("Wrong number of arguments, need 4 arguments: blockchain type - string, node url - string," +
                     " csv file name - string, request frequency - int, please, try again.");
