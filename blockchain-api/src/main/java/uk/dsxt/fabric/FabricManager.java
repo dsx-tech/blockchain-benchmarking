@@ -54,6 +54,10 @@ public class FabricManager implements Manager {
     private static final Logger log = LogManager.getLogger(FabricManager.class.getName());
 
     private String chainName;
+    private String affiliation;
+    private String keyValueStore;
+    private String chainCodeName;
+    private String chainCodePath;
     private String admin;
     private String passphrase;
     private String peer;
@@ -69,8 +73,13 @@ public class FabricManager implements Manager {
 
     private enum ChaincodeFunction {INIT, READ, WRITE}
 
-    public FabricManager(String admin, String passphrase, String memberServiceUrl,
-                         String peer, boolean isInit, int validatingPeerID, String peerToConnect) throws InterruptedException {
+    public FabricManager(String chainName, String keyValueStore, String chainCodeName, String admin, String chainCodePath,
+                         String passphrase, String memberServiceUrl, String peer, boolean isInit, int validatingPeerID,
+                         String peerToConnect) throws InterruptedException {
+        this.chainName = chainName;
+        this.keyValueStore = keyValueStore;
+        this.chainCodeName = chainCodeName;
+        this.chainCodePath =
         this.admin = admin;
         this.passphrase = passphrase;
         this.memberServiceUrl = memberServiceUrl;
@@ -86,7 +95,7 @@ public class FabricManager implements Manager {
 
             chain.setMemberServicesUrl(memberServiceUrl, null);
 
-            chain.setKeyValStore(new FileKeyValStore(HOME_PATH.concat(KEY_VALUE_STORE)));
+            chain.setKeyValStore(new FileKeyValStore(keyValueStore));
             chain.addPeer(peer, null);
 
             Member registrar = chain.getMember(admin);
@@ -165,11 +174,11 @@ public class FabricManager implements Manager {
     private ChainCodeResponse initChaincode() {
         DeployRequest request = new DeployRequest();
 
-        request.setChaincodePath(CHAINCODE_PATH);
+        request.setChaincodePath(chainCodePath);
         request.setArgs(new ArrayList<>(Collections.singletonList(ChaincodeFunction.INIT.name().toLowerCase())));
         
-        Member member = getMember(admin, AFFILIATION);
-        request.setChaincodeName(CHAINCODE_NAME);
+        Member member = getMember(admin, affiliation);
+        request.setChaincodeName(chainCodeName);
 
         return member.deploy(request);
     }
@@ -184,7 +193,7 @@ public class FabricManager implements Manager {
         request.setChaincodeID(deployResponse.getChainCodeID());
         request.setChaincodeName(deployResponse.getChainCodeID());
 
-        Member member = getMember(admin, AFFILIATION);
+        Member member = getMember(admin, affiliation);
         String transactionID = null;
         try {
             transactionID = member.invoke(request).getMessage();
@@ -231,7 +240,7 @@ public class FabricManager implements Manager {
         request.setChaincodeID(deployResponse.getChainCodeID ());
         request.setChaincodeName(deployResponse.getChainCodeID());
 
-        Member member = getMember(admin, AFFILIATION);
+        Member member = getMember(admin, affiliation);
         
         try {
             return member.query(request);

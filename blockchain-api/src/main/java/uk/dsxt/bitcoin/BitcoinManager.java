@@ -34,8 +34,6 @@ import uk.dsxt.utils.JSONRPCHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
