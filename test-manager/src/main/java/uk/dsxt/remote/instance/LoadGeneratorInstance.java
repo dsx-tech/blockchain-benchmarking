@@ -19,6 +19,9 @@
  * *
  ******************************************************************************/
 
+package uk.dsxt.remote.instance;
+import java.nio.file.Path;
+
 /**
  * @author phd
  */
@@ -26,8 +29,8 @@ public class LoadGeneratorInstance extends RemoteInstance {
 
     private String loadTargetHost;
 
-    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, String loadTarget) {
-        super(userName, host, port, keyPath);
+    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, String loadTarget, Path logPath) {
+        super(userName, host, port, keyPath, logPath);
         this.loadTargetHost = loadTarget;
     }
 
