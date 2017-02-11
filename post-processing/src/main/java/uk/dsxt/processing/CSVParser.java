@@ -18,21 +18,20 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package processing;
+package uk.dsxt.processing;
 
 import au.com.bytecode.opencsv.CSVReader;
-import model.BlockInfo;
-import model.BlockchainInfo;
-import model.TransactionInfo;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
+import uk.dsxt.model.BlockInfo;
+import uk.dsxt.model.BlockchainInfo;
+import uk.dsxt.model.NodeInfo;
+import uk.dsxt.model.TransactionInfo;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
+@Log4j2
 public class CSVParser {
 
     //input files
@@ -42,12 +41,12 @@ public class CSVParser {
     private static final String NODES_FILE = "nodes.csv";
     private static final String BLOCKCHAIN_INFO_FILE = "blockchainInfo.csv";
     private BlockchainInfo blockchainInfo;
-    private final static Logger log = LogManager.getLogger(CSVParser.class);
 
     public CSVParser() {
-        List<TransactionInfo> transactions = new ArrayList<>();
-        List<BlockInfo> blocks = new ArrayList<>();
-        blockchainInfo = new BlockchainInfo(blocks, transactions);
+        Map<Long, TransactionInfo> transactions = new HashMap<>();
+        Map<Long, BlockInfo> blocks = new HashMap<>();
+        List<NodeInfo> nodes = new ArrayList<>();
+        blockchainInfo = new BlockchainInfo(blocks, transactions, nodes);
     }
 
     public BlockchainInfo parseCSVs() {
@@ -73,10 +72,17 @@ public class CSVParser {
             log.error(e.getMessage());
             return null;
         }
+        try (CSVReader reader = new CSVReader(new FileReader(PATH + NODES_FILE), ',')) {
+            //call corresponding parser
+            blockchainInfo.setNodes(parseNodesCSV(reader));
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            return null;
+        }
         return blockchainInfo;
     }
 
-    private List<BlockInfo> parseBlockchainInfo(CSVReader reader) throws IOException {
+    private Map<Long, BlockInfo> parseBlockchainInfo(CSVReader reader) throws IOException {
         String[] nextLine;
         //Read one line at a time
         while ((nextLine = reader.readNext()) != null) {
@@ -87,9 +93,9 @@ public class CSVParser {
             }
             try {
                 long transactionId = Long.parseLong(nextLine[0]);
-                int blockId = Integer.parseInt(nextLine[1]);
-                BlockInfo block = blockchainInfo.getBlockById(blockId);
-                TransactionInfo transaction = blockchainInfo.getTransactionById(transactionId);
+                long blockId = Integer.parseInt(nextLine[1]);
+                BlockInfo block = blockchainInfo.getBlocks().get(blockId);
+                TransactionInfo transaction = blockchainInfo.getTransactions().get(transactionId);
 
                 if (!nextLine[2].isEmpty() && block != null) {
                     int parentBlockId = Integer.parseInt(nextLine[2]);
@@ -106,9 +112,9 @@ public class CSVParser {
         return blockchainInfo.getBlocks();
     }
 
-    private List<TransactionInfo> parseLoadGeneratorCSV(CSVReader reader) throws IOException {
+    private Map<Long, TransactionInfo> parseLoadGeneratorCSV(CSVReader reader) throws IOException {
         String[] nextLine;
-        List<TransactionInfo> transactions = new ArrayList<>();
+        Map<Long, TransactionInfo> transactions = new HashMap<>();
         //Read one line at a time
         while ((nextLine = reader.readNext()) != null) {
             if (nextLine.length < 6) {
@@ -124,7 +130,7 @@ public class CSVParser {
                 int responseCode = Integer.parseInt(nextLine[4]);
                 String responseMessage = nextLine[5];
 
-                transactions.add(new TransactionInfo(time, transactionId,
+                transactions.put(transactionId, new TransactionInfo(time, transactionId,
                         transactionSize, nodeId, responseCode, responseMessage));
             } catch (NumberFormatException e) {
                 log.error(e.getMessage());
@@ -134,9 +140,9 @@ public class CSVParser {
         return transactions;
     }
 
-    private List<BlockInfo> parseBlockDistributionCSV(CSVReader reader) throws IOException {
+    private Map<Long, BlockInfo> parseBlockDistributionCSV(CSVReader reader) throws IOException {
         String[] nextLine;
-        List<BlockInfo> blocks = new ArrayList<>();
+        Map<Long, BlockInfo> blocks = new HashMap<>();
         //Read one line at a time
         while ((nextLine = reader.readNext()) != null) {
             if (nextLine.length <= 0) {
@@ -145,7 +151,7 @@ public class CSVParser {
                 continue;
             }
             try {
-                int blockId = Integer.parseInt(nextLine[0]);
+                long blockId = Integer.parseInt(nextLine[0]);
                 List<BlockInfo.NodeTime> nodeTimes = new ArrayList<>();
 
                 for (int i = 1; i < nextLine.length; i++) {
@@ -153,12 +159,57 @@ public class CSVParser {
                         nodeTimes.add(new BlockInfo.NodeTime(i, Long.parseLong(nextLine[i])));
                     }
                 }
-                blocks.add(new BlockInfo(blockId, nodeTimes));
+                blocks.put(blockId, new BlockInfo(blockId, nodeTimes));
             } catch (NumberFormatException e) {
                 //ignore all unparseable lines
                 log.error(e.getMessage());
             }
         }
         return blocks;
+    }
+
+    private List<NodeInfo> parseNodesCSV(CSVReader reader) throws IOException {
+        String[] nextLine;
+        List<NodeInfo> nodes = new ArrayList<>();
+        //Read one line at a time
+        while ((nextLine = reader.readNext()) != null) {
+            if (nextLine.length < 3) {
+                //ignore all unparseable lines
+                log.error("Unparseable line: " + Arrays.toString(nextLine));
+                continue;
+            }
+            try {
+                long time = Long.parseLong(nextLine[0]);
+                int nodeId = Integer.parseInt(nextLine[1]);
+                String state = nextLine[2];
+                if (!state.equals("start") && !state.equals("stop")) {
+                    log.error("Unparseable line: " + Arrays.toString(nextLine));
+                    continue;
+                }
+                NodeInfo node = getNodeById(nodeId, nodes);
+                if (node == null) {
+                    node = new NodeInfo(nodeId);
+                    nodes.add(node);
+                }
+                if (state.equals("start")) {
+                    node.addStartTime(time);
+                } else {
+                    node.addStopTime(time);
+                }
+            } catch (NumberFormatException e) {
+                //ignore all unparseable lines
+                log.error(e.getMessage());
+            }
+        }
+        return nodes;
+    }
+
+    private NodeInfo getNodeById(int id, List<NodeInfo> nodes) {
+        for (NodeInfo node : nodes) {
+            if (node.getNodeId() == id) {
+                return node;
+            }
+        }
+        return null;
     }
 }

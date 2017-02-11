@@ -18,12 +18,13 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package processing;
+package uk.dsxt.processing;
 
 import au.com.bytecode.opencsv.CSVWriter;
-import model.BlockInfo;
-import model.BlockchainInfo;
-import model.TransactionInfo;
+import lombok.extern.log4j.Log4j2;
+import uk.dsxt.model.BlockInfo;
+import uk.dsxt.model.BlockchainInfo;
+import uk.dsxt.model.TransactionInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,15 +33,16 @@ import java.io.IOException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+@Log4j2
 public class CSVComposer {
 
-    private static final String PATH = "post-processing/src/main/resources/";
+    private static final String PATH = "post-processing/src/main/resources/results/";
     //output files
     private static final String INTENSITIES_FILE = "intensity.csv";
     private static final String TRANSACTIONS_FILE = "transactions.csv";
     private static final String BLOCKS_FILE = "blocks.csv";
     private static final String UNVERIFIED_TRANSACTIONS_FILE = "timeToUnverifiedTransactions.csv";
-    private final static Logger log = LogManager.getLogger(CSVComposer.class);
+    private static final String NUMBER_OF_NODES_FILE = "numberOfNodes.csv";
     private BlockchainInfo blockchainInfo;
 
     public CSVComposer(BlockchainInfo blockchainInfo) {
@@ -68,6 +70,20 @@ public class CSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+        try (CSVWriter writer = new CSVWriter(new FileWriter(PATH + NUMBER_OF_NODES_FILE))) {
+            fillNumberOfNodesCSV(writer);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void fillNumberOfNodesCSV(CSVWriter writer) throws IOException {
+        SortedSet<Long> times = new TreeSet<>(blockchainInfo.getTimeToNumNodes().keySet());
+        for (Long time : times) {
+            String[] entry = {String.valueOf(time), String.valueOf(blockchainInfo.getTimeToNumNodes().get(time))};
+            writer.writeNext(entry);
+            writer.flush();
+        }
     }
 
     private void fillIntensitiesCSV(CSVWriter writer) throws IOException {
@@ -81,7 +97,7 @@ public class CSVComposer {
 
 
     private void fillTransactionsCSV(CSVWriter writer) throws IOException {
-        for (TransactionInfo transactionInfo : blockchainInfo.getTransactions()) {
+        for (TransactionInfo transactionInfo : blockchainInfo.getTransactions().values()) {
             String[] entry = {String.valueOf(transactionInfo.getTransactionId()),
                     String.valueOf(transactionInfo.getBlockId()),
                     String.valueOf(transactionInfo.getTransactionSize()),
@@ -93,7 +109,7 @@ public class CSVComposer {
     }
 
     private void fillBlocksCSV(CSVWriter writer) throws IOException {
-        for (BlockInfo blockDistributionInfo : blockchainInfo.getBlocks()) {
+        for (BlockInfo blockDistributionInfo : blockchainInfo.getBlocks().values()) {
             String[] entry = {String.valueOf(blockDistributionInfo.getBlockId()),
                     String.valueOf(blockDistributionInfo.getMaxNodeTime95()),
                     String.valueOf(blockDistributionInfo.getMaxNodeTime()),

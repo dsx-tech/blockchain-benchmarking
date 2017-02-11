@@ -18,48 +18,28 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package model;
+package uk.dsxt.model;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
-public class NodeInfo {
+public class TransactionInfo {
 
+    private long time;
+    private long transactionId;
+    private int transactionSize;
     private int nodeId;
-    private List<TimeSpan> workTimes;
-    private List<Long> startTimes;
-    private List<Long> stopTimes;
+    private int responseCode;
+    private String responseMessage;
+    private long blockId;
 
-    public NodeInfo(int nodeId) {
+    public TransactionInfo(long time, long transactionId, int transactionSize,
+                           int nodeId, int responseCode, String responseMessage) {
+        this.time = time;
+        this.transactionId = transactionId;
+        this.transactionSize = transactionSize;
         this.nodeId = nodeId;
-        this.startTimes = new ArrayList<>();
-        this.stopTimes = new ArrayList<>();
-        this.workTimes = new ArrayList<>();
-    }
-
-    public void addStartTime(Long time) {
-        startTimes.add(time);
-    }
-
-    public void addStopTime(Long time) {
-        stopTimes.add(time);
-    }
-
-    public void addWorkTime(TimeSpan time) {
-        workTimes.add(time);
-    }
-
-    @Data
-    public static class TimeSpan {
-        private long startTime;
-        private long endTime;
-
-        public TimeSpan(long startTime, long endTime) {
-            this.startTime = startTime;
-            this.endTime = endTime;
-        }
+        this.responseCode = responseCode;
+        this.responseMessage = responseMessage;
     }
 }

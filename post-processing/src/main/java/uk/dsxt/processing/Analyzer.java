@@ -18,53 +18,40 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package processing;
+package uk.dsxt.processing;
 
-import model.BlockInfo;
-import model.TransactionInfo;
+import lombok.extern.log4j.Log4j2;
+import uk.dsxt.model.BlockInfo;
+import uk.dsxt.model.BlockchainInfo;
+import uk.dsxt.model.NodeInfo;
+import uk.dsxt.model.TransactionInfo;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
-public class Processor {
+@Log4j2
+public class Analyzer {
 
-    private List<TransactionInfo> transactions;
-    private List<BlockInfo> blocks;
-    private Map<Long, Integer> intensities;
-    private Map<Long, Integer> unverifiedTransactions;
+    private BlockchainInfo blockchainInfo;
 
     //note: time is counted from the start of the test in milliseconds
     private static final long TIME_INTERVAL = 5000;
     private static final int NUMBER_OF_VERIFICATION = 6;
 
-    public Processor(List<TransactionInfo> transactions, List<BlockInfo> blocks) {
-        if(transactions == null || blocks == null) {
-            throw new NullPointerException();
-        }
-        this.transactions = transactions;
-        this.blocks = blocks;
+    public Analyzer(BlockchainInfo blockchainInfo) {
+        this.blockchainInfo = blockchainInfo;
     }
 
-    public List<TransactionInfo> getTransactions() {
-        return transactions;
-    }
-
-    public List<BlockInfo> getBlocks() {
-        return blocks;
-    }
-
-    public Map<Long, Integer> getIntensities() {
-        return intensities;
-    }
-
-    public Map<Long, Integer> getUnverifiedTransactions() {
-        return unverifiedTransactions;
-    }
-
-    public void process() {
-        intensities = calculateIntensity();
+    public BlockchainInfo analyze() {
+        blockchainInfo.setTimeToIntensities(calculateIntensity());
         updateTransactionInfos();
         updateBlockInfos();
-        unverifiedTransactions = calculateUnverifiedTransactions();
+        updateNodeInfos();
+
+        blockchainInfo.setTimeToNumNodes(calculateNumberOfNodes());
+        blockchainInfo.setTimeToUnverifiedTransactions(calculateUnverifiedTransactions());
+        return blockchainInfo;
     }
 
     //transaction is verified when block with it is verified
@@ -77,10 +64,11 @@ public class Processor {
             numUnverifiedTrans.put(i, 0);
         }
         //foreach transaction find intervals where it has already been created but hasn't been verified yet
-        for (TransactionInfo transaction : transactions) {
+        for (TransactionInfo transaction : blockchainInfo.getTransactions().values()) {
             long creationTime = transaction.getTime();
-            BlockInfo block = getBlockById(transaction.getBlockId());
+            BlockInfo block = blockchainInfo.getBlocks().get(transaction.getBlockId());
             if (block == null) {
+                log.error("couldn't find block by id: " + transaction.getBlockId());
                 //ignore all problems
                 continue;
             }
@@ -90,28 +78,20 @@ public class Processor {
             }
             for (Long time : numUnverifiedTrans.keySet()) {
                 if (creationTime <= time && time <= verificationTime) {
-                    numUnverifiedTrans.replace(time, unverifiedTransactions.get(time) + 1);
+                    numUnverifiedTrans.replace(time, numUnverifiedTrans.get(time) + 1);
                 }
             }
         }
         return numUnverifiedTrans;
     }
 
-    private BlockInfo getBlockById(int id) {
-        for (BlockInfo block : blocks) {
-            if (block.getBlockId() == id) {
-                return block;
-            }
-        }
-        return null;
-    }
 
     //calculate maxTime and verificationTime
     private void updateBlockInfos() {
-        for (BlockInfo block : blocks) {
+        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
             block.calculateMaxTime();
         }
-        for (BlockInfo block : blocks) {
+        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
             block.setVerificationTime(calculateVerificationTime(block));
         }
     }
@@ -124,7 +104,7 @@ public class Processor {
     private long calculateVerificationTime(BlockInfo blockInfo) {
         BlockInfo nextBlock = blockInfo;
         for (int i = 0; i < NUMBER_OF_VERIFICATION; i++) {
-            nextBlock = getChildById(nextBlock.getBlockId());
+            nextBlock = blockchainInfo.getChildBlockById(nextBlock.getBlockId());
             if (nextBlock == null) {
                 return -1;
             }
@@ -132,34 +112,13 @@ public class Processor {
         return nextBlock.getMaxNodeTime();
     }
 
-    private BlockInfo getChildById(int id) {
-        for (BlockInfo block : blocks) {
-            if (block.getParentBlockId() == id) {
-                return block;
-            }
-        }
-        return null;
-    }
-
     //adding blockId to transactionInfo
     private void updateTransactionInfos() {
-        for (BlockInfo blockInfo : blocks) {
-            for (Integer transactionId : blockInfo.getTransactionIds()) {
-                TransactionInfo transaction = findTransactionById(transactionId);
-                if (transaction != null) {
-                    transaction.setBlockId(blockInfo.getBlockId());
-                }
+        for (BlockInfo blockInfo : blockchainInfo.getBlocks().values()) {
+            for (TransactionInfo transaction : blockInfo.getTransactionIds()) {
+                transaction.setBlockId(blockInfo.getBlockId());
             }
         }
-    }
-
-    private TransactionInfo findTransactionById(int id) {
-        for (TransactionInfo transactionInfo : transactions) {
-            if (transactionInfo.getTransactionId() == id) {
-                return transactionInfo;
-            }
-        }
-        return null;
     }
 
     private Map<Long, Integer> calculateIntensity() {
@@ -172,13 +131,13 @@ public class Processor {
             intensities.put(i, 0);
         }
         //for each transaction add ++ to corresponding intensity
-        for (TransactionInfo transaction : transactions) {
+        for (TransactionInfo transaction : blockchainInfo.getTransactions().values()) {
             long time = transaction.getTime();
             while (time > 0 && !intensities.containsKey(time)) {
                 time--;
             }
             if (time < 0) {
-                //ignoring all incorrect lines
+                log.error("incorrect time: " + transaction.getTime());//ignoring all incorrect lines
                 continue;
             }
             intensities.replace(time, intensities.get(time) + 1);
@@ -186,9 +145,47 @@ public class Processor {
         return intensities;
     }
 
+    private Map<Long, Integer> calculateNumberOfNodes() {
+        Map<Long, Integer> numOfNodes = new HashMap<>();
+        long startTime = 0;
+        long endTime = getEndTime();
+        //add all intervals to list
+        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
+            numOfNodes.put(i, 0);
+        }
+        for (Long time : numOfNodes.keySet()) {
+            for (NodeInfo node : blockchainInfo.getNodes()) {
+                for (NodeInfo.TimeSpan workTime : node.getWorkTimes()) {
+                    if (workTime.getStartTime() < time && time < workTime.getEndTime()) {
+                        numOfNodes.replace(time, numOfNodes.get(time) + 1);
+                        break;
+                    }
+                }
+            }
+        }
+        return numOfNodes;
+    }
+
+    private void updateNodeInfos() {
+        for (NodeInfo node : blockchainInfo.getNodes()) {
+            List<Long> startTimes = node.getStartTimes();
+            List<Long> stopTimes = node.getStopTimes();
+            startTimes.sort(Long::compareTo);
+            stopTimes.sort(Long::compareTo);
+            if (startTimes.size() != stopTimes.size()) {
+                log.error("Start and stop times of node " + node.getNodeId() + " doesn't correspond");
+                continue;
+            }
+            for (int i = 0; i < startTimes.size(); i++) {
+                node.addWorkTime(new NodeInfo.TimeSpan(startTimes.get(i), stopTimes.get(i)));
+            }
+            //todo check here that time spans don't overlap
+        }
+    }
+
     private long getEndTime() {
         long maxTime = 0;
-        for (TransactionInfo transaction : transactions) {
+        for (TransactionInfo transaction : blockchainInfo.getTransactions().values()) {
             if (transaction.getTime() > maxTime) {
                 maxTime = transaction.getTime();
             }

@@ -18,57 +18,48 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package model;
+package uk.dsxt.model;
 
-public class TransactionInfo {
+import lombok.Data;
 
-    private long time;
-    private long transactionId;
-    private int transactionSize;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+public class NodeInfo {
+
     private int nodeId;
-    private int responseCode;
-    private String responseMessage;
-    private int blockId;
+    private List<TimeSpan> workTimes;
+    private List<Long> startTimes;
+    private List<Long> stopTimes;
 
-    public TransactionInfo(long time, long transactionId, int transactionSize,
-                           int nodeId, int responseCode, String responseMessage) {
-        this.time = time;
-        this.transactionId = transactionId;
-        this.transactionSize = transactionSize;
+    public NodeInfo(int nodeId) {
         this.nodeId = nodeId;
-        this.responseCode = responseCode;
-        this.responseMessage = responseMessage;
+        this.startTimes = new ArrayList<>();
+        this.stopTimes = new ArrayList<>();
+        this.workTimes = new ArrayList<>();
     }
 
-    public int getBlockId() {
-        return blockId;
+    public void addStartTime(Long time) {
+        startTimes.add(time);
     }
 
-    public void setBlockId(int blockId) {
-        this.blockId = blockId;
+    public void addStopTime(Long time) {
+        stopTimes.add(time);
     }
 
-    public long getTime() {
-        return time;
+    public void addWorkTime(TimeSpan time) {
+        workTimes.add(time);
     }
 
-    public long getTransactionId() {
-        return transactionId;
-    }
+    @Data
+    public static class TimeSpan {
+        private long startTime;
+        private long endTime;
 
-    public int getTransactionSize() {
-        return transactionSize;
-    }
-
-    public int getNodeId() {
-        return nodeId;
-    }
-
-    public int getResponseCode() {
-        return responseCode;
-    }
-
-    public String getResponseMessage() {
-        return responseMessage;
+        public TimeSpan(long startTime, long endTime) {
+            this.startTime = startTime;
+            this.endTime = endTime;
+        }
     }
 }

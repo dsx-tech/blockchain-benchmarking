@@ -18,50 +18,24 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package model;
+package uk.dsxt.point;
 
-import lombok.Data;
+import uk.dsxt.model.BlockchainInfo;
+import uk.dsxt.processing.Analyzer;
+import uk.dsxt.processing.CSVComposer;
+import uk.dsxt.processing.CSVParser;
 
-import java.util.List;
-import java.util.Map;
+public class Main {
 
-@Data
-public class BlockchainInfo {
-
-    private List<BlockInfo> blocks;
-    private List<TransactionInfo> transactions;
-    private Map<Long, Integer> timeToIntensities;
-    private Map<Long, Integer> timeToUnverifiedTransactions;
-
-    public BlockchainInfo(List<BlockInfo> blocks, List<TransactionInfo> transactions) {
-        this.blocks = blocks;
-        this.transactions = transactions;
-    }
-
-    public BlockInfo getBlockById(long id) {
-        for (BlockInfo block : blocks) {
-            if (block.getBlockId() == id) {
-                return block;
-            }
+    public static void main(String[] args) {
+        CSVParser parser = new CSVParser();
+        BlockchainInfo blockchainInfo = parser.parseCSVs();
+        if (blockchainInfo == null) {
+            return;
         }
-        return null;
-    }
-
-    public TransactionInfo getTransactionById(long id) {
-        for (TransactionInfo transactionInfo : transactions) {
-            if (transactionInfo.getTransactionId() == id) {
-                return transactionInfo;
-            }
-        }
-        return null;
-    }
-
-    public BlockInfo getChildBlockById(long id) {
-        for (BlockInfo block : blocks) {
-            if (block.getParentBlockId() == id) {
-                return block;
-            }
-        }
-        return null;
+        Analyzer analyzer = new Analyzer(blockchainInfo);
+        blockchainInfo = analyzer.analyze();
+        CSVComposer composer = new CSVComposer(blockchainInfo);
+        composer.composeCSVs();
     }
 }

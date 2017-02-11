@@ -18,87 +18,28 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package model;
+package uk.dsxt.model;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Data;
+
+@Data
 public class BlockInfo {
 
-    private int blockId;
-    private List<Integer> transactionIds;
-    private int parentBlockId;
+    private long blockId;
+    private List<TransactionInfo> transactionIds;
+    private long parentBlockId;
     private List<NodeTime> nodeTimes;
     private long maxNodeTime95;
     private long maxNodeTime;
     private long verificationTime;
 
-//    public BlockInfo(int blockId, List<Integer> transactionIds, int parentBlockId, List<NodeTime> nodeTimes) {
-//        this.blockId = blockId;
-//        this.transactionIds = transactionIds;
-//        this.parentBlockId = parentBlockId;
-//        this.nodeTimes = nodeTimes;
-//    }
-
-    public BlockInfo(int blockId, List<NodeTime> nodeTimes) {
+    public BlockInfo(long blockId, List<NodeTime> nodeTimes) {
         this.blockId = blockId;
         this.nodeTimes = nodeTimes;
-    }
-
-    public long getMaxNodeTime95() {
-        return maxNodeTime95;
-    }
-
-    public long getMaxNodeTime() {
-        return maxNodeTime;
-    }
-
-    public long getVerificationTime() {
-        return verificationTime;
-    }
-
-    public void setMaxNodeTime95(long maxNodeTime95) {
-        this.maxNodeTime95 = maxNodeTime95;
-    }
-
-    public void setMaxNodeTime(long maxNodeTime) {
-        this.maxNodeTime = maxNodeTime;
-    }
-
-    public void setVerificationTime(long verificationTime) {
-        this.verificationTime = verificationTime;
-    }
-
-    public int getBlockId() {
-        return blockId;
-    }
-
-    public void setBlockId(int blockId) {
-        this.blockId = blockId;
-    }
-
-    public List<Integer> getTransactionIds() {
-        return transactionIds;
-    }
-
-    public void setTransactionIds(List<Integer> transactionIds) {
-        this.transactionIds = transactionIds;
-    }
-
-    public int getParentBlockId() {
-        return parentBlockId;
-    }
-
-    public void setParentBlockId(int parentBlockId) {
-        this.parentBlockId = parentBlockId;
-    }
-
-    public List<NodeTime> getNodeTimes() {
-        return nodeTimes;
-    }
-
-    public void setNodeTimes(List<NodeTime> nodeTimes) {
-        this.nodeTimes = nodeTimes;
+        this.transactionIds = new ArrayList<>();
     }
 
     public void calculateMaxTime() {
@@ -108,9 +49,14 @@ public class BlockInfo {
         }
         times.sort(Long::compareTo);
         maxNodeTime = times.get(times.size() - 1);
-        maxNodeTime95 = times.get((int)(times.size() * 0.95 - 1));
+        maxNodeTime95 = times.get((int) (times.size() * 0.95 - 1));
     }
 
+    public void addTransaction(TransactionInfo transaction) {
+        transactionIds.add(transaction);
+    }
+
+    @Data
     public static class NodeTime {
         private int nodeId;
         private long time;
@@ -118,14 +64,6 @@ public class BlockInfo {
         public NodeTime(int nodeId, long time) {
             this.nodeId = nodeId;
             this.time = time;
-        }
-
-        public int getNodeId() {
-            return nodeId;
-        }
-
-        public long getTime() {
-            return time;
         }
     }
 }
