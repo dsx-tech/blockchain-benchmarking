@@ -52,7 +52,7 @@ public class BlockchainLogger {
         long timeMillis = System.currentTimeMillis();
         long startTime = TimeUnit.MILLISECONDS.toSeconds(timeMillis);
         long blockNumber = blockchainManager.getChain().getLastBlockNumber();
-        if (blockNumber - 1 > counterForHeight) {
+        while (blockNumber - 1 > counterForHeight) {
             counterForHeight++;
             long time = blockchainManager.getBlock(blockNumber - 1).getTime();
             String str = String.valueOf(counterForHeight) +

@@ -96,17 +96,20 @@ public class FabricManager implements Manager {
     }
 
     // All fields loaded from fabric.properties can be the same for all peers
+//    public FabricManager(String peer) {
+//        this.peer = peer;
+//        this.chainName = properties.getProperty("chainname");
+//        this.chainCodePath = properties.getProperty("chaincodepath");
+//        this.chainCodeName = properties.getProperty("chaincodename");
+//        this.keyValueStore = properties.getProperty("keyvaluestore");
+//        this.affiliation = properties.getProperty("affiliation");
+//        this.admin = properties.getProperty("admin");
+//        this.passphrase = properties.getProperty("passphrase");
+//        this.memberServiceUrl = properties.getProperty("memberServiceUrl");
+//        initChain(chainName, memberServiceUrl, keyValueStore, peer, admin, passphrase);
+//    }
     public FabricManager(String peer) {
         this.peer = peer;
-        this.chainName = properties.getProperty("chainname");
-        this.chainCodePath = properties.getProperty("chaincodepath");
-        this.chainCodeName = properties.getProperty("chaincodename");
-        this.keyValueStore = properties.getProperty("keyvaluestore");
-        this.affiliation = properties.getProperty("affiliation");
-        this.admin = properties.getProperty("admin");
-        this.passphrase = properties.getProperty("passphrase");
-        this.memberServiceUrl = properties.getProperty("memberServiceUrl");
-        initChain(chainName, memberServiceUrl, keyValueStore, peer, admin, passphrase);
     }
 
     private void initChain(String chainName, String memberServiceUrl, String keyValueStore, String peer, String admin,
