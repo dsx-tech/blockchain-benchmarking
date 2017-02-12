@@ -29,6 +29,9 @@ import uk.dsxt.datamodel.blockchain.BlockchainChainInfo;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.StringJoiner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
@@ -37,6 +40,7 @@ public class BlockchainLogger {
     private BlockchainManager blockchainManager;
     private long counterForHeight;
     private long requestFrequency;
+    private long checkTime;
     private String url;
     private FileWriter fw;
 
@@ -51,18 +55,19 @@ public class BlockchainLogger {
 
         long timeMillis = System.currentTimeMillis();
         long startTime = TimeUnit.MILLISECONDS.toSeconds(timeMillis);
-        long blockNumber = blockchainManager.getChain().getLastBlockNumber();
-        while (blockNumber - 1 > counterForHeight) {
+        long lastBlockNumber = blockchainManager.getChain().getLastBlockNumber();
+        long time = 0;
+        if (lastBlockNumber - 1 > counterForHeight) {
+            time = blockchainManager.getBlock(counterForHeight).getTime();
+        }
+        while (lastBlockNumber - 1 > counterForHeight) {
             counterForHeight++;
-            long time = blockchainManager.getBlock(blockNumber - 1).getTime();
-            String str = String.valueOf(counterForHeight) +
-                    "," +
-                    startTime +
-                    "," +
-                    time +
-                    "\n";
-            fw.write(str);
-            fw.flush();
+
+            StringJoiner stringJoiner = new StringJoiner(",");
+            stringJoiner.add(String.valueOf(counterForHeight));
+            stringJoiner.add(String.valueOf(startTime));
+            stringJoiner.add(String.valueOf(time));
+            fw.write(stringJoiner.toString() + '\n');
 
             log.info(counterForHeight + " Start time: " + startTime);
             log.info(counterForHeight + " Block committed: " + time);
@@ -75,13 +80,12 @@ public class BlockchainLogger {
                 BlockchainChainInfo info = blockchainManager.getChain();
                 if (info != null) {
                     counterForHeight = info.getLastBlockNumber();
-                    String str = "id" +
-                            "," +
-                            "Start time" +
-                            "," +
-                            "Block commited" +
-                            "\n";
-                    fw.write(str);
+                    StringJoiner stringJoiner = new StringJoiner(",");
+                    stringJoiner.add("id");
+                    stringJoiner.add("Start time");
+                    stringJoiner.add("Block committed");
+
+                    fw.write(stringJoiner.toString() + '\n');
                     fw.flush();
                     while (true) {
                         log();
@@ -99,7 +103,7 @@ public class BlockchainLogger {
 
         if (args.length < 1) {
             log.info("Using default parameters.");
-            BlockchainLogger logger = new BlockchainLogger("fabric", "grpc://172.17.0.3:7051",
+            BlockchainLogger logger = new BlockchainLogger("fabric", "grpc://52.59.221.191:7051",
                     "block.csv",1000);
             logger.logInLoop();
         } else if (args.length == 4) {
