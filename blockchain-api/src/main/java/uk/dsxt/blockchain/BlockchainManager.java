@@ -39,7 +39,6 @@ public class BlockchainManager implements Manager {
 
     private String blockchainType;
     private String url;
-    //private Properties properties = PropertiesHelper.loadProperties("blockchain");
 
     private Manager manager;
 
@@ -54,18 +53,14 @@ public class BlockchainManager implements Manager {
                 manager = new BitcoinManager(url);
                 break;
             case "ethereum":
-                manager = new EthereumManager (url);
+                manager = new EthereumManager(url);
                 break;
             default:
-                log.error("This blockchain currently not supported or not exist. Currently supported: fabric, bitcoin, " +
-                        "ethereum");
+                log.error(String.format("%s blockchain currently not supported or not exist. Currently supported: " +
+                        "fabric, bitcoin, ethereum", blockchainType));
                 break;
         }
     }
-
-//    private String getProperty(String name) {
-//        return properties.getProperty(String.format("%s.%s", blockchainType, name));
-//    }
 
     @Override
     public String sendMessage(byte[] body) {

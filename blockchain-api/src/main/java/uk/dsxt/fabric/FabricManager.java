@@ -38,6 +38,7 @@ import uk.dsxt.datamodel.fabric.FabricBlock;
 import uk.dsxt.datamodel.fabric.FabricChain;
 import uk.dsxt.datamodel.fabric.FabricPeer;
 import uk.dsxt.utils.PrintOutputToConsole;
+import uk.dsxt.utils.PropertiesHelper;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -52,6 +53,7 @@ import static uk.dsxt.fabric.FabricConstants.*;
 public class FabricManager implements Manager {
 
     private static final Logger log = LogManager.getLogger(FabricManager.class.getName());
+    private Properties properties = PropertiesHelper.loadProperties("fabric");
 
     private String chainName;
     private String affiliation;
@@ -73,7 +75,8 @@ public class FabricManager implements Manager {
 
     private enum ChaincodeFunction {INIT, READ, WRITE}
 
-    public FabricManager(String chainName, String keyValueStore, String chainCodeName, String admin, String chainCodePath,
+    // This consctructor for test purposes only
+    private FabricManager(String chainName, String keyValueStore, String chainCodeName, String admin, String chainCodePath,
                          String passphrase, String memberServiceUrl, String peer, boolean isInit, int validatingPeerID,
                          String peerToConnect) throws InterruptedException {
         this.chainName = chainName;
@@ -88,9 +91,27 @@ public class FabricManager implements Manager {
         this.validatingPeerID = validatingPeerID;
         this.peerToConnect = peerToConnect;
         FabricManager.setEnv("GOPATH", Paths.get(HOME_PATH, "go").toString());
+        start();
+        initChain(chainName, memberServiceUrl, keyValueStore, peer, admin, passphrase);
+    }
+
+    // All fields loaded from fabric.properties can be the same for all peers
+    public FabricManager(String peer) {
+        this.peer = peer;
+        this.chainName = properties.getProperty("chainname");
+        this.chainCodePath = properties.getProperty("chaincodepath");
+        this.chainCodeName = properties.getProperty("chaincodename");
+        this.keyValueStore = properties.getProperty("keyvaluestore");
+        this.affiliation = properties.getProperty("affiliation");
+        this.admin = properties.getProperty("admin");
+        this.passphrase = properties.getProperty("passphrase");
+        this.memberServiceUrl = properties.getProperty("memberServiceUrl");
+        initChain(chainName, memberServiceUrl, keyValueStore, peer, admin, passphrase);
+    }
+
+    private void initChain(String chainName, String memberServiceUrl, String keyValueStore, String peer, String admin,
+                           String passphrase) {
         try {
-            //start function commented in case you don't want to run fabric node instance locally from java code
-            //start();
             chain = new Chain(chainName);
 
             chain.setMemberServicesUrl(memberServiceUrl, null);
@@ -112,11 +133,7 @@ public class FabricManager implements Manager {
         }
     }
 
-    public FabricManager(String peer) {
-        this.peer = peer;
-    }
-
-    public void start() {
+    private void start() {
         try {
             Runtime rt = Runtime.getRuntime();
             if (!isInit) {
@@ -136,7 +153,6 @@ public class FabricManager implements Manager {
         } catch (Exception e) {
             log.error("Failed to start FabricManager instance", e);
         }
-
 
         PrintOutputToConsole errorReported = PrintOutputToConsole.getStreamWrapper(fabricProcess.getErrorStream(),
                 "ERROR");
@@ -160,7 +176,7 @@ public class FabricManager implements Manager {
         }
     }
 
-    public void stop() {
+    private void stop() {
         try {
             if (fabricProcess.isAlive())
                 fabricProcess.destroyForcibly();
