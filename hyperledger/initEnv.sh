@@ -10,4 +10,4 @@ sudo mv docker-compose /usr/local/bin;
 sudo chmod +x /usr/local/bin/docker-compose;
 docker pull hyperledger/fabric-peer:latest;
 docker pull hyperledger/fabric-membersrvc:latest;
-sudo chmod u+x chaincode_example02
+sudo chmod u+x e-voting
