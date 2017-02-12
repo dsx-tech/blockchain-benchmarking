@@ -113,7 +113,7 @@ public class LoadManager {
         }
     }
 
-    public void stop() {
+    public void waitCompletion() {
         try {
             executorService.shutdown();
             executorService.awaitTermination(24, TimeUnit.HOURS);

@@ -20,21 +20,32 @@
  ******************************************************************************/
 
 package uk.dsxt.remote.instance;
+import lombok.Getter;
+
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author phd
  */
+@Getter
 public class LoadGeneratorInstance extends RemoteInstance {
 
-    private String loadTargetHost;
+    private List<String> loadTargets;
+    private int amountOfTransactions;
+    private int amountOfThreadsPerTarget;
+    private int minLength;
+    private int maxLength;
 
-    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, String loadTarget, Path logPath) {
+    public LoadGeneratorInstance(String userName, String host,
+                                 int port, String keyPath, Path logPath,
+                                 int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength) {
         super(userName, host, port, keyPath, logPath);
-        this.loadTargetHost = loadTarget;
-    }
-
-    public String getLoadTargetHost() {
-        return loadTargetHost;
+        this.amountOfTransactions = amountOfTransactions;
+        this.amountOfThreadsPerTarget = amountOfThreadsPerTarget;
+        this.minLength = minLength;
+        this.maxLength = maxLength;
+        this.loadTargets = new ArrayList<>();
     }
 }

@@ -19,30 +19,27 @@
  * *
  ******************************************************************************/
 
-import java.util.ArrayList;
-import java.util.List;
+package uk.dsxt.remote.instance;
+
+import lombok.Getter;
+
+import java.nio.file.Path;
 
 /**
  * @author phd
  */
-public class Main {
-    public static void main(String[] args) throws Exception {
-        int amountOfTransactions = Integer.parseInt(args[0]);
-        int amountOfThreadsPerTarget = Integer.parseInt(args[1]);
-        int minLength = Integer.parseInt(args[2]);
-        int maxLength = Integer.parseInt(args[3]);
-        List<String> targets = new ArrayList<>();
-        for (int i = 4; i < args.length; ++i) {
-            targets.add(args[i]);
-        }
-        LoadManager loadManager = new LoadManager(
-                targets,
-                amountOfTransactions,
-                amountOfThreadsPerTarget,
-                minLength,
-                maxLength
-        );
-        loadManager.start();
-        loadManager.waitCompletion();
+@Getter
+public class LoggerInstance extends RemoteInstance {
+    private String blockchainType;
+    private String target;
+    private String logFile;
+    private int requestPeriod;
+
+    public LoggerInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String logFile, int requestPeriod) {
+        super(userName, host, port, keyPath, logPath);
+        this.blockchainType = blockchainType;
+        this.target = target;
+        this.logFile = logFile;
+        this.requestPeriod = requestPeriod;
     }
 }

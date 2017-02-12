@@ -21,17 +21,18 @@
 
 package uk.dsxt.remote.instance;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * @author phd
  */
 public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGeneratorInstance> {
-    private final static Logger logger = LogManager.getLogger(LoadGeneratorInstancesManager.class);
-
     @Override
     protected String getEnvVariables(LoadGeneratorInstance remoteInstance) {
-        return String.format("LOAD_TARGET=%s ", remoteInstance.getLoadTargetHost());
+        String params = String.format("%d %d %d %d %s",
+                remoteInstance.getAmountOfTransactions(),
+                remoteInstance.getAmountOfThreadsPerTarget(),
+                remoteInstance.getMinLength(),
+                remoteInstance.getMaxLength(),
+                String.join(" ", remoteInstance.getLoadTargets()));
+        return String.format("export LOAD_PARAMS=\"%s\"; ", params);
     }
 }

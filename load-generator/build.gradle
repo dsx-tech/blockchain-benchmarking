@@ -6,6 +6,7 @@ apply plugin: 'java'
 sourceCompatibility = 1.8
 
 task fatJar(type: Jar) {
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA', 'META-INF/*.MF'
     manifest {
         attributes 'Implementation-Title': 'Load generator',
                 'Implementation-Version': version,

@@ -21,12 +21,12 @@
 
 package uk.dsxt;
 
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import uk.dsxt.remote.instance.LoadGeneratorInstance;
-import uk.dsxt.remote.instance.LoadGeneratorInstancesManager;
-import uk.dsxt.remote.instance.RemoteInstance;
-import uk.dsxt.remote.instance.RemoteInstancesManager;
+import uk.dsxt.remote.instance.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,10 +50,20 @@ public class Main {
     private final static String prefix = "hyperledger";
     public static void main(String[] args) throws Exception {
         String pemKeyPath = args[0];
+
+        int amountOfTransactions = Integer.parseInt(args[1]);
+        int amountOfThreadsPerTarget = Integer.parseInt(args[2]);
+        int minMessageLength = Integer.parseInt(args[3]);
+        int maxMessageLength = Integer.parseInt(args[4]);
+        String blockchainType = args[5];
+        String fileToLogBlocks = args[6];
+        int requestPeriod = Integer.parseInt(args[7]);
+        String chaincodeFile = args[8];
+        final int blockchainInstancesAmount = Integer.parseInt(args[9]);
+        final int loadGeneratorInstancesAmount = Integer.parseInt(args[10]);
+
         Path logPath = Paths.get(prefix, "log");
         logger.debug("pem key path: " + pemKeyPath);
-        final int blockchainInstancesAmount = 4;
-        final int loadGeneratorInstancesAmount = 1;
         if (!Files.exists(Paths.get(prefix, "instances"))) {
             logger.error("File \"instances\" doesn't exists");
             return;
@@ -68,19 +78,30 @@ public class Main {
         List<LoadGeneratorInstance> loadGeneratorInstances = new ArrayList<>();
         for (int i = 0; i < loadGeneratorInstancesAmount; ++i) {
             loadGeneratorInstances.add(new LoadGeneratorInstance(userNameOnRemoteInstance,
-                    allHosts.get(i + loadGeneratorInstancesAmount), 22, pemKeyPath, blockchainInstances.get(i).getHost(), logPath));
+                    allHosts.get(i + blockchainInstancesAmount), 22, pemKeyPath, logPath,
+                        amountOfTransactions, amountOfThreadsPerTarget, minMessageLength, maxMessageLength));
         }
-        runBlockchain(blockchainInstances);
+        runBlockchain(blockchainInstances, chaincodeFile);
+        Thread.sleep(10000);
+        List<LoggerInstance> loggerInstances = new ArrayList<>();
+        blockchainInstances.forEach(i -> loggerInstances.add(new LoggerInstance(
+                userNameOnRemoteInstance, i.getHost(), 22, pemKeyPath, logPath,
+                blockchainType, i.getHost(), fileToLogBlocks, requestPeriod)));
+        runLoggers(loggerInstances);
+        Thread.sleep(10000);
         runLoadGenerators(loadGeneratorInstances, blockchainInstances);
     }
 
-    private static void runBlockchain(List<RemoteInstance> blockchainInstances) throws Exception {
+    private static void runBlockchain(List<RemoteInstance> blockchainInstances, String chaincodeFile) throws Exception {
         RemoteInstancesManager<RemoteInstance> blockchainInstancesManager = new RemoteInstancesManager<>();
         blockchainInstancesManager.setRootInstance(blockchainInstances.get(0));
         blockchainInstancesManager.addCommonInstances(blockchainInstances.subList(1, blockchainInstances.size()));
 
+        //String chaincodeFile = "chaincode_example02";
+//        String chaincodeFile = "e-voting";
+
         blockchainInstancesManager.uploadFilesForAll(Arrays.asList(
-                Paths.get(prefix, "chaincode_example02"),
+                Paths.get(prefix, chaincodeFile),
                 Paths.get(prefix, "initEnv.sh")
         ));
 
@@ -105,31 +126,73 @@ public class Main {
         sleep(20000);
         blockchainInstancesManager.executeCommandsForAll(singletonList("CORE_CHAINCODE_ID_NAME=mycc " +
                 "CORE_PEER_ADDRESS=0.0.0.0:7051 " +
-                "nohup ./chaincode_example02 >/dev/null 2>chaincode.log &")
+                "nohup ./" + chaincodeFile + " >/dev/null 2>chaincode.log &")
         );
-        logger.info("Chaincode started");
+        logger.info("Blockchain instances started");
         sleep(3000);
+        HttpResponse<JsonNode> response = Unirest.post(
+                "http://" + blockchainInstancesManager.getRootInstance().getHost() + ":7050/chaincode").body("{\n" +
+                "  \"jsonrpc\": \"2.0\",\n" +
+                "  \"method\": \"deploy\",\n" +
+                "  \"params\": {\n" +
+                "    \"type\": 1,\n" +
+                "    \"chaincodeID\":{\n" +
+                "        \"name\": \"mycc\"\n" +
+                "    },\n" +
+                "    \"CtorMsg\": {\n" +
+                "        \"args\":[\"init\"]\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"id\": 1\n" +
+                "}").asJson();
+        logger.info("chaincode deployed: " + response.getBody());
         blockchainInstancesManager.stop();
     }
+
+    private static void runLoggers(List<LoggerInstance> loggers) {
+        logger.debug("runLoggers start");
+        LoggerInstancesManager loggerInstancesManager = new LoggerInstancesManager();
+        loggerInstancesManager.setRootInstance(loggers.get(0));
+        loggerInstancesManager.addCommonInstances(loggers.subList(1, loggers.size()));
+        loggerInstancesManager.uploadFilesForAll(singletonList(Paths.get(prefix, "blockchain-logger.jar")));
+        loggerInstancesManager.executeCommandsForAll(Arrays.asList(
+                "pkill -f 'java -jar'",
+                "sudo yum -y install java-1.8.0",
+                "nohup java -jar blockchain-logger.jar ${LOG_PARAMS} >/dev/null 2>blockchain-logger-stdout.log &"
+                ));
+
+        logger.debug("runLoggers stop");
+        loggerInstancesManager.stop();
+    }
+
     private static void runLoadGenerators(List<LoadGeneratorInstance> loadGeneratorInstances,
                                           List<RemoteInstance> blockchainInstances) throws Exception {
         logger.debug("runLoadGenerators start");
-        if (loadGeneratorInstances.size() != blockchainInstances.size()) {
-            throw new IllegalArgumentException("amount of loaderGenerators must be equals amount of blockchain instances");
+        List<String> blockchainHosts = blockchainInstances
+                .stream()
+                .map(RemoteInstance::getHost)
+                .collect(Collectors.toList());
+
+        while (!blockchainHosts.isEmpty()) {
+            for (LoadGeneratorInstance loadGeneratorInstance: loadGeneratorInstances) {
+                if (!blockchainHosts.isEmpty()) {
+                    loadGeneratorInstance.getLoadTargets().add(blockchainHosts.remove(0));
+                }
+            }
         }
 
         LoadGeneratorInstancesManager loadGeneratorsManager = new LoadGeneratorInstancesManager();
         loadGeneratorsManager.setRootInstance(loadGeneratorInstances.get(0));
-        loadGeneratorsManager.addCommonInstances(loadGeneratorInstances);
+        loadGeneratorsManager.addCommonInstances(loadGeneratorInstances.subList(1, loadGeneratorInstances.size()));
 
-        loadGeneratorsManager.executeCommandsForCommon(Arrays.asList(
+        loadGeneratorsManager.executeCommandsForAll(Arrays.asList(
                 "pkill -f 'java -jar'",
                 "sudo yum -y install java-1.8.0")
         );
-        loadGeneratorsManager.uploadFilesForCommon(singletonList(Paths.get(prefix, "load-generator.jar")));
+        loadGeneratorsManager.uploadFilesForAll(singletonList(Paths.get(prefix, "load-generator.jar")));
 
-        loadGeneratorsManager.executeCommandsForCommon(singletonList(
-                "nohup java -jar load-generator.jar ${LOAD_TARGET} 1000 >/dev/null 2>load-generator-stdout.log &"));
+        loadGeneratorsManager.executeCommandsForAll(singletonList(
+                "nohup java -jar load-generator.jar ${LOAD_PARAMS} >/dev/null 2>load-generator-stdout.log &"));
 
         logger.debug("runLoadGenerators end");
         loadGeneratorsManager.stop();

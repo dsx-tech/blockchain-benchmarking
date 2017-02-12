@@ -29,9 +29,8 @@ import uk.dsxt.datamodel.blockchain.BlockchainChainInfo;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.StringJoiner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
@@ -48,6 +47,7 @@ public class BlockchainLogger {
         this.requestFrequency = requestFrequency;
         this.url = url;
         this.blockchainManager = new BlockchainManager(blockchainType, url);
+        Paths.get(csv).getParent().toFile().mkdirs();
         this.fw = new FileWriter(csv, true);
     }
 
@@ -72,6 +72,7 @@ public class BlockchainLogger {
             log.info(counterForHeight + " Start time: " + startTime);
             log.info(counterForHeight + " Block committed: " + time);
         }
+        fw.flush();
     }
 
     public void logInLoop() throws IOException, InterruptedException {
