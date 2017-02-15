@@ -37,15 +37,17 @@ public class LoadGeneratorInstance extends RemoteInstance {
     private int amountOfThreadsPerTarget;
     private int minLength;
     private int maxLength;
+    private int delay;
 
     public LoadGeneratorInstance(String userName, String host,
                                  int port, String keyPath, Path logPath,
-                                 int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength) {
+                                 int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength, int delay) {
         super(userName, host, port, keyPath, logPath);
         this.amountOfTransactions = amountOfTransactions;
         this.amountOfThreadsPerTarget = amountOfThreadsPerTarget;
         this.minLength = minLength;
         this.maxLength = maxLength;
         this.loadTargets = new ArrayList<>();
+        this.delay = delay;
     }
 }

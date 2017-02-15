@@ -27,11 +27,12 @@ package uk.dsxt.remote.instance;
 public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGeneratorInstance> {
     @Override
     protected String getEnvVariables(LoadGeneratorInstance remoteInstance) {
-        String params = String.format("%d %d %d %d %s",
+        String params = String.format("%d %d %d %d %d %s",
                 remoteInstance.getAmountOfTransactions(),
                 remoteInstance.getAmountOfThreadsPerTarget(),
                 remoteInstance.getMinLength(),
                 remoteInstance.getMaxLength(),
+                remoteInstance.getDelay(),
                 String.join(" ", remoteInstance.getLoadTargets()));
         return String.format("export LOAD_PARAMS=\"%s\"; ", params);
     }

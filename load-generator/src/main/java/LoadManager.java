@@ -47,6 +47,7 @@ public class LoadManager {
     private int amountOfThreadsPerTarget;
     private final int minLength;
     private final int maxLength;
+    private final int delay;
     private ExecutorService executorService;
     private List<Logger> loggers;
 
@@ -65,12 +66,13 @@ public class LoadManager {
             "  \"id\": 3\n" +
             "}";
 
-    public LoadManager(List<String> targets, int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength) {
+    public LoadManager(List<String> targets, int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength, int delay) {
         this.targets = targets;
         this.amountOfTransactions = amountOfTransactions;
         this.amountOfThreadsPerTarget = amountOfThreadsPerTarget;
         this.minLength = minLength;
         this.maxLength = maxLength;
+        this.delay = delay;
         this.loggers = new ArrayList<>();
         executorService = Executors.newFixedThreadPool(amountOfThreadsPerTarget * targets.size());
     }
@@ -84,9 +86,10 @@ public class LoadManager {
                     List<String> logs = new ArrayList<>(BATCH_SIZE);
                     Random random = new Random();
                     for (int j = 0; j < amountOfTransactions; ++j) {
-                        String message = generateMessage(random, minLength, maxLength);
-                        long startTime = System.currentTimeMillis();
                         try {
+                            Thread.sleep(delay);
+                            String message = generateMessage(random, minLength, maxLength);
+                            long startTime = System.currentTimeMillis();
                             HttpResponse<JsonNode> response = Unirest.post(
                                     "http://" + t + ":7050" + "/chaincode")
                                     .body(requestTemplate.replace("{message}", message))
@@ -104,7 +107,7 @@ public class LoadManager {
                                 logger.addLogs(logs);
                                 logs = new ArrayList<>(BATCH_SIZE);
                             }
-                        } catch (UnirestException e) {
+                        } catch (UnirestException | InterruptedException e) {
                             e.printStackTrace();
                         }
                     }

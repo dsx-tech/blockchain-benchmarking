@@ -50,7 +50,6 @@ public class Main {
     private final static String prefix = "hyperledger";
     public static void main(String[] args) throws Exception {
         String pemKeyPath = args[0];
-
         int amountOfTransactions = Integer.parseInt(args[1]);
         int amountOfThreadsPerTarget = Integer.parseInt(args[2]);
         int minMessageLength = Integer.parseInt(args[3]);
@@ -61,6 +60,7 @@ public class Main {
         String chaincodeFile = args[8];
         final int blockchainInstancesAmount = Integer.parseInt(args[9]);
         final int loadGeneratorInstancesAmount = Integer.parseInt(args[10]);
+        final int delay = Integer.parseInt(args[11]);
 
         Path logPath = Paths.get(prefix, "log");
         logger.debug("pem key path: " + pemKeyPath);
@@ -79,7 +79,7 @@ public class Main {
         for (int i = 0; i < loadGeneratorInstancesAmount; ++i) {
             loadGeneratorInstances.add(new LoadGeneratorInstance(userNameOnRemoteInstance,
                     allHosts.get(i + blockchainInstancesAmount), 22, pemKeyPath, logPath,
-                        amountOfTransactions, amountOfThreadsPerTarget, minMessageLength, maxMessageLength));
+                        amountOfTransactions, amountOfThreadsPerTarget, minMessageLength, maxMessageLength, delay));
         }
         runBlockchain(blockchainInstances, chaincodeFile);
         Thread.sleep(10000);
@@ -158,7 +158,7 @@ public class Main {
         loggerInstancesManager.executeCommandsForAll(Arrays.asList(
                 "pkill -f 'java -jar'",
                 "sudo yum -y install java-1.8.0",
-                "nohup java -jar blockchain-logger.jar ${LOG_PARAMS} >/dev/null 2>blockchain-logger-stdout.log &"
+                "nohup java8 -jar blockchain-logger.jar ${LOG_PARAMS} >/dev/null 2>blockchain-logger-stdout.log &"
                 ));
 
         logger.debug("runLoggers stop");
@@ -168,6 +168,10 @@ public class Main {
     private static void runLoadGenerators(List<LoadGeneratorInstance> loadGeneratorInstances,
                                           List<RemoteInstance> blockchainInstances) throws Exception {
         logger.debug("runLoadGenerators start");
+        if (loadGeneratorInstances.isEmpty()) {
+            logger.error("loadGenerators is absent");
+            return;
+        }
         List<String> blockchainHosts = blockchainInstances
                 .stream()
                 .map(RemoteInstance::getHost)
@@ -192,7 +196,7 @@ public class Main {
         loadGeneratorsManager.uploadFilesForAll(singletonList(Paths.get(prefix, "load-generator.jar")));
 
         loadGeneratorsManager.executeCommandsForAll(singletonList(
-                "nohup java -jar load-generator.jar ${LOAD_PARAMS} >/dev/null 2>load-generator-stdout.log &"));
+                "nohup java8 -jar load-generator.jar ${LOAD_PARAMS} >/dev/null 2>load-generator-stdout.log &"));
 
         logger.debug("runLoadGenerators end");
         loadGeneratorsManager.stop();

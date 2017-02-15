@@ -31,6 +31,7 @@ public class Main {
         int amountOfThreadsPerTarget = Integer.parseInt(args[1]);
         int minLength = Integer.parseInt(args[2]);
         int maxLength = Integer.parseInt(args[3]);
+        int delay = Integer.parseInt(args[4]);
         List<String> targets = new ArrayList<>();
         for (int i = 4; i < args.length; ++i) {
             targets.add(args[i]);
@@ -40,7 +41,8 @@ public class Main {
                 amountOfTransactions,
                 amountOfThreadsPerTarget,
                 minLength,
-                maxLength
+                maxLength,
+                delay
         );
         loadManager.start();
         loadManager.waitCompletion();

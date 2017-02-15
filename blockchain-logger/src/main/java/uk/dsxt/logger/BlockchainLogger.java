@@ -47,7 +47,7 @@ public class BlockchainLogger {
         this.requestFrequency = requestFrequency;
         this.url = url;
         this.blockchainManager = new BlockchainManager(blockchainType, url);
-        Paths.get(csv).getParent().toFile().mkdirs();
+        Paths.get(csv).toAbsolutePath().getParent().toFile().mkdirs();
         this.fw = new FileWriter(csv, true);
     }
 
@@ -104,7 +104,7 @@ public class BlockchainLogger {
 
         if (args.length < 1) {
             log.info("Using default parameters.");
-            BlockchainLogger logger = new BlockchainLogger("fabric", "grpc://52.59.221.191:7051",
+            BlockchainLogger logger = new BlockchainLogger("fabric", "grpc://54.93.73.69:7051",
                     "block.csv",1000);
             logger.logInLoop();
         } else if (args.length == 4) {

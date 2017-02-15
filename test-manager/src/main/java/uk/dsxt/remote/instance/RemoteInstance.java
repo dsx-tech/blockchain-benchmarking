@@ -124,6 +124,8 @@ public class RemoteInstance {
         }
         finally {
             channelShell.disconnect();
+            session.disconnect();
+            session = null;
         }
         return false;
     }
@@ -136,7 +138,7 @@ public class RemoteInstance {
             files.forEach(f -> {
                 try (FileInputStream fis = new FileInputStream(f.toFile())) {
                     channel.put(fis, f.getFileName().toString());
-                    logger.debug("File {} uploaded to: {}", f.getFileName().toString(), channel.getSession().getHost());
+                    logger.info("File {} uploaded to: {}", f.getFileName().toString(), channel.getSession().getHost());
                 } catch (Exception e) {
                     logger.error(e);
                 }
@@ -147,7 +149,25 @@ public class RemoteInstance {
         }
         finally {
             channelSftp.disconnect();
-            return false;
         }
+        return false;
+    }
+
+    public boolean downloadFiles(List<Path> from, Path to) {
+        try {
+            ChannelSftp channel = getOrCreateChannelSftp();
+            logger.debug("Download files from: " + channel.getSession().getHost());
+            channel.connect();
+            for (Path file: from) {
+                channel.get(file.toString(), to.toString());
+            }
+            return true;
+        } catch (Exception e) {
+            logger.error(e);
+        }
+        finally {
+            channelSftp.disconnect();
+        }
+        return false;
     }
 }
