@@ -18,12 +18,14 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
+package uk.dsxt.remote.instance;
 
 import com.jcraft.jsch.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.List;
@@ -47,6 +49,7 @@ public class RemoteInstance {
     //hyperledger specific
     private final static AtomicInteger globalCounter = new AtomicInteger(0);
     private int id;
+    private Path logPath;
 
     public String getHost() {
         return host;
@@ -58,11 +61,12 @@ public class RemoteInstance {
 
 
 
-    public RemoteInstance(String userName, String host, int port, String keyPath) {
+    public RemoteInstance(String userName, String host, int port, String keyPath, Path logPath) {
         this.userName = userName;
         this.host = host;
         this.port = port;
         this.id = globalCounter.getAndIncrement();
+        this.logPath = logPath;
         jsch = new JSch();
         try {
             jsch.addIdentity(keyPath);
@@ -96,10 +100,10 @@ public class RemoteInstance {
     }
 
     public boolean sendCommands(List<String> commands) {
-        try {
+        try (FileOutputStream logStream = new FileOutputStream(logPath.resolve(host + "_deploy.log").toFile(), true)){
             ChannelShell channel = getOrCreateChannelShell();
             logger.debug("Executing commands on: " + channel.getSession().getHost());
-            channelShell.setOutputStream(System.out);
+            channelShell.setOutputStream(logStream);
             PrintStream shellStream = new PrintStream(channel.getOutputStream());
             channel.connect();
             commands.add("exit");
@@ -111,8 +115,8 @@ public class RemoteInstance {
             }
             while(channel.isConnected())
             {
-                System.out.println("----- Channel On ----");
-                Thread.sleep(1000);
+                logger.info("----- Executing commads... ----");
+                Thread.sleep(10000);
             }
             return true;
         } catch (Exception e) {
@@ -120,8 +124,10 @@ public class RemoteInstance {
         }
         finally {
             channelShell.disconnect();
-            return false;
+            session.disconnect();
+            session = null;
         }
+        return false;
     }
 
     public boolean uploadFiles(List<Path> files) {
@@ -132,7 +138,7 @@ public class RemoteInstance {
             files.forEach(f -> {
                 try (FileInputStream fis = new FileInputStream(f.toFile())) {
                     channel.put(fis, f.getFileName().toString());
-                    logger.debug("File {} uploaded to: {}", f.getFileName().toString(), channel.getSession().getHost());
+                    logger.info("File {} uploaded to: {}", f.getFileName().toString(), channel.getSession().getHost());
                 } catch (Exception e) {
                     logger.error(e);
                 }
@@ -143,7 +149,25 @@ public class RemoteInstance {
         }
         finally {
             channelSftp.disconnect();
-            return false;
         }
+        return false;
+    }
+
+    public boolean downloadFiles(List<Path> from, Path to) {
+        try {
+            ChannelSftp channel = getOrCreateChannelSftp();
+            logger.debug("Download files from: " + channel.getSession().getHost());
+            channel.connect();
+            for (Path file: from) {
+                channel.get(file.toString(), to.toString());
+            }
+            return true;
+        } catch (Exception e) {
+            logger.error(e);
+        }
+        finally {
+            channelSftp.disconnect();
+        }
+        return false;
     }
 }

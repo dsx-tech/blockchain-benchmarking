@@ -32,10 +32,6 @@ import java.util.List;
 
 public interface Manager {
 
-    void start();
-
-    void stop();
-
     String sendMessage(byte[] body);
 
     List<Message> getNewMessages();

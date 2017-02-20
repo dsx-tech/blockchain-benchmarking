@@ -19,32 +19,21 @@
  * *
  ******************************************************************************/
 
-import java.util.ArrayList;
-import java.util.List;
+package uk.dsxt.remote.instance;
 
 /**
  * @author phd
  */
-public class Main {
-    public static void main(String[] args) throws Exception {
-        int amountOfTransactions = Integer.parseInt(args[0]);
-        int amountOfThreadsPerTarget = Integer.parseInt(args[1]);
-        int minLength = Integer.parseInt(args[2]);
-        int maxLength = Integer.parseInt(args[3]);
-        int delay = Integer.parseInt(args[4]);
-        List<String> targets = new ArrayList<>();
-        for (int i = 4; i < args.length; ++i) {
-            targets.add(args[i]);
-        }
-        LoadManager loadManager = new LoadManager(
-                targets,
-                amountOfTransactions,
-                amountOfThreadsPerTarget,
-                minLength,
-                maxLength,
-                delay
-        );
-        loadManager.start();
-        loadManager.waitCompletion();
+public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGeneratorInstance> {
+    @Override
+    protected String getEnvVariables(LoadGeneratorInstance remoteInstance) {
+        String params = String.format("%d %d %d %d %d %s",
+                remoteInstance.getAmountOfTransactions(),
+                remoteInstance.getAmountOfThreadsPerTarget(),
+                remoteInstance.getMinLength(),
+                remoteInstance.getMaxLength(),
+                remoteInstance.getDelay(),
+                String.join(" ", remoteInstance.getLoadTargets()));
+        return String.format("export LOAD_PARAMS=\"%s\"; ", params);
     }
 }

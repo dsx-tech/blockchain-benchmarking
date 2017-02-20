@@ -6,10 +6,16 @@ apply plugin: 'java'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+ext.log4jVersion = "2.7"
+ext.lombockVersion = "1.16.6"
+
 repositories {
     mavenCentral()
 }
 
+allprojects {
+    apply plugin: 'java'
+}
 task copyJars(type: Copy) {
     into project.file('benchmark-bundle')
     subprojects {
@@ -21,6 +27,18 @@ task copyFiles(dependsOn: [copyJars])
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+subprojects {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compile "org.apache.logging.log4j:log4j-api:$log4jVersion"
+        compile "org.apache.logging.log4j:log4j-core:$log4jVersion"
+        compile "org.projectlombok:lombok:$lombockVersion"
+    }
 }
 
 defaultTasks 'clean', 'buildNeeded', 'copyFiles'

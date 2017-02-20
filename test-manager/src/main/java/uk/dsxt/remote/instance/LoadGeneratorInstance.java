@@ -19,32 +19,35 @@
  * *
  ******************************************************************************/
 
+package uk.dsxt.remote.instance;
+import lombok.Getter;
+
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author phd
  */
-public class Main {
-    public static void main(String[] args) throws Exception {
-        int amountOfTransactions = Integer.parseInt(args[0]);
-        int amountOfThreadsPerTarget = Integer.parseInt(args[1]);
-        int minLength = Integer.parseInt(args[2]);
-        int maxLength = Integer.parseInt(args[3]);
-        int delay = Integer.parseInt(args[4]);
-        List<String> targets = new ArrayList<>();
-        for (int i = 4; i < args.length; ++i) {
-            targets.add(args[i]);
-        }
-        LoadManager loadManager = new LoadManager(
-                targets,
-                amountOfTransactions,
-                amountOfThreadsPerTarget,
-                minLength,
-                maxLength,
-                delay
-        );
-        loadManager.start();
-        loadManager.waitCompletion();
+@Getter
+public class LoadGeneratorInstance extends RemoteInstance {
+
+    private List<String> loadTargets;
+    private int amountOfTransactions;
+    private int amountOfThreadsPerTarget;
+    private int minLength;
+    private int maxLength;
+    private int delay;
+
+    public LoadGeneratorInstance(String userName, String host,
+                                 int port, String keyPath, Path logPath,
+                                 int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength, int delay) {
+        super(userName, host, port, keyPath, logPath);
+        this.amountOfTransactions = amountOfTransactions;
+        this.amountOfThreadsPerTarget = amountOfThreadsPerTarget;
+        this.minLength = minLength;
+        this.maxLength = maxLength;
+        this.loadTargets = new ArrayList<>();
+        this.delay = delay;
     }
 }

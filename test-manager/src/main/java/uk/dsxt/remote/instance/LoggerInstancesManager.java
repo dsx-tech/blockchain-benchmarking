@@ -19,19 +19,20 @@
  * *
  ******************************************************************************/
 
+package uk.dsxt.remote.instance;
+
 /**
  * @author phd
  */
-public class LoadGeneratorInstance extends RemoteInstance {
-
-    private String loadTargetHost;
-
-    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, String loadTarget) {
-        super(userName, host, port, keyPath);
-        this.loadTargetHost = loadTarget;
-    }
-
-    public String getLoadTargetHost() {
-        return loadTargetHost;
+public class LoggerInstancesManager extends RemoteInstancesManager<LoggerInstance> {
+    @Override
+    protected String getEnvVariables(LoggerInstance remoteInstance) {
+        String params = String.format("%s %s %s %d",
+                remoteInstance.getBlockchainType(),
+                "grpc://" + remoteInstance.getTarget() + ":7051",
+                remoteInstance.getLogFile(),
+                remoteInstance.getRequestPeriod()
+                );
+        return String.format("export LOG_PARAMS=\"%s\"; ", params);
     }
 }

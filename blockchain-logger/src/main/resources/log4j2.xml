@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ /******************************************************************************
+  ~  * Blockchain benchmarking framework                                          *
+  ~  * Copyright (C) 2016 DSX Technologies Limited.                               *
+  ~  * *
+  ~  * This program is free software: you can redistribute it and/or modify       *
+  ~  * it under the terms of the GNU General Public License as published by       *
+  ~  * the Free Software Foundation, either version 3 of the License, or          *
+  ~  * (at your option) any later version.                                        *
+  ~  * *
+  ~  * This program is distributed in the hope that it will be useful,            *
+  ~  * but WITHOUT ANY WARRANTY; without even the implied warranty of             *
+  ~  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                       *
+  ~  * See the GNU General Public License for more details.                       *
+  ~  * *
+  ~  * You should have received a copy of the GNU General Public License          *
+  ~  * along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
+  ~  * *
+  ~  * Removal or modification of this copyright notice is prohibited.            *
+  ~  * *
+  ~  ******************************************************************************/
+  -->
+
+<configuration monitorInterval="3">
+    <appenders>
+        <File name="FILE" fileName="logs/info.log">
+            <PatternLayout pattern="%d{ISO8601} [%-5p] (%F:%L) - %m%n"/>
+        </File>
+        <File name="BLOCKCHAIN_NODE" fileName="logs/peer.log">
+            <PatternLayout pattern="%d{ISO8601} [%-5p] (%F:%L) - %m%n"/>
+        </File>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{ABSOLUTE} [%-5p] (%F:%L) - %m%n"/>
+        </Console>
+    </appenders>
+    <loggers>
+        <Logger name="uk.dsxt.logger.BlockchainLogger">
+            <level value="debug"/>
+            <appender-ref ref="BLOCKCHAIN_NODE"/>
+        </Logger>
+        <Logger name="uk.dsxt.logger.BlockchainLogger">
+            <level value="debug"/>
+            <appender-ref ref = "FILE"/>
+        </Logger>
+        <root level="debug">
+            <appender-ref ref="STDOUT"/>
+        </root>
+    </loggers>
+</configuration>

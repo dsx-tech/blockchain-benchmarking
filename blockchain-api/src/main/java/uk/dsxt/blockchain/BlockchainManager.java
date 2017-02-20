@@ -23,119 +23,82 @@
 
 package uk.dsxt.blockchain;
 
+import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bitcoin.BitcoinManager;
 import uk.dsxt.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.datamodel.blockchain.BlockchainChainInfo;
 import uk.dsxt.datamodel.blockchain.BlockchainPeer;
 import uk.dsxt.ethereum.EthereumManager;
 import uk.dsxt.fabric.FabricManager;
-import uk.dsxt.utils.PropertiesHelper;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
 
+@Log4j2
 public class BlockchainManager implements Manager {
 
-    private String blockchainType = "fabric";
-    private static Properties properties = PropertiesHelper.loadProperties("blockchain");
+    private String blockchainType;
+    private String url;
 
     private Manager manager;
 
-    BlockchainManager(Properties properties, String blockchainType) {
+    public BlockchainManager(String blockchainType, String url) {
         this.blockchainType = blockchainType;
+        this.url = url;
         switch (blockchainType) {
             case "fabric":
-                try {
-                    manager = new FabricManager(
-                            getProperty("admin"),
-                            getProperty("passphrase"),
-                            getProperty("memberServiceUrl"),
-                            getProperty("peer"),
-                            Boolean.parseBoolean(getProperty("isInit")),
-                            Integer.parseInt(getProperty("validatingPeerID")),
-                            getProperty("peerToConnect"));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                manager = new FabricManager(url);
                 break;
             case "bitcoin":
-                manager = new BitcoinManager(
-                        getProperty("url"),
-                        getProperty("rpcuser"),
-                        getProperty("rpcpassword"),
-                        getProperty("datadir")
-                );
+                manager = new BitcoinManager(url);
                 break;
             case "ethereum":
-                manager = new EthereumManager (
-                        getProperty("url"),
-                        Integer.parseInt(getProperty("rpcport")),
-                        getProperty("rpcapi"),
-                        getProperty("rpccorsdomain"),
-                        getProperty("datadir"),
-                        Integer.parseInt(getProperty("networkid")),
-                        Integer.parseInt(getProperty("port")),
-                        Integer.parseInt(getProperty("maxpeers")),
-                        getProperty("genesis_directory")
-                );
+                manager = new EthereumManager(url);
+                break;
+            default:
+                log.error(String.format("%s blockchain currently not supported or not exist. Currently supported: " +
+                        "fabric, bitcoin, ethereum", blockchainType));
+                break;
         }
-    }
-
-    private String getProperty(String name) {
-        return properties.getProperty(String.format("%s.%s", blockchainType, name));
     }
 
     @Override
     public String sendMessage(byte[] body) {
-        return manager.sendMessage(body);
+        if (manager != null)
+            return manager.sendMessage(body);
+
+        return null;
     }
 
     @Override
     public List<Message> getNewMessages() {
-        return manager.getNewMessages();
+        if (manager != null)
+            return manager.getNewMessages();
+
+        return null;
     }
 
     @Override
     public BlockchainBlock getBlock(long id) throws IOException {
-        return manager.getBlock(id);
+        if (manager != null)
+            return manager.getBlock(id);
+
+        return null;
     }
 
     @Override
     public BlockchainPeer[] getPeers() throws IOException {
-         return manager.getPeers();
+        if (manager != null)
+            return manager.getPeers();
+
+        return null;
     }
 
     @Override
     public BlockchainChainInfo getChain() throws IOException {
-        return manager.getChain();
-    }
+        if (manager != null)
+            return manager.getChain();
 
-    @Override
-    public void start() {
-        manager.start();
-    }
-
-    @Override
-    public void stop() {
-        manager.stop();
-    }
-
-    public static void main(String[] args) {
-        BlockchainManager blockchainManager = new BlockchainManager(properties, "fabric");
-
-        blockchainManager.sendMessage("Greeting traveler".getBytes());
-        try {
-            Thread.sleep(2);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        blockchainManager.sendMessage("I will be your death".getBytes());
-        try {
-            Thread.sleep(4);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        return null;
     }
 }

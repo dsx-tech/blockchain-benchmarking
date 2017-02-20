@@ -19,24 +19,27 @@
  * *
  ******************************************************************************/
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+package uk.dsxt.remote.instance;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.Getter;
+
+import java.nio.file.Path;
 
 /**
  * @author phd
  */
-public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGeneratorInstance> {
-    private final static Logger logger = LogManager.getLogger(LoadGeneratorInstancesManager.class);
+@Getter
+public class LoggerInstance extends RemoteInstance {
+    private String blockchainType;
+    private String target;
+    private String logFile;
+    private int requestPeriod;
 
-    @Override
-    protected List<String> resolveCommands(LoadGeneratorInstance remoteInstance, List<String> commands) {
-        return super.resolveCommands(remoteInstance, commands)
-                .stream()
-                .map(command -> command.replace("${LOAD_TARGET}", remoteInstance.getLoadTargetHost()))
-                .peek(command -> logger.debug("command mapped to " + command))
-                .collect(Collectors.toList());
+    public LoggerInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String logFile, int requestPeriod) {
+        super(userName, host, port, keyPath, logPath);
+        this.blockchainType = blockchainType;
+        this.target = target;
+        this.logFile = logFile;
+        this.requestPeriod = requestPeriod;
     }
 }

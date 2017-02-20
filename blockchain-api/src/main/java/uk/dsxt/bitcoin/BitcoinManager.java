@@ -34,8 +34,6 @@ import uk.dsxt.utils.JSONRPCHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,12 +45,8 @@ import java.util.stream.Collectors;
 public class BitcoinManager implements Manager {
 
     private String url;
-    private String rpcuser;
-    private String rpcpassword;
-    private String datadir;
 
     private enum BitcoinMethods {
-        STOP,
         SENDTOADDRESS,
         LISTUNSPENT,
         LISTTRANSACTIONS,
@@ -64,31 +58,6 @@ public class BitcoinManager implements Manager {
     }
 
     private static final String BITCOIN_WALLET_ADDRESS = "mpkMbdQsiCCQ6x5YfufPsm5ByeJ73ccQ1V";
-    private static final String BITCOIN_START_COMMAND = "bitcoind -datadir=%s -daemon";
-
-    @Override
-    public void start() {
-        Runtime rt = Runtime.getRuntime();
-        try {
-            rt.exec(String.format(BITCOIN_START_COMMAND, datadir));
-        } catch (IOException e) {
-            log.error("Exception when try to start bitcoin node", e);
-        }
-        Authenticator.setDefault(new Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(rpcuser, rpcpassword.toCharArray());
-            }
-        });
-    }
-
-    @Override
-    public void stop() {
-        try {
-            JSONRPCHelper.post(url, BitcoinMethods.STOP.name().toLowerCase());
-        } catch (InternalLogicException e) {
-            log.error("Exception in stop method", e);
-        }
-    }
 
     @Override
     public String sendMessage(byte[] body) {

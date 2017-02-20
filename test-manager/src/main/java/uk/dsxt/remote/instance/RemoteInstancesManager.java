@@ -19,15 +19,14 @@
  * *
  ******************************************************************************/
 
+package uk.dsxt.remote.instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
@@ -100,7 +99,14 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
             List<Callable<Boolean>> tasks = remoteInstances.stream()
                     .map(instance -> (Callable<Boolean>) () -> instance.sendCommands(resolveCommands(instance, commands)))
                     .collect(Collectors.toList());
-            executorService.invokeAll(tasks);
+            List<Future<Boolean>> futures = executorService.invokeAll(tasks);
+            boolean succsess = futures.stream().map(f -> {
+                try {
+                    return f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    return false;
+                }
+            }).reduce(true, (r, f) -> r && f);
         } catch (Exception e) {
             logger.error(e);
         }
@@ -119,11 +125,13 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
 
     protected List<String> resolveCommands(T remoteInstance, List<String> commands) {
         return commands.stream()
-                .map(command -> command.replace("${ROOT_NODE}", rootInstance.getHost()))
-                .map(command -> command.replace("${NODE}", remoteInstance.getHost()))
-                .map(command -> command.replace("${PEER_ID}", Integer.toString(remoteInstance.getId())))
+                .map(command -> getEnvVariables(remoteInstance) + command)
                 .peek(command -> logger.info("Command mapped to {}", command))
                 .collect(Collectors.toList());
+    }
+
+    protected String getEnvVariables(T remoteInstance) {
+        return String.format("export ROOT_NODE=%s NODE=%s PEER_ID=%d; ", rootInstance.getHost(), remoteInstance.getHost(), remoteInstance.getId());
     }
 
     public void stop() {
