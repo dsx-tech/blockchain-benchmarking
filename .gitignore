@@ -20,3 +20,6 @@ build/
 
 #Project
 /benchmark-bundle
+/logs
+*.log
+block.csv
