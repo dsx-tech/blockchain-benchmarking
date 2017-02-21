@@ -18,28 +18,49 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.model;
+
+package uk.dsxt.bb.model;
 
 import lombok.Data;
 
 @Data
-public class TransactionInfo {
+public class TimeInfo {
 
-    private long time;
-    private long transactionId;
-    private int transactionSize;
-    private int nodeId;
-    private int responseCode;
-    private String responseMessage;
-    private long blockId;
+    private TimeAndSize timeAndSize;
+    private long mediumDstrbTime95;
+    private long mediumDstrbTime100;
+    private int numberOfBlocks;
 
-    public TransactionInfo(long time, long transactionId, int transactionSize,
-                           int nodeId, int responseCode, String responseMessage) {
-        this.time = time;
-        this.transactionId = transactionId;
-        this.transactionSize = transactionSize;
-        this.nodeId = nodeId;
-        this.responseCode = responseCode;
-        this.responseMessage = responseMessage;
+    public TimeInfo(TimeAndSize timeAndSize) {
+        this.timeAndSize = timeAndSize;
+        mediumDstrbTime95 = 0;
+        mediumDstrbTime100 = 0;
+        numberOfBlocks = 0;
+    }
+
+    /**
+     * Sets the start of a time span paired to a size span
+     * time spans are currently of fixed size: ResultsAnalyzer.TIME_INTERVAL
+     */
+    @Data
+    public static class TimeAndSize {
+        private long time;
+        private SizeSpan sizeSpan;
+
+        public TimeAndSize(long time, SizeSpan sizeSpan) {
+            this.time = time;
+            this.sizeSpan = sizeSpan;
+        }
+    }
+
+    @Data
+    public static class SizeSpan {
+        private int blockSizeMin;
+        private int blockSizeMax;
+
+        public SizeSpan(int blockSizeMin, int blockSizeMax) {
+            this.blockSizeMin = blockSizeMin;
+            this.blockSizeMax = blockSizeMax;
+        }
     }
 }

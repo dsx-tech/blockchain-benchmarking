@@ -18,46 +18,49 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.model;
+
+package uk.dsxt.bb.model;
 
 import lombok.Data;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
-public class BlockchainInfo {
+public class NodeInfo {
 
-    private Map<Long, BlockInfo> blocks;
-    private Map<Long, TransactionInfo> transactions;
-    private List<NodeInfo> nodes;
-    private Map<Long, Integer> timeToIntensities;
-    private Map<Long, Integer> timeToUnverifiedTransactions;
-    private Map<Long, Integer> timeToNumNodes;
-    private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> timeInfos;
+    private int nodeId;
+    private List<TimeSpan> workTimes;
+    private List<Long> startTimes;
+    private List<Long> stopTimes;
 
-    public BlockchainInfo(Map<Long, BlockInfo> blocks, Map<Long, TransactionInfo> transactions, List<NodeInfo> nodes) {
-        this.blocks = blocks;
-        this.transactions = transactions;
-        this.nodes = nodes;
-        this.timeToIntensities = new HashMap<>();
-        timeToUnverifiedTransactions = new HashMap<>();
-        timeToNumNodes = new HashMap<>();
-        timeInfos = new TreeMap<>();
+    public NodeInfo(int nodeId) {
+        this.nodeId = nodeId;
+        this.startTimes = new ArrayList<>();
+        this.stopTimes = new ArrayList<>();
+        this.workTimes = new ArrayList<>();
     }
 
-    public BlockInfo getChildBlockById(long id) {
-        for (BlockInfo block : blocks.values()) {
-            if (block.getParentBlockId() == id) {
-                return block;
-            }
+    public void addStartTime(Long time) {
+        startTimes.add(time);
+    }
+
+    public void addStopTime(Long time) {
+        stopTimes.add(time);
+    }
+
+    public void addWorkTime(TimeSpan time) {
+        workTimes.add(time);
+    }
+
+    @Data
+    public static class TimeSpan {
+        private long startTime;
+        private long endTime;
+
+        public TimeSpan(long startTime, long endTime) {
+            this.startTime = startTime;
+            this.endTime = endTime;
         }
-        return null;
     }
-
-//    public TimeInfo getTimeInfoByTimeAndSize(long time, int size) {
-//        for (TimeInfo timeInfo : timeInfos) {
-//
-//        }
-//        return null;
-//    }
 }

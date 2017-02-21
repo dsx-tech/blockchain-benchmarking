@@ -18,48 +18,29 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.model;
+
+package uk.dsxt.bb.model;
 
 import lombok.Data;
 
 @Data
-public class TimeInfo {
+public class TransactionInfo {
 
-    private TimeAndSize timeAndSize;
-    private long mediumDstrbTime95;
-    private long mediumDstrbTime100;
-    private int numberOfBlocks;
+    private long time;
+    private long transactionId;
+    private int transactionSize;
+    private int nodeId;
+    private int responseCode;
+    private String responseMessage;
+    private long blockId;
 
-    public TimeInfo(TimeAndSize timeAndSize) {
-        this.timeAndSize = timeAndSize;
-        mediumDstrbTime95 = 0;
-        mediumDstrbTime100 = 0;
-        numberOfBlocks = 0;
-    }
-
-    /**
-     * Sets the start of a time span paired to a size span
-     * time spans are currently of fixed size: Analyzer.TIME_INTERVAL
-     */
-    @Data
-    public static class TimeAndSize {
-        private long time;
-        private SizeSpan sizeSpan;
-
-        public TimeAndSize(long time, SizeSpan sizeSpan) {
-            this.time = time;
-            this.sizeSpan = sizeSpan;
-        }
-    }
-
-    @Data
-    public static class SizeSpan {
-        private int blockSizeMin;
-        private int blockSizeMax;
-
-        public SizeSpan(int blockSizeMin, int blockSizeMax) {
-            this.blockSizeMin = blockSizeMin;
-            this.blockSizeMax = blockSizeMax;
-        }
+    public TransactionInfo(long time, long transactionId, int transactionSize,
+                           int nodeId, int responseCode, String responseMessage) {
+        this.time = time;
+        this.transactionId = transactionId;
+        this.transactionSize = transactionSize;
+        this.nodeId = nodeId;
+        this.responseCode = responseCode;
+        this.responseMessage = responseMessage;
     }
 }

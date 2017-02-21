@@ -18,7 +18,8 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.model;
+
+package uk.dsxt.bb.model;
 
 import lombok.Data;
 
@@ -26,40 +27,47 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class NodeInfo {
+public class BlockInfo {
 
-    private int nodeId;
-    private List<TimeSpan> workTimes;
-    private List<Long> startTimes;
-    private List<Long> stopTimes;
+    private long blockId;
+    private List<TransactionInfo> transactions;
+    private long parentBlockId;
+    private List<DistributionTime> distributionTimes;
+    private long distributionTime95;
+    private long distributionTime100;
+    private long verificationTime;
+    private int size;
+    private long creationTime;
 
-    public NodeInfo(int nodeId) {
-        this.nodeId = nodeId;
-        this.startTimes = new ArrayList<>();
-        this.stopTimes = new ArrayList<>();
-        this.workTimes = new ArrayList<>();
+
+    public BlockInfo(long blockId, List<DistributionTime> distributionTimes) {
+        this.blockId = blockId;
+        this.distributionTimes = distributionTimes;
+        this.transactions = new ArrayList<>();
     }
 
-    public void addStartTime(Long time) {
-        startTimes.add(time);
+    public void calculateMaxTime() {
+        List<Long> times = new ArrayList<>();
+        for (DistributionTime distributionTime : distributionTimes) {
+            times.add(distributionTime.getTime());
+        }
+        times.sort(Long::compareTo);
+        distributionTime100 = times.get(times.size() - 1);
+        distributionTime95 = times.get((int) (times.size() * 0.95 - 1));
     }
 
-    public void addStopTime(Long time) {
-        stopTimes.add(time);
-    }
-
-    public void addWorkTime(TimeSpan time) {
-        workTimes.add(time);
+    public void addTransaction(TransactionInfo transaction) {
+        transactions.add(transaction);
     }
 
     @Data
-    public static class TimeSpan {
-        private long startTime;
-        private long endTime;
+    public static class DistributionTime {
+        private int nodeId;
+        private long time;
 
-        public TimeSpan(long startTime, long endTime) {
-            this.startTime = startTime;
-            this.endTime = endTime;
+        public DistributionTime(int nodeId, long time) {
+            this.nodeId = nodeId;
+            this.time = time;
         }
     }
 }

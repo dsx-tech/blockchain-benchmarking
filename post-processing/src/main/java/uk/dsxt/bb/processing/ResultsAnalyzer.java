@@ -18,23 +18,24 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.processing;
+
+package uk.dsxt.bb.processing;
 
 import lombok.extern.log4j.Log4j2;
-import uk.dsxt.model.*;
+import uk.dsxt.bb.model.*;
 
 import java.util.*;
 
 @Log4j2
-public class Analyzer {
-
-    private BlockchainInfo blockchainInfo;
+public class ResultsAnalyzer {
 
     //note: time is counted from the start of the test in milliseconds
     private static final long TIME_INTERVAL = 5000;
     private static final int NUMBER_OF_VERIFICATION = 6;
+    private static final int NUMBER_OF_SIZES = 3;
+    private BlockchainInfo blockchainInfo;
 
-    public Analyzer(BlockchainInfo blockchainInfo) {
+    public ResultsAnalyzer(BlockchainInfo blockchainInfo) {
         this.blockchainInfo = blockchainInfo;
     }
 
@@ -48,9 +49,6 @@ public class Analyzer {
         blockchainInfo.setTimeInfos(calculateTimeInfos());
         return blockchainInfo;
     }
-
-
-    private static final int NUMBER_OF_SIZES = 3;
 
     private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> calculateTimeInfos() {
         NavigableMap<Long, NavigableMap<Integer, TimeInfo>> timeInfos = new TreeMap<>();
@@ -78,7 +76,7 @@ public class Analyzer {
         int step = (maxBlockSize - minBlockSize) / NUMBER_OF_SIZES;
         for (Map.Entry<Long, NavigableMap<Integer, TimeInfo>> timeInfo : timeInfos.entrySet()) {
             for (int i = 0; i < NUMBER_OF_SIZES; i++) {
-                int startSize =minBlockSize + i * step;
+                int startSize = minBlockSize + i * step;
                 timeInfo.getValue().put(startSize, new TimeInfo
                         (new TimeInfo.TimeAndSize(timeInfo.getKey(), new TimeInfo.SizeSpan
                                 (startSize, startSize + step))));

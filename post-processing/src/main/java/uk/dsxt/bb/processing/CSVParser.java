@@ -18,14 +18,14 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.processing;
+package uk.dsxt.bb.processing;
 
 import au.com.bytecode.opencsv.CSVReader;
 import lombok.extern.log4j.Log4j2;
-import uk.dsxt.model.BlockInfo;
-import uk.dsxt.model.BlockchainInfo;
-import uk.dsxt.model.NodeInfo;
-import uk.dsxt.model.TransactionInfo;
+import uk.dsxt.bb.model.BlockInfo;
+import uk.dsxt.bb.model.BlockchainInfo;
+import uk.dsxt.bb.model.NodeInfo;
+import uk.dsxt.bb.model.TransactionInfo;
 
 import java.io.FileReader;
 import java.io.IOException;

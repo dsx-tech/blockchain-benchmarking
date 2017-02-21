@@ -18,17 +18,17 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.point;
 
-import uk.dsxt.model.BlockchainInfo;
-import uk.dsxt.processing.Analyzer;
-import uk.dsxt.processing.CSVComposer;
-import uk.dsxt.processing.CSVParser;
+package uk.dsxt.bb;
+
+import uk.dsxt.bb.model.BlockchainInfo;
+import uk.dsxt.bb.processing.ResultsAnalyzer;
+import uk.dsxt.bb.processing.CSVComposer;
+import uk.dsxt.bb.processing.CSVParser;
 
 import java.io.File;
-import java.io.IOException;
 
-public class Main {
+public class ResultsAnalyzerMain {
 
     public static void main(String[] args) {
         CSVParser parser = new CSVParser();
@@ -36,8 +36,8 @@ public class Main {
         if (blockchainInfo == null) {
             return;
         }
-        Analyzer analyzer = new Analyzer(blockchainInfo);
-        blockchainInfo = analyzer.analyze();
+        ResultsAnalyzer resultsAnalyzer = new ResultsAnalyzer(blockchainInfo);
+        blockchainInfo = resultsAnalyzer.analyze();
         File file = new File(CSVComposer.RESULT_PATH);
         if (!file.exists() || file.isFile()) {
             file.mkdir();
