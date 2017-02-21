@@ -3,5 +3,6 @@ include 'test-manager'
 include 'load-generator'
 include 'observer'
 include 'blockchain-api'
+include 'post-processing'
 include 'blockchain-logger'
 
