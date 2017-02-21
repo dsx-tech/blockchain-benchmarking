@@ -12,11 +12,11 @@
         </Console>
     </appenders>
     <loggers>
-        <Logger name="uk.uk.dsxt.fabric.FabricLogger">
+        <Logger name="uk.uk.dsxt.bb.fabric.FabricLogger">
             <level value="debug"/>
             <appender-ref ref="FABRIC_PEER"/>
         </Logger>
-        <Logger name="uk.uk.dsxt.fabric.FabricManager">
+        <Logger name="uk.uk.dsxt.bb.fabric.FabricManager">
             <level value="debug"/>
             <appender-ref ref = "FILE"/>
         </Logger>
