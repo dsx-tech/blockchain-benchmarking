@@ -21,12 +21,7 @@
 package uk.dsxt.processing;
 
 import lombok.extern.log4j.Log4j2;
-import uk.dsxt.model.BlockInfo;
-import uk.dsxt.model.BlockchainInfo;
-import uk.dsxt.model.NodeInfo;
-import uk.dsxt.model.TransactionInfo;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import uk.dsxt.model.*;
 
 import java.util.*;
 
@@ -48,10 +43,59 @@ public class Analyzer {
         updateTransactionInfos();
         updateBlockInfos();
         updateNodeInfos();
-
         blockchainInfo.setTimeToNumNodes(calculateNumberOfNodes());
         blockchainInfo.setTimeToUnverifiedTransactions(calculateUnverifiedTransactions());
+        blockchainInfo.setTimeInfos(calculateTimeInfos());
         return blockchainInfo;
+    }
+
+
+    private static final int NUMBER_OF_SIZES = 3;
+
+    private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> calculateTimeInfos() {
+        NavigableMap<Long, NavigableMap<Integer, TimeInfo>> timeInfos = new TreeMap<>();
+        if (blockchainInfo.getBlocks().isEmpty()) {
+            log.error("No blocks found");
+            return timeInfos;
+        }
+        int minBlockSize = blockchainInfo.getBlocks().values().iterator().next().getSize();
+        int maxBlockSize = 0;
+        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
+            if (minBlockSize > block.getSize()) {
+                minBlockSize = block.getSize();
+            }
+            if (maxBlockSize < block.getSize()) {
+                maxBlockSize = block.getSize();
+            }
+        }
+        //add all possible time intervals
+        long startTime = 0;
+        long endTime = getEndTime();
+        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
+            timeInfos.put(i, new TreeMap<>());
+        }
+        //add all size spans to every map
+        int step = (maxBlockSize - minBlockSize) / NUMBER_OF_SIZES;
+        for (Map.Entry<Long, NavigableMap<Integer, TimeInfo>> timeInfo : timeInfos.entrySet()) {
+            for (int i = 0; i < NUMBER_OF_SIZES; i++) {
+                int startSize =minBlockSize + i * step;
+                timeInfo.getValue().put(startSize, new TimeInfo
+                        (new TimeInfo.TimeAndSize(timeInfo.getKey(), new TimeInfo.SizeSpan
+                                (startSize, startSize + step))));
+            }
+        }
+        //for each block find correct time and size map and recalculate medium distribution times
+        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
+            NavigableMap<Integer, TimeInfo> timeInfoInside = timeInfos.get(timeInfos.floorKey(block.getCreationTime()));
+            TimeInfo t = timeInfoInside.get(timeInfoInside.floorKey(block.getSize()));
+            t.setMediumDstrbTime95(((t.getMediumDstrbTime95() * t.getNumberOfBlocks() + block.getDistributionTime95())
+                    / (t.getNumberOfBlocks() + 1)));
+            t.setMediumDstrbTime100(((t.getMediumDstrbTime100() * t.getNumberOfBlocks() + block.getDistributionTime100())
+                    / (t.getNumberOfBlocks() + 1)));
+            t.setNumberOfBlocks(t.getNumberOfBlocks() + 1);
+        }
+        return timeInfos;
+
     }
 
     //transaction is verified when block with it is verified
@@ -94,6 +138,14 @@ public class Analyzer {
         for (BlockInfo block : blockchainInfo.getBlocks().values()) {
             block.setVerificationTime(calculateVerificationTime(block));
         }
+
+        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
+            int size = 0;
+            for (TransactionInfo transaction : block.getTransactions()) {
+                size += transaction.getTransactionSize();
+            }
+            block.setSize(size);
+        }
     }
 
     //block is verified when 6 blocks after it have been created
@@ -109,13 +161,13 @@ public class Analyzer {
                 return -1;
             }
         }
-        return nextBlock.getMaxNodeTime();
+        return nextBlock.getDistributionTime100();
     }
 
     //adding blockId to transactionInfo
     private void updateTransactionInfos() {
         for (BlockInfo blockInfo : blockchainInfo.getBlocks().values()) {
-            for (TransactionInfo transaction : blockInfo.getTransactionIds()) {
+            for (TransactionInfo transaction : blockInfo.getTransactions()) {
                 transaction.setBlockId(blockInfo.getBlockId());
             }
         }

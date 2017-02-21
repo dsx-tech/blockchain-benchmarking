@@ -29,39 +29,42 @@ import lombok.Data;
 public class BlockInfo {
 
     private long blockId;
-    private List<TransactionInfo> transactionIds;
+    private List<TransactionInfo> transactions;
     private long parentBlockId;
-    private List<NodeTime> nodeTimes;
-    private long maxNodeTime95;
-    private long maxNodeTime;
+    private List<DistributionTime> distributionTimes;
+    private long distributionTime95;
+    private long distributionTime100;
     private long verificationTime;
+    private int size;
+    private long creationTime;
 
-    public BlockInfo(long blockId, List<NodeTime> nodeTimes) {
+
+    public BlockInfo(long blockId, List<DistributionTime> distributionTimes) {
         this.blockId = blockId;
-        this.nodeTimes = nodeTimes;
-        this.transactionIds = new ArrayList<>();
+        this.distributionTimes = distributionTimes;
+        this.transactions = new ArrayList<>();
     }
 
     public void calculateMaxTime() {
         List<Long> times = new ArrayList<>();
-        for (NodeTime nodeTime : nodeTimes) {
-            times.add(nodeTime.getTime());
+        for (DistributionTime distributionTime : distributionTimes) {
+            times.add(distributionTime.getTime());
         }
         times.sort(Long::compareTo);
-        maxNodeTime = times.get(times.size() - 1);
-        maxNodeTime95 = times.get((int) (times.size() * 0.95 - 1));
+        distributionTime100 = times.get(times.size() - 1);
+        distributionTime95 = times.get((int) (times.size() * 0.95 - 1));
     }
 
     public void addTransaction(TransactionInfo transaction) {
-        transactionIds.add(transaction);
+        transactions.add(transaction);
     }
 
     @Data
-    public static class NodeTime {
+    public static class DistributionTime {
         private int nodeId;
         private long time;
 
-        public NodeTime(int nodeId, long time) {
+        public DistributionTime(int nodeId, long time) {
             this.nodeId = nodeId;
             this.time = time;
         }

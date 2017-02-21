@@ -86,7 +86,7 @@ public class CSVParser {
         String[] nextLine;
         //Read one line at a time
         while ((nextLine = reader.readNext()) != null) {
-            if (nextLine.length < 2) {
+            if (nextLine.length < 4) {
                 //ignore all unparseable lines
                 log.error("Unparseable line: " + Arrays.toString(nextLine));
                 continue;
@@ -94,15 +94,18 @@ public class CSVParser {
             try {
                 long transactionId = Long.parseLong(nextLine[0]);
                 long blockId = Integer.parseInt(nextLine[1]);
+                long creationTime = Long.parseLong(nextLine[3]);
                 BlockInfo block = blockchainInfo.getBlocks().get(blockId);
                 TransactionInfo transaction = blockchainInfo.getTransactions().get(transactionId);
-
-                if (!nextLine[2].isEmpty() && block != null) {
-                    int parentBlockId = Integer.parseInt(nextLine[2]);
-                    block.setParentBlockId(parentBlockId);
-                }
-                if (block != null && transaction != null) {
-                    block.addTransaction(transaction);
+                if(block != null) {
+                    block.setCreationTime(creationTime);
+                    if (!nextLine[2].isEmpty()) {
+                        int parentBlockId = Integer.parseInt(nextLine[2]);
+                        block.setParentBlockId(parentBlockId);
+                    }
+                    if (transaction != null) {
+                        block.addTransaction(transaction);
+                    }
                 }
             } catch (NumberFormatException e) {
                 log.error(e.getMessage());
@@ -152,14 +155,14 @@ public class CSVParser {
             }
             try {
                 long blockId = Integer.parseInt(nextLine[0]);
-                List<BlockInfo.NodeTime> nodeTimes = new ArrayList<>();
+                List<BlockInfo.DistributionTime> distributionTimes = new ArrayList<>();
 
                 for (int i = 1; i < nextLine.length; i++) {
                     if (!nextLine[i].isEmpty()) {
-                        nodeTimes.add(new BlockInfo.NodeTime(i, Long.parseLong(nextLine[i])));
+                        distributionTimes.add(new BlockInfo.DistributionTime(i, Long.parseLong(nextLine[i])));
                     }
                 }
-                blocks.put(blockId, new BlockInfo(blockId, nodeTimes));
+                blocks.put(blockId, new BlockInfo(blockId, distributionTimes));
             } catch (NumberFormatException e) {
                 //ignore all unparseable lines
                 log.error(e.getMessage());

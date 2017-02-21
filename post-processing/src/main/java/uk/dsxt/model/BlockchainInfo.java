@@ -22,9 +22,7 @@ package uk.dsxt.model;
 
 import lombok.Data;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 public class BlockchainInfo {
@@ -35,6 +33,7 @@ public class BlockchainInfo {
     private Map<Long, Integer> timeToIntensities;
     private Map<Long, Integer> timeToUnverifiedTransactions;
     private Map<Long, Integer> timeToNumNodes;
+    private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> timeInfos;
 
     public BlockchainInfo(Map<Long, BlockInfo> blocks, Map<Long, TransactionInfo> transactions, List<NodeInfo> nodes) {
         this.blocks = blocks;
@@ -43,25 +42,8 @@ public class BlockchainInfo {
         this.timeToIntensities = new HashMap<>();
         timeToUnverifiedTransactions = new HashMap<>();
         timeToNumNodes = new HashMap<>();
+        timeInfos = new TreeMap<>();
     }
-
-//    public BlockInfo getBlockById(long id) {
-//        for (BlockInfo block : blocks) {
-//            if (block.getBlockId() == id) {
-//                return block;
-//            }
-//        }
-//        return null;
-//    }
-//
-//    public TransactionInfo getTransactionById(long id) {
-//        for (TransactionInfo transactionInfo : transactions) {
-//            if (transactionInfo.getTransactionId() == id) {
-//                return transactionInfo;
-//            }
-//        }
-//        return null;
-//    }
 
     public BlockInfo getChildBlockById(long id) {
         for (BlockInfo block : blocks.values()) {
@@ -71,4 +53,11 @@ public class BlockchainInfo {
         }
         return null;
     }
+
+//    public TimeInfo getTimeInfoByTimeAndSize(long time, int size) {
+//        for (TimeInfo timeInfo : timeInfos) {
+//
+//        }
+//        return null;
+//    }
 }
