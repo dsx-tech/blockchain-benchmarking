@@ -36,14 +36,14 @@
     </appenders>
     <loggers>
         <Logger name="uk.dsxt.logger.BlockchainLogger">
-            <level value="debug"/>
+            <level value="info"/>
             <appender-ref ref="BLOCKCHAIN_NODE"/>
         </Logger>
         <Logger name="uk.dsxt.logger.BlockchainLogger">
-            <level value="debug"/>
+            <level value="info"/>
             <appender-ref ref = "FILE"/>
         </Logger>
-        <root level="debug">
+        <root level="info">
             <appender-ref ref="STDOUT"/>
         </root>
     </loggers>

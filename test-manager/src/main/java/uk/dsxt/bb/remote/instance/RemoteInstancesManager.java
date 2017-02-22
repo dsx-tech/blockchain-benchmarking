@@ -20,11 +20,12 @@
  ******************************************************************************/
 
 package uk.dsxt.bb.remote.instance;
+
+import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -39,21 +40,25 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
 
     private T rootInstance;
     private final List<T> commonInstances;
-    private final List<T> instances;
+    @Getter private final List<T> allInstances;
+    @Getter private final String masterIp;
+    @Getter private final int masterPort;
     private final ExecutorService executorService;
     private final int THREADS_AMOUNT = 4;
 
 
-    public RemoteInstancesManager() {
-        commonInstances = new ArrayList<>();
-        instances = new ArrayList<>();
+    public RemoteInstancesManager(String masterIp, int masterPort) {
+        this.masterIp = masterIp;
+        this.masterPort = masterPort;
+        commonInstances = new CopyOnWriteArrayList<>();
+        allInstances = new CopyOnWriteArrayList<>();
         executorService = Executors.newFixedThreadPool(THREADS_AMOUNT);
     }
 
     public void setRootInstance(T remoteInstance) {
-        instances.remove(rootInstance);
+        allInstances.remove(rootInstance);
         rootInstance = remoteInstance;
-        instances.add(rootInstance);
+        allInstances.add(rootInstance);
     }
 
     public T getRootInstance() {
@@ -62,16 +67,16 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
 
     public void addCommonInstance(T remoteInstance) {
         commonInstances.add(remoteInstance);
-        instances.add(remoteInstance);
+        allInstances.add(remoteInstance);
     }
 
     public void addCommonInstances(List<T> remoteInstances) {
         commonInstances.addAll(remoteInstances);
-        instances.addAll(remoteInstances);
+        allInstances.addAll(remoteInstances);
     }
 
     public void executeCommandsForAll(List<String> commands) {
-        executeCommands(instances, commands);
+        executeCommands(allInstances, commands);
     }
 
     public void executeCommandsForCommon(List<String> commands) {
@@ -83,7 +88,7 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
     }
 
     public void uploadFilesForAll(List<Path> files) {
-        uploadFiles(instances, files);
+        uploadFiles(allInstances, files);
     }
 
     public void uploadFilesForCommon(List<Path> files) {

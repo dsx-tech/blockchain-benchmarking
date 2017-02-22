@@ -22,6 +22,7 @@
 package uk.dsxt.bb.remote.instance;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.nio.file.Path;
 
@@ -34,6 +35,9 @@ public class LoggerInstance extends RemoteInstance {
     private String target;
     private String logFile;
     private int requestPeriod;
+
+    @Setter
+    private boolean isRunning;
 
     public LoggerInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String logFile, int requestPeriod) {
         super(userName, host, port, keyPath, logPath);

@@ -20,55 +20,18 @@
  *                                                                            *
  ******************************************************************************
  */
+package uk.dsxt.bb.remote.instance;
 
-package uk.dsxt.bb.datamodel.bitcoin;
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
+import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
+/**
+ * @author phd
+ */
 @Data
-public class BitcoinBlock implements BlockchainBlock {
-    String hash;
-    long confirmations;
-    long strippedsize;
-    long size;
-    long weight;
-    long height;
-    long version;
-    String versionHex;
-    String merkleroot;
-    String[] tx;
-    long time;
-    long mediantime;
-    long nonce;
-    String bits;
-    BigDecimal difficulty;
-    String chainwork;
-    String previousblockhash;
-    String nextblockhash;
-
-    @Override
-    public String getHash() {
-        return hash;
-    }
-
-    @Override
-    public String getPreviousBlockHash() {
-        return previousblockhash;
-    }
-
-    //todo implement bitcoin transaction
-    @Override
-    public BlockchainTransaction[] getTransactions() {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public long getTime() {
-        return time;
-    }
+@NoArgsConstructor
+@AllArgsConstructor
+public class WorkFinishedTO {
+    private String ip;
 }

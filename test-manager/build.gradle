@@ -26,5 +26,8 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.3'
     compile 'ch.qos.logback:logback-classic:1.1.7'
     compile 'com.mashape.unirest:unirest-java:1.4.9'
+    compile 'com.sparkjava:spark-core:2.5.5'
+    compile "com.fasterxml.jackson.core:jackson-databind:2.5.3"
+    compile project(':blockchain-api')
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }

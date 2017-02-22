@@ -28,5 +28,7 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.3'
     compile 'ch.qos.logback:logback-classic:1.1.7'
     compile 'org.apache.commons:commons-csv:1.4'
+    compile "com.fasterxml.jackson.core:jackson-databind:2.5.3"
+    compile project(":test-manager")
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }

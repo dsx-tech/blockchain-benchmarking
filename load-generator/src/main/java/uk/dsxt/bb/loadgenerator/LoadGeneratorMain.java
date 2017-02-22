@@ -23,7 +23,13 @@
 
 package uk.dsxt.bb.loadgenerator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import lombok.extern.log4j.Log4j2;
+import uk.dsxt.bb.remote.instance.WorkFinishedTO;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,8 +43,8 @@ import java.util.List;
 public class LoadGeneratorMain {
     public static void main(String[] args) {
         try {
-            if (args.length != 5) {
-                log.error("Incorrect arguments count in LoadGeneratorMain.main(). Need 5. Actual args: {}", Arrays.toString(args));
+            if (args.length < 8) {
+                log.error("Incorrect arguments count in LoadGeneratorMain.main(). Need min 8. Actual args: {}", Arrays.toString(args));
                 return;
             }
             int amountOfTransactions = Integer.parseInt(args[0]);
@@ -46,15 +52,25 @@ public class LoadGeneratorMain {
             int minLength = Integer.parseInt(args[2]);
             int maxLength = Integer.parseInt(args[3]);
             int delay = Integer.parseInt(args[4]);
+            String ip = args[5];
+            String masterHost = args[6];
             List<String> targets = new ArrayList<>();
-            targets.addAll(Arrays.asList(args).subList(4, args.length));
+            targets.addAll(Arrays.asList(args).subList(6, args.length));
 
             LoadManager loadManager = new LoadManager(targets, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay);
 
             loadManager.start();
             loadManager.waitCompletion();
-        } catch (IOException e) {
-            log.error("Couldn't start Load Generator module.");
+
+            log.info("Load generation finished, sending info to master node " + "http://" + masterHost + "/loadGenerator/state");
+            WorkFinishedTO remoteInstanceStateTO = new WorkFinishedTO(ip);
+            ObjectMapper mapper = new ObjectMapper();
+
+            HttpResponse<JsonNode> response = Unirest.post("http://" + masterHost + "/loadGenerator/state")
+                    .body(mapper.writeValueAsString(remoteInstanceStateTO)).asJson();
+            log.info("Info sended to master node, response {}", response);
+        } catch (IOException | UnirestException e) {
+            log.error("Couldn't start Load Generator module. {}", e);
         }
     }
 }

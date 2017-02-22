@@ -25,13 +25,19 @@ package uk.dsxt.bb.remote.instance;
  * @author phd
  */
 public class LoggerInstancesManager extends RemoteInstancesManager<LoggerInstance> {
+    public LoggerInstancesManager(String masterIp, int masterPort) {
+        super(masterIp, masterPort);
+    }
+
     @Override
     protected String getEnvVariables(LoggerInstance remoteInstance) {
-        String params = String.format("%s %s %s %d",
+        String params = String.format("%s %s %s %d %s %s",
                 remoteInstance.getBlockchainType(),
                 "grpc://" + remoteInstance.getTarget() + ":7051",
                 remoteInstance.getLogFile(),
-                remoteInstance.getRequestPeriod()
+                remoteInstance.getRequestPeriod(),
+                remoteInstance.getHost(),
+                getMasterIp() + ":" + getMasterPort()
                 );
         return String.format("export LOG_PARAMS=\"%s\"; ", params);
     }

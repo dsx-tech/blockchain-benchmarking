@@ -38,6 +38,7 @@ subprojects {
         compile "org.apache.logging.log4j:log4j-api:$log4jVersion"
         compile "org.apache.logging.log4j:log4j-core:$log4jVersion"
         compile "org.projectlombok:lombok:$lombockVersion"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.5.3"
     }
 }
 

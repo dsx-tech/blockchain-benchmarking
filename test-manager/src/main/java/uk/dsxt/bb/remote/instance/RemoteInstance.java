@@ -21,6 +21,8 @@
 package uk.dsxt.bb.remote.instance;
 
 import com.jcraft.jsch.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,6 +52,8 @@ public class RemoteInstance {
     private final static AtomicInteger globalCounter = new AtomicInteger(0);
     private int id;
     private Path logPath;
+
+    @Getter @Setter private boolean isRunning;
 
     public String getHost() {
         return host;
@@ -153,13 +157,13 @@ public class RemoteInstance {
         return false;
     }
 
-    public boolean downloadFiles(List<Path> from, Path to) {
+    public boolean downloadFiles(List<String> from, Path to) {
         try {
             ChannelSftp channel = getOrCreateChannelSftp();
             logger.debug("Download files from: " + channel.getSession().getHost());
             channel.connect();
-            for (Path file: from) {
-                channel.get(file.toString(), to.toString());
+            for (String file: from) {
+                channel.get(file, to.toString());
             }
             return true;
         } catch (Exception e) {
@@ -169,5 +173,19 @@ public class RemoteInstance {
             channelSftp.disconnect();
         }
         return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof RemoteInstance)) return false;
+        RemoteInstance other = (RemoteInstance) o;
+        return host.equals(other.host);
+    }
+
+    @Override
+    public int hashCode() {
+        return host.hashCode();
     }
 }

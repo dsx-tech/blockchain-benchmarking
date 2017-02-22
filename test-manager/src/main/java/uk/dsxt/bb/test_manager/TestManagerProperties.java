@@ -20,55 +20,32 @@
  *                                                                            *
  ******************************************************************************
  */
+package uk.dsxt.bb.test_manager;
 
-package uk.dsxt.bb.datamodel.bitcoin;
+import lombok.Builder;
+import lombok.Getter;
 
-import lombok.Data;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
-
-import java.math.BigDecimal;
-
-@Data
-public class BitcoinBlock implements BlockchainBlock {
-    String hash;
-    long confirmations;
-    long strippedsize;
-    long size;
-    long weight;
-    long height;
-    long version;
-    String versionHex;
-    String merkleroot;
-    String[] tx;
-    long time;
-    long mediantime;
-    long nonce;
-    String bits;
-    BigDecimal difficulty;
-    String chainwork;
-    String previousblockhash;
-    String nextblockhash;
-
-    @Override
-    public String getHash() {
-        return hash;
-    }
-
-    @Override
-    public String getPreviousBlockHash() {
-        return previousblockhash;
-    }
-
-    //todo implement bitcoin transaction
-    @Override
-    public BlockchainTransaction[] getTransactions() {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public long getTime() {
-        return time;
-    }
+/**
+ * @author phd
+ */
+@Getter
+@Builder
+public class TestManagerProperties {
+    final private String pemKeyPath;
+    final private String pathToBlockchainResources;
+    final private int amountOfTransactionsPerTarget;
+    final private int amountOfThreadsPerTarget;
+    final private int delayBeetweenRequests;
+    final private int minMessageLength;
+    final private int maxMessageLength;
+    final private String blockchainType;
+    final private String fileToLogBlocks;
+    final private int requestPeriod;
+    final private String chaincodeFile;
+    final private int blockchainInstancesAmount;
+    final private int loadGeneratorInstancesAmount;
+    final private String deployLogPath;
+    final private String userNameOnRemoteInstances;
+    final private String masterIpAddress;
+    final private int masterPort;
 }

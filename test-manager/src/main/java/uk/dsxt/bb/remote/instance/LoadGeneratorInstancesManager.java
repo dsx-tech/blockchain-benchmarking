@@ -25,14 +25,20 @@ package uk.dsxt.bb.remote.instance;
  * @author phd
  */
 public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGeneratorInstance> {
+    public LoadGeneratorInstancesManager(String masterIp, int masterPort) {
+        super(masterIp, masterPort);
+    }
+
     @Override
     protected String getEnvVariables(LoadGeneratorInstance remoteInstance) {
-        String params = String.format("%d %d %d %d %d %s",
+        String params = String.format("%d %d %d %d %d %s %s %s",
                 remoteInstance.getAmountOfTransactions(),
                 remoteInstance.getAmountOfThreadsPerTarget(),
                 remoteInstance.getMinLength(),
                 remoteInstance.getMaxLength(),
                 remoteInstance.getDelay(),
+                remoteInstance.getHost(),
+                getMasterIp() + ":" + getMasterPort(),
                 String.join(" ", remoteInstance.getLoadTargets()));
         return String.format("export LOAD_PARAMS=\"%s\"; ", params);
     }

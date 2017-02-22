@@ -48,7 +48,7 @@ public class FabricBlock implements BlockchainBlock {
 
     @Override
     public FabricTransaction[] getTransactions() {
-        return transactions.toArray(new FabricTransaction[transactions.size()]);
+        return transactions == null ? new FabricTransaction[0] : transactions.toArray(new FabricTransaction[transactions.size()]);
     }
 
     @Override

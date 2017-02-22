@@ -38,7 +38,7 @@ public interface BlockchainBlock {
         return previousBlockHash;
     }
 
-    default Object[] getTransactions() {
+    default BlockchainTransaction[] getTransactions() {
         return transactions;
     }
 
