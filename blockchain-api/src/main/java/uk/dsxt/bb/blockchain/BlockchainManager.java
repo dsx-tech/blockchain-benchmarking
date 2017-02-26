@@ -63,6 +63,15 @@ public class BlockchainManager implements Manager {
     }
 
     @Override
+    public String sendTransaction(String to, String from, String amount) {
+        if (manager != null) {
+            return manager.sendTransaction(to, from, amount);
+        }
+
+        return null;
+    }
+
+    @Override
     public String sendMessage(byte[] body) {
         if (manager != null)
             return manager.sendMessage(body);
@@ -100,5 +109,11 @@ public class BlockchainManager implements Manager {
             return manager.getChain();
 
         return null;
+    }
+
+    @Override
+    public void authorize(String user, String password) {
+        if (manager != null)
+            manager.authorize(user, password);
     }
 }

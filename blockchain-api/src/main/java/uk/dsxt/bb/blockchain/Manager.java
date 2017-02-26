@@ -32,6 +32,8 @@ import java.util.List;
 
 public interface Manager {
 
+    String sendTransaction(String to, String from, String amount);
+
     String sendMessage(byte[] body);
 
     List<Message> getNewMessages();
@@ -41,4 +43,6 @@ public interface Manager {
     BlockchainPeer[] getPeers() throws IOException;
 
     BlockchainChainInfo getChain() throws IOException;
+
+    void authorize(String user, String password);
 }

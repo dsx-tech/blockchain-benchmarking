@@ -24,12 +24,12 @@
 package uk.dsxt.bb.datamodel.bitcoin;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
-import lombok.Value;
 
 import java.math.BigDecimal;
 
-@Value
+@Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class BitcoinUnspentTransaction extends BitcoinTransaction {
@@ -37,4 +37,12 @@ public class BitcoinUnspentTransaction extends BitcoinTransaction {
     private String scriptPubKey;
     private BigDecimal confirmations;
     private boolean solvable;
+
+    public BitcoinUnspentTransaction(String txid, int vout, String scriptPubKey, BigDecimal confirmations, boolean solvable) {
+        super(txid);
+        this.vout = vout;
+        this.scriptPubKey = scriptPubKey;
+        this.confirmations = confirmations;
+        this.solvable = solvable;
+    }
 }

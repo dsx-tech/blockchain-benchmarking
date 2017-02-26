@@ -47,7 +47,7 @@ public class EthereumManager implements Manager {
 
     private String url;
 
-    public String unlockAccount(String address, String passphrase, Long duration)
+    private String unlockAccount(String address, String passphrase, Long duration)
             throws MalformedURLException, InternalLogicException {
         return JSONRPCHelper.post(url, EthereumMethods.UNLOCK_ACCOUNT.getMethod(), address, passphrase, duration);
     }
@@ -58,10 +58,11 @@ public class EthereumManager implements Manager {
         return Strings.EMPTY;
     }
 
-    public String sendTransaction(String from, String to, byte[] amount) {
+    @Override
+    public String sendTransaction(String from, String to, String amount) {
         try {
             return JSONRPCHelper.postToSendMessageEthereum(url, EthereumMethods.SEND_TRANSACTION.getMethod(), from, to,
-                    new String(amount));
+                    amount);
         } catch (IOException e) {
             log.error("Cannot send message", e);
         }
@@ -165,6 +166,15 @@ public class EthereumManager implements Manager {
         }
 
         return new EthereumInfo(amountOfPeers, amountOfBlocks);
+    }
+
+    @Override
+    public void authorize(String address, String password) {
+        try {
+            unlockAccount(address, password, 1000L);
+        } catch (MalformedURLException | InternalLogicException e) {
+            log.error("Failed to initialize", e);
+        }
     }
 
     private enum EthereumMethods {

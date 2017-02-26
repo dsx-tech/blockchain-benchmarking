@@ -24,10 +24,10 @@
 package uk.dsxt.bb.datamodel.bitcoin;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
-import lombok.Value;
 
-@Value
+@Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class BitcoinTransactionInList extends BitcoinTransaction {
@@ -41,4 +41,19 @@ public class BitcoinTransactionInList extends BitcoinTransaction {
     long blocktime;
     long time;
     long timereceived;
+
+    public BitcoinTransactionInList(String txid, String account, String category, int vout, long confirmations,
+                                    boolean generated, String blockhash, int blockindex, long blocktime, long time, long timereceived) {
+        super(txid);
+        this.account = account;
+        this.category = category;
+        this.vout = vout;
+        this.confirmations = confirmations;
+        this.generated = generated;
+        this.blockhash = blockhash;
+        this.blockindex = blockindex;
+        this.blocktime = blocktime;
+        this.time = time;
+        this.timereceived = timereceived;
+    }
 }
