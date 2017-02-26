@@ -35,6 +35,10 @@ public class BitcoinTransaction implements BlockchainTransaction {
     private BigDecimal amount;
     private boolean spendable;
 
+    BitcoinTransaction(String txid) {
+        this.txid = txid;
+    }
+
     @Override
     public String getTxId() {
         return txid;

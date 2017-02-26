@@ -24,9 +24,7 @@
 package uk.dsxt.bb.datamodel.bitcoin;
 
 import lombok.Data;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
 
 import java.math.BigDecimal;
 
@@ -63,8 +61,15 @@ public class BitcoinBlock implements BlockchainBlock {
 
     //todo implement bitcoin transaction
     @Override
-    public BlockchainTransaction[] getTransactions() {
-        throw new NotImplementedException();
+    public BitcoinTransaction[] getTransactions() {
+        BitcoinTransaction[] transactions = new BitcoinTransaction[tx.length];
+        System.out.println(tx.length);
+        System.out.println(transactions.length);
+
+        for (int i = 0; i < tx.length; i++) {
+            transactions[i] = new BitcoinTransaction(tx[i]);
+        }
+        return transactions;
     }
 
     @Override

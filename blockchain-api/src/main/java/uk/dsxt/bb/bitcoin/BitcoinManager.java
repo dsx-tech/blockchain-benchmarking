@@ -34,6 +34,8 @@ import uk.dsxt.bb.utils.JSONRPCHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +60,16 @@ public class BitcoinManager implements Manager {
     }
 
     private static final String BITCOIN_WALLET_ADDRESS = "mpkMbdQsiCCQ6x5YfufPsm5ByeJ73ccQ1V";
+
+    @Override
+    public String sendTransaction(String to, String from, String amount) {
+        try {
+            return sendMessage(to, amount.getBytes());
+        } catch (IOException e) {
+            log.error("Sending transaction failed");
+        }
+        return null;
+    }
 
     @Override
     public String sendMessage(byte[] body) {
@@ -164,6 +176,16 @@ public class BitcoinManager implements Manager {
     @Override
     public BitcoinChain getChain() throws IOException {
         return JSONRPCHelper.post(url, BitcoinMethods.GETINFO.name().toLowerCase(), BitcoinChain.class);
+    }
+
+    @Override
+    public void authorize(String user, String password) {
+        Authenticator.setDefault(new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user, password.toCharArray());
+            }
+        });
     }
 
     public String getNewAddress() throws IOException {

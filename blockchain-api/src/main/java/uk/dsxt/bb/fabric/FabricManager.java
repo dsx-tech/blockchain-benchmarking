@@ -32,6 +32,7 @@ import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.ChainCodeException;
 import org.hyperledger.fabric.sdk.exception.EnrollmentException;
 import org.hyperledger.fabric.sdk.exception.RegistrationException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
 import uk.dsxt.bb.datamodel.fabric.FabricBlock;
@@ -108,6 +109,7 @@ public class FabricManager implements Manager {
         this.peer = peer;
     }
 
+    @SuppressWarnings("unchecked")
     private static void setEnv(String key, String value) {
         try {
             Map<String, String> env = System.getenv();
@@ -204,6 +206,11 @@ public class FabricManager implements Manager {
         request.setChaincodeName(chainCodeName);
 
         return member.deploy(request);
+    }
+
+    @Override
+    public String sendTransaction(String to, String from, String amount) {
+        throw new NotImplementedException();
     }
 
     @Override
@@ -314,6 +321,11 @@ public class FabricManager implements Manager {
             log.error("Exception while calling url", e);
             throw e;
         }
+    }
+
+    @Override
+    public void authorize(String user, String password) {
+        throw new NotImplementedException();
     }
 
     @Override
