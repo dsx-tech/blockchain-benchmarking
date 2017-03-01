@@ -27,20 +27,18 @@ import lombok.Data;
 public class TransactionInfo {
 
     private long time;
-    private long transactionId;
+    private String transactionId;
     private int transactionSize;
-    private int nodeId;
+    private String nodeId;
     private int responseCode;
-    private String responseMessage;
     private long blockId;
 
-    public TransactionInfo(long time, long transactionId, int transactionSize,
-                           int nodeId, int responseCode, String responseMessage) {
+    public TransactionInfo(long time, String transactionId, int transactionSize,
+                           String nodeId, int responseCode) {
         this.time = time;
         this.transactionId = transactionId;
         this.transactionSize = transactionSize;
         this.nodeId = nodeId;
         this.responseCode = responseCode;
-        this.responseMessage = responseMessage;
     }
 }

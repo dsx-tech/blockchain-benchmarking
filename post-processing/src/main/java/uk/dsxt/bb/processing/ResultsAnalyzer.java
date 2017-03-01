@@ -30,7 +30,7 @@ import java.util.*;
 public class ResultsAnalyzer {
 
     //note: time is counted from the start of the test in milliseconds
-    private static final long TIME_INTERVAL = 5000;
+    private static final long TIME_INTERVAL = 500;
     private static final int NUMBER_OF_VERIFICATION = 6;
     private static final int NUMBER_OF_SIZES = 3;
     private BlockchainInfo blockchainInfo;
@@ -40,14 +40,28 @@ public class ResultsAnalyzer {
     }
 
     public BlockchainInfo analyze() {
+        // change time to counting from zero
+        updateTimeFormat();
         blockchainInfo.setTimeToIntensities(calculateIntensity());
-        updateTransactionInfos();
+        // calculate creation time and times of distribution
         updateBlockInfos();
-        updateNodeInfos();
-        blockchainInfo.setTimeToNumNodes(calculateNumberOfNodes());
+//        updateNodeInfos();
+//        blockchainInfo.setTimeToNumNodes(calculateNumberOfNodes());
         blockchainInfo.setTimeToUnverifiedTransactions(calculateUnverifiedTransactions());
         blockchainInfo.setTimeInfos(calculateTimeInfos());
         return blockchainInfo;
+    }
+
+    private void updateTimeFormat() {
+        long startTime = getStartTime();
+        for (TransactionInfo transactionInfo : blockchainInfo.getTransactions().values()) {
+            transactionInfo.setTime(transactionInfo.getTime() - startTime);
+        }
+        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
+            for (BlockInfo.DistributionTime time : block.getDistributionTimes()) {
+                time.setTime(time.getTime() - startTime);
+            }
+        }
     }
 
     private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> calculateTimeInfos() {
@@ -110,7 +124,7 @@ public class ResultsAnalyzer {
             long creationTime = transaction.getTime();
             BlockInfo block = blockchainInfo.getBlocks().get(transaction.getBlockId());
             if (block == null) {
-                log.error("couldn't find block by id: " + transaction.getBlockId());
+                log.error("Couldn't find block by id: " + transaction.getBlockId());
                 //ignore all problems
                 continue;
             }
@@ -131,6 +145,7 @@ public class ResultsAnalyzer {
     //calculate maxTime and verificationTime
     private void updateBlockInfos() {
         for (BlockInfo block : blockchainInfo.getBlocks().values()) {
+            block.calculateCreationTime();
             block.calculateMaxTime();
         }
         for (BlockInfo block : blockchainInfo.getBlocks().values()) {
@@ -159,20 +174,11 @@ public class ResultsAnalyzer {
                 return -1;
             }
         }
-        return nextBlock.getDistributionTime100();
+        return nextBlock.getDistributionTime100() + nextBlock.getCreationTime();
     }
 
-    //adding blockId to transactionInfo
-    private void updateTransactionInfos() {
-        for (BlockInfo blockInfo : blockchainInfo.getBlocks().values()) {
-            for (TransactionInfo transaction : blockInfo.getTransactions()) {
-                transaction.setBlockId(blockInfo.getBlockId());
-            }
-        }
-    }
-
-    private Map<Long, Integer> calculateIntensity() {
-        Map<Long, Integer> intensities = new HashMap<>();
+    private NavigableMap<Long, Integer> calculateIntensity() {
+        NavigableMap<Long, Integer> intensities = new TreeMap<>();
         // get max/min time
         long startTime = 0;
         long endTime = getEndTime();
@@ -183,54 +189,57 @@ public class ResultsAnalyzer {
         //for each transaction add ++ to corresponding intensity
         for (TransactionInfo transaction : blockchainInfo.getTransactions().values()) {
             long time = transaction.getTime();
-            while (time > 0 && !intensities.containsKey(time)) {
-                time--;
-            }
-            if (time < 0) {
-                log.error("incorrect time: " + transaction.getTime());//ignoring all incorrect lines
-                continue;
-            }
-            intensities.replace(time, intensities.get(time) + 1);
+            long timeInMap = intensities.floorKey(time);
+            intensities.replace(timeInMap, intensities.get(timeInMap) + 1);
         }
         return intensities;
     }
 
-    private Map<Long, Integer> calculateNumberOfNodes() {
-        Map<Long, Integer> numOfNodes = new HashMap<>();
-        long startTime = 0;
-        long endTime = getEndTime();
-        //add all intervals to list
-        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
-            numOfNodes.put(i, 0);
-        }
-        for (Long time : numOfNodes.keySet()) {
-            for (NodeInfo node : blockchainInfo.getNodes()) {
-                for (NodeInfo.TimeSpan workTime : node.getWorkTimes()) {
-                    if (workTime.getStartTime() < time && time < workTime.getEndTime()) {
-                        numOfNodes.replace(time, numOfNodes.get(time) + 1);
-                        break;
-                    }
-                }
-            }
-        }
-        return numOfNodes;
-    }
+//    private Map<Long, Integer> calculateNumberOfNodes() {
+//        Map<Long, Integer> numOfNodes = new HashMap<>();
+//        long startTime = 0;
+//        long endTime = getEndTime();
+//        //add all intervals to list
+//        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
+//            numOfNodes.put(i, 0);
+//        }
+//        for (Long time : numOfNodes.keySet()) {
+//            for (NodeInfo node : blockchainInfo.getNodes()) {
+//                for (NodeInfo.TimeSpan workTime : node.getWorkTimes()) {
+//                    if (workTime.getStartTime() < time && time < workTime.getEndTime()) {
+//                        numOfNodes.replace(time, numOfNodes.get(time) + 1);
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//        return numOfNodes;
+//    }
 
-    private void updateNodeInfos() {
-        for (NodeInfo node : blockchainInfo.getNodes()) {
-            List<Long> startTimes = node.getStartTimes();
-            List<Long> stopTimes = node.getStopTimes();
-            startTimes.sort(Long::compareTo);
-            stopTimes.sort(Long::compareTo);
-            if (startTimes.size() != stopTimes.size()) {
-                log.error("Start and stop times of node " + node.getNodeId() + " doesn't correspond");
-                continue;
+//    private void updateNodeInfos() {
+//        for (NodeInfo node : blockchainInfo.getNodes()) {
+//            List<Long> startTimes = node.getStartTimes();
+//            List<Long> stopTimes = node.getStopTimes();
+//            startTimes.sort(Long::compareTo);
+//            stopTimes.sort(Long::compareTo);
+//            if (startTimes.size() != stopTimes.size()) {
+//                log.error("Start and stop times of node " + node.getNodeId() + " doesn't correspond");
+//                continue;
+//            }
+//            for (int i = 0; i < startTimes.size(); i++) {
+//                node.addWorkTime(new NodeInfo.TimeSpan(startTimes.get(i), stopTimes.get(i)));
+//            }
+//        }
+//    }
+
+    private long getStartTime() {
+        long minTime = blockchainInfo.getTransactions().entrySet().iterator().next().getValue().getTime();
+        for (TransactionInfo transaction : blockchainInfo.getTransactions().values()) {
+            if (transaction.getTime() < minTime) {
+                minTime = transaction.getTime();
             }
-            for (int i = 0; i < startTimes.size(); i++) {
-                node.addWorkTime(new NodeInfo.TimeSpan(startTimes.get(i), stopTimes.get(i)));
-            }
-            //todo check here that time spans don't overlap
         }
+        return minTime;
     }
 
     private long getEndTime() {

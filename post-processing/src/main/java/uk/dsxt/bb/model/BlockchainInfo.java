@@ -29,18 +29,18 @@ import java.util.*;
 public class BlockchainInfo {
 
     private Map<Long, BlockInfo> blocks;
-    private Map<Long, TransactionInfo> transactions;
+    private Map<String, TransactionInfo> transactions;
     private List<NodeInfo> nodes;
-    private Map<Long, Integer> timeToIntensities;
+    private NavigableMap<Long, Integer> timeToIntensities;
     private Map<Long, Integer> timeToUnverifiedTransactions;
     private Map<Long, Integer> timeToNumNodes;
     private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> timeInfos;
 
-    public BlockchainInfo(Map<Long, BlockInfo> blocks, Map<Long, TransactionInfo> transactions, List<NodeInfo> nodes) {
-        this.blocks = blocks;
-        this.transactions = transactions;
-        this.nodes = nodes;
-        this.timeToIntensities = new HashMap<>();
+    public BlockchainInfo() {
+        this.blocks = new HashMap<>();
+        this.transactions = new HashMap<>();
+        this.nodes = new ArrayList<>();
+        this.timeToIntensities = new TreeMap<>();
         timeToUnverifiedTransactions = new HashMap<>();
         timeToNumNodes = new HashMap<>();
         timeInfos = new TreeMap<>();
@@ -55,10 +55,9 @@ public class BlockchainInfo {
         return null;
     }
 
-//    public TimeInfo getTimeInfoByTimeAndSize(long time, int size) {
-//        for (TimeInfo timeInfo : timeInfos) {
-//
-//        }
-//        return null;
-//    }
+    public void addTransactions(Map<String, TransactionInfo> transactions) {
+        transactions.forEach(this.transactions::putIfAbsent);
+    }
+
+
 }

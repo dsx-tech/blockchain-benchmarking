@@ -46,26 +46,39 @@ public class BlockInfo {
         this.transactions = new ArrayList<>();
     }
 
+    public void calculateCreationTime() {
+        List<Long> times = new ArrayList<>();
+        for (DistributionTime distributionTime : distributionTimes) {
+            times.add(distributionTime.getTime());
+        }
+        times.sort(Long::compareTo);
+        creationTime = times.get(1);
+    }
+
     public void calculateMaxTime() {
         List<Long> times = new ArrayList<>();
         for (DistributionTime distributionTime : distributionTimes) {
             times.add(distributionTime.getTime());
         }
         times.sort(Long::compareTo);
-        distributionTime100 = times.get(times.size() - 1);
-        distributionTime95 = times.get((int) (times.size() * 0.95 - 1));
+        distributionTime100 = times.get(times.size() - 1) - creationTime;
+        distributionTime95 = times.get((int) (times.size() * 0.95 - 1)) - creationTime;
     }
 
     public void addTransaction(TransactionInfo transaction) {
         transactions.add(transaction);
     }
 
+    public void addDistributionTime(DistributionTime time) {
+        distributionTimes.add(time);
+    }
+
     @Data
     public static class DistributionTime {
-        private int nodeId;
+        private String nodeId;
         private long time;
 
-        public DistributionTime(int nodeId, long time) {
+        public DistributionTime(String nodeId, long time) {
             this.nodeId = nodeId;
             this.time = time;
         }

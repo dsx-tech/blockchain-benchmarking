@@ -79,11 +79,6 @@ public class CSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + NUMBER_OF_NODES_FILE), ',', '\u0000')) {
-            fillNumberOfNodesCSV(writer);
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
         try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + DISTRIBUTIONS_FILE), ',', '\u0000')) {
             fillDistributionsCSV(writer);
         } catch (IOException e) {
@@ -107,16 +102,6 @@ public class CSVComposer {
         }
     }
 
-    private void fillNumberOfNodesCSV(CSVWriter writer) throws IOException {
-        writer.writeNext(NUMBER_OF_NODES_HEADER);
-        SortedSet<Long> times = new TreeSet<>(blockchainInfo.getTimeToNumNodes().keySet());
-        for (Long time : times) {
-            String[] entry = {String.valueOf(time), String.valueOf(blockchainInfo.getTimeToNumNodes().get(time))};
-            writer.writeNext(entry);
-            writer.flush();
-        }
-    }
-
     private void fillIntensitiesCSV(CSVWriter writer) throws IOException {
         writer.writeNext(INTENSIIES_HEADER);
         SortedSet<Long> times = new TreeSet<>(blockchainInfo.getTimeToIntensities().keySet());
@@ -126,7 +111,6 @@ public class CSVComposer {
             writer.flush();
         }
     }
-
 
     private void fillTransactionsCSV(CSVWriter writer) throws IOException {
         writer.writeNext(TRANSACTIONS_HEADER);

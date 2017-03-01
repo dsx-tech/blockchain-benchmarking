@@ -31,8 +31,7 @@ import java.io.File;
 public class ResultsAnalyzerMain {
 
     public static void main(String[] args) {
-        CSVParser parser = new CSVParser();
-        BlockchainInfo blockchainInfo = parser.parseCSVs();
+        BlockchainInfo blockchainInfo = CSVParser.parseCSVs();
         if (blockchainInfo == null) {
             return;
         }

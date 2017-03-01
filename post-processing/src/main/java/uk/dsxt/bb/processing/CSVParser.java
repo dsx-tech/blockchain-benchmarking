@@ -22,11 +22,12 @@ package uk.dsxt.bb.processing;
 
 import au.com.bytecode.opencsv.CSVReader;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FilenameUtils;
 import uk.dsxt.bb.model.BlockInfo;
 import uk.dsxt.bb.model.BlockchainInfo;
-import uk.dsxt.bb.model.NodeInfo;
 import uk.dsxt.bb.model.TransactionInfo;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -35,55 +36,66 @@ import java.util.*;
 public class CSVParser {
 
     //input files
-    private static final String PATH = "post-processing/src/main/resources/";
-    private static final String LOAD_GENERATOR_FILE = "loadGeneratorOutput.csv";
-    private static final String BLOCK_DISTRIBUTION_FILE = "blockDistribution.csv";
-    private static final String NODES_FILE = "nodes.csv";
-    private static final String BLOCKCHAIN_INFO_FILE = "blockchainInfo.csv";
-    private BlockchainInfo blockchainInfo;
+    private static final String PATH = "post-processing/src/main/resources/logs";
+    private static final String BLOCKS_DIR = "/blocks";
+    private static final String TRANSACTIONS_DIR = "/transactions";
+    private static final String TRANSACTIONS_PER_BLOCK_DIR = "/transactionsPerBlock";
 
-    public CSVParser() {
-        Map<Long, TransactionInfo> transactions = new HashMap<>();
-        Map<Long, BlockInfo> blocks = new HashMap<>();
-        List<NodeInfo> nodes = new ArrayList<>();
-        blockchainInfo = new BlockchainInfo(blocks, transactions, nodes);
-    }
-
-    public BlockchainInfo parseCSVs() {
-        //create CSVReader for each file
-        try (CSVReader reader = new CSVReader(new FileReader(PATH + LOAD_GENERATOR_FILE), ',')) {
-            //call corresponding parser
-            blockchainInfo.setTransactions(parseLoadGeneratorCSV(reader));
-        } catch (IOException e) {
-            log.error(e.getMessage());
+    public static BlockchainInfo parseCSVs() {
+        BlockchainInfo blockchainInfo = new BlockchainInfo();
+        //blocks
+        File blocksDir = new File(PATH + BLOCKS_DIR);
+        if (!blocksDir.isDirectory() || blocksDir.listFiles() == null) {
+            log.error("Can't find blocks directory");
             return null;
         }
-        try (CSVReader reader = new CSVReader(new FileReader(PATH + BLOCK_DISTRIBUTION_FILE), ',')) {
-            //call corresponding parser
-            blockchainInfo.setBlocks(parseBlockDistributionCSV(reader));
-        } catch (IOException e) {
-            log.error(e.getMessage());
+        for (File file : blocksDir.listFiles()) {
+            try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
+                //call corresponding parser
+                String nodeId = FilenameUtils.removeExtension(file.getName());
+                blockchainInfo.setBlocks(parseBlockCSV(reader, nodeId, blockchainInfo.getBlocks()));
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                return null;
+            }
+        }
+        //transactions
+        File transactionsDir = new File(PATH + TRANSACTIONS_DIR);
+        if (!transactionsDir.isDirectory() || transactionsDir.listFiles() == null) {
+            log.error("Can't find transactions directory");
             return null;
         }
-        try (CSVReader reader = new CSVReader(new FileReader(PATH + BLOCKCHAIN_INFO_FILE), ',')) {
-            //call corresponding parser
-            blockchainInfo.setBlocks(parseBlockchainInfo(reader));
-        } catch (IOException e) {
-            log.error(e.getMessage());
+        for (File file : transactionsDir.listFiles()) {
+            try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
+                //call corresponding parser
+                String nodeId = FilenameUtils.removeExtension(file.getName());
+                blockchainInfo.addTransactions(parseLoadCSV(reader, nodeId));
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                return null;
+            }
+        }
+        //transactions per block
+        File transactionsPerBlockDir = new File(PATH + TRANSACTIONS_PER_BLOCK_DIR);
+        if (!transactionsPerBlockDir.isDirectory() || transactionsPerBlockDir.listFiles() == null) {
+            log.error("Can't find transactionsPerBlock directory");
             return null;
         }
-        try (CSVReader reader = new CSVReader(new FileReader(PATH + NODES_FILE), ',')) {
-            //call corresponding parser
-            blockchainInfo.setNodes(parseNodesCSV(reader));
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            return null;
+        for (File file : transactionsPerBlockDir.listFiles()) {
+            try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
+                //call corresponding parser
+                parseTransactionsPerBlockCSV(reader, blockchainInfo.getBlocks(), blockchainInfo.getTransactions());
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                return null;
+            }
         }
         return blockchainInfo;
     }
 
-    private Map<Long, BlockInfo> parseBlockchainInfo(CSVReader reader) throws IOException {
+    private static Map<String, TransactionInfo> parseLoadCSV(CSVReader reader, String nodeId) throws IOException {
         String[] nextLine;
+        Map<String, TransactionInfo> transactions = new HashMap<>();
         //Read one line at a time
         while ((nextLine = reader.readNext()) != null) {
             if (nextLine.length < 4) {
@@ -92,49 +104,12 @@ public class CSVParser {
                 continue;
             }
             try {
-                long transactionId = Long.parseLong(nextLine[0]);
-                long blockId = Integer.parseInt(nextLine[1]);
-                long creationTime = Long.parseLong(nextLine[3]);
-                BlockInfo block = blockchainInfo.getBlocks().get(blockId);
-                TransactionInfo transaction = blockchainInfo.getTransactions().get(transactionId);
-                if(block != null) {
-                    block.setCreationTime(creationTime);
-                    if (!nextLine[2].isEmpty()) {
-                        int parentBlockId = Integer.parseInt(nextLine[2]);
-                        block.setParentBlockId(parentBlockId);
-                    }
-                    if (transaction != null) {
-                        block.addTransaction(transaction);
-                    }
-                }
-            } catch (NumberFormatException e) {
-                log.error(e.getMessage());
-                //ignore all unparseable lines
-            }
-        }
-        return blockchainInfo.getBlocks();
-    }
-
-    private Map<Long, TransactionInfo> parseLoadGeneratorCSV(CSVReader reader) throws IOException {
-        String[] nextLine;
-        Map<Long, TransactionInfo> transactions = new HashMap<>();
-        //Read one line at a time
-        while ((nextLine = reader.readNext()) != null) {
-            if (nextLine.length < 6) {
-                //ignore all unparseable lines
-                log.error("Unparseable line: " + Arrays.toString(nextLine));
-                continue;
-            }
-            try {
-                long time = Long.parseLong(nextLine[0]);
-                long transactionId = Long.parseLong(nextLine[1]);
-                int transactionSize = Integer.parseInt(nextLine[2]);
-                int nodeId = Integer.parseInt(nextLine[3]);
-                int responseCode = Integer.parseInt(nextLine[4]);
-                String responseMessage = nextLine[5];
-
-                transactions.put(transactionId, new TransactionInfo(time, transactionId,
-                        transactionSize, nodeId, responseCode, responseMessage));
+                String transactionId = nextLine[0];
+                long creationTime = Long.parseLong(nextLine[1]);
+                int size = Integer.parseInt(nextLine[2]);
+                int status = Integer.parseInt(nextLine[3]);
+                TransactionInfo transactionInfo = new TransactionInfo(creationTime, transactionId, size, nodeId, status);
+                transactions.put(transactionId, transactionInfo);
             } catch (NumberFormatException e) {
                 log.error(e.getMessage());
                 //ignore all unparseable lines
@@ -143,26 +118,30 @@ public class CSVParser {
         return transactions;
     }
 
-    private Map<Long, BlockInfo> parseBlockDistributionCSV(CSVReader reader) throws IOException {
+    private static Map<Long, BlockInfo> parseBlockCSV(CSVReader reader, String nodeId,
+                                                      Map<Long, BlockInfo> blocks) throws IOException {
         String[] nextLine;
-        Map<Long, BlockInfo> blocks = new HashMap<>();
+        //skip header
+        reader.readNext();
         //Read one line at a time
         while ((nextLine = reader.readNext()) != null) {
-            if (nextLine.length <= 0) {
+            if (nextLine.length < 2) {
                 //ignore all unparseable lines
                 log.error("Unparseable line: " + Arrays.toString(nextLine));
                 continue;
             }
             try {
-                long blockId = Integer.parseInt(nextLine[0]);
-                List<BlockInfo.DistributionTime> distributionTimes = new ArrayList<>();
-
-                for (int i = 1; i < nextLine.length; i++) {
-                    if (!nextLine[i].isEmpty()) {
-                        distributionTimes.add(new BlockInfo.DistributionTime(i, Long.parseLong(nextLine[i])));
-                    }
+                long blockId = Long.parseLong(nextLine[0]);
+                long time = Long.parseLong(nextLine[1]) * 1000;
+                if (blocks.containsKey(blockId)) {
+                    BlockInfo block = blocks.get(blockId);
+                    block.addDistributionTime(new BlockInfo.DistributionTime(nodeId, time));
+                } else {
+                    BlockInfo block = new BlockInfo(blockId, new ArrayList<BlockInfo.DistributionTime>() {{
+                        add(new BlockInfo.DistributionTime(nodeId, time));
+                    }});
+                    blocks.put(blockId, block);
                 }
-                blocks.put(blockId, new BlockInfo(blockId, distributionTimes));
             } catch (NumberFormatException e) {
                 //ignore all unparseable lines
                 log.error(e.getMessage());
@@ -171,48 +150,42 @@ public class CSVParser {
         return blocks;
     }
 
-    private List<NodeInfo> parseNodesCSV(CSVReader reader) throws IOException {
+    private static void parseTransactionsPerBlockCSV(CSVReader reader,
+                                                     Map<Long, BlockInfo> blocks,
+                                                     Map<String, TransactionInfo> transactions) throws IOException {
         String[] nextLine;
-        List<NodeInfo> nodes = new ArrayList<>();
+        //skip header
+        reader.readNext();
         //Read one line at a time
         while ((nextLine = reader.readNext()) != null) {
-            if (nextLine.length < 3) {
+            if (nextLine.length < 2) {
                 //ignore all unparseable lines
                 log.error("Unparseable line: " + Arrays.toString(nextLine));
                 continue;
             }
             try {
-                long time = Long.parseLong(nextLine[0]);
-                int nodeId = Integer.parseInt(nextLine[1]);
-                String state = nextLine[2];
-                if (!state.equals("start") && !state.equals("stop")) {
-                    log.error("Unparseable line: " + Arrays.toString(nextLine));
+                long blockId = Integer.parseInt(nextLine[0]);
+                String transactionId = nextLine[1];
+
+                if (!blocks.containsKey(blockId)) {
+                    log.error("Unknown block found : " + blockId);
                     continue;
                 }
-                NodeInfo node = getNodeById(nodeId, nodes);
-                if (node == null) {
-                    node = new NodeInfo(nodeId);
-                    nodes.add(node);
+                if (!transactions.containsKey(transactionId)) {
+                    log.error("Unknown transaction found : " + transactionId);
+                    continue;
                 }
-                if (state.equals("start")) {
-                    node.addStartTime(time);
-                } else {
-                    node.addStopTime(time);
+                BlockInfo block = blocks.get(blockId);
+                TransactionInfo transaction = transactions.get(transactionId);
+                block.addTransaction(transaction);
+                transaction.setBlockId(blockId);
+                if (blockId > 1) {
+                    block.setParentBlockId(blockId - 1);
                 }
             } catch (NumberFormatException e) {
-                //ignore all unparseable lines
                 log.error(e.getMessage());
+                //ignore all unparseable lines
             }
         }
-        return nodes;
-    }
-
-    private NodeInfo getNodeById(int id, List<NodeInfo> nodes) {
-        for (NodeInfo node : nodes) {
-            if (node.getNodeId() == id) {
-                return node;
-            }
-        }
-        return null;
     }
 }
