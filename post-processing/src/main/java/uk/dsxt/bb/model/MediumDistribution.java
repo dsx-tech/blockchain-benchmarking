@@ -19,36 +19,20 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb;
+package uk.dsxt.bb.model;
 
-import uk.dsxt.bb.model.BlockchainInfo;
-import uk.dsxt.bb.processing.ResultsAnalyzer;
-import uk.dsxt.bb.processing.CSVComposer;
-import uk.dsxt.bb.processing.CSVParser;
+import lombok.Data;
 
-import java.io.File;
+@Data
+public class MediumDistribution {
 
-public class ResultsAnalyzerMain {
+    private long mediumDstrbTime95;
+    private long mediumDstrbTime100;
+    private int numberOfBlocks;
 
-    public static void main(String[] args) {
-        BlockchainInfo blockchainInfo = CSVParser.parseCSVs();
-        if (blockchainInfo == null) {
-            return;
-        }
-        ResultsAnalyzer resultsAnalyzer = new ResultsAnalyzer(blockchainInfo);
-        blockchainInfo = resultsAnalyzer.analyze();
-        File file = new File(CSVComposer.RESULT_PATH);
-        if (!file.exists() || file.isFile()) {
-            file.mkdir();
-        }
-        CSVComposer composer = new CSVComposer(blockchainInfo);
-        composer.composeCSVs();
-
-
-//        try {
-//            Runtime.getRuntime().exec("Rscript \\post-processing\\src\\main\\resources\\graphsDrawer.R \\post-processing\\src\\main\\resources\\results"");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+    public MediumDistribution() {
+        this.mediumDstrbTime95 = 0;
+        this.mediumDstrbTime100 = 0;
+        this.numberOfBlocks = 0;
     }
 }

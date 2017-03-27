@@ -43,7 +43,8 @@ public class CSVComposer {
     private static final String BLOCKS_FILE = "blocks.csv";
     private static final String UNVERIFIED_TRANSACTIONS_FILE = "timeToUnverifiedTransactions.csv";
     private static final String NUMBER_OF_NODES_FILE = "numberOfNodes.csv";
-    private static final String DISTRIBUTIONS_FILE = "distributions.csv";
+    private static final String DISTRIBUTION_WITH_SIZE_FILE = "distributionsWithSize.csv";
+    private static final String DISTRIBUTION_FILE = "distributions.csv";
     //header lines
     private static final String[] INTENSIIES_HEADER = {"time", "intensity"};
     private static final String[] TRANSACTIONS_HEADER = {"transactionId", "blockId",
@@ -79,12 +80,14 @@ public class CSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + DISTRIBUTIONS_FILE), ',', '\u0000')) {
+        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + DISTRIBUTION_WITH_SIZE_FILE), ',', '\u0000')) {
             fillDistributionsCSV(writer);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
     }
+
+//    private void
 
     private void fillDistributionsCSV(CSVWriter writer) throws IOException {
         writer.writeNext(DISTRIBUTIONS_HEADER);

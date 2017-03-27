@@ -7,7 +7,7 @@ setwd(path)
 dir.create(file.path(path, "graphs"))
 
 intensities <-
-  read.csv(file = "intensity.csv", sep = ",", head = TRUE)
+  read.csv(file = "intensityInfo.csv", sep = ",", head = TRUE)
 blocks <- read.csv(file = "blocks.csv", sep = ",", head = TRUE)
 distribution <-
   read.csv(file = "distributions.csv", sep = ",", head = TRUE)
@@ -32,7 +32,7 @@ for(i in 1:nrow(uniqueSizes)) {
   distr95 <- data.frame(distr["time"], distr["distributionTime95"])
   distr100 <-
     data.frame(distr["time"], distr["maxDistributionTime"])
-  #merge distribution and intensity
+  #merge distribution and intensityInfo
   result95 <- merge(distr95, intensities, by = "time")[, 2:3]
   result100 <- merge(distr100, intensities, by = "time")[, 2:3]
   bmp(filename = paste("graphs\\distribution",size[1],"to",size[2], "Mb.bmp"))

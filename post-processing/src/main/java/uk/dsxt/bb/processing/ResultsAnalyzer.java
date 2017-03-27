@@ -30,7 +30,7 @@ import java.util.*;
 public class ResultsAnalyzer {
 
     //note: time is counted from the start of the test in milliseconds
-    private static final long TIME_INTERVAL = 500;
+    public static final long TIME_INTERVAL = 500;
     private static final int NUMBER_OF_VERIFICATION = 6;
     private static final int NUMBER_OF_SIZES = 3;
     private BlockchainInfo blockchainInfo;
@@ -45,13 +45,42 @@ public class ResultsAnalyzer {
         blockchainInfo.setTimeToIntensities(calculateIntensity());
         // calculate creation time and times of distribution
         updateBlockInfos();
-//        updateNodeInfos();
-//        blockchainInfo.setTimeToNumNodes(calculateNumberOfNodes());
         blockchainInfo.setTimeToUnverifiedTransactions(calculateUnverifiedTransactions());
         blockchainInfo.setTimeInfos(calculateTimeInfos());
+        blockchainInfo.setTimeToDistributionTimes(calculateDistributionTimes());
         return blockchainInfo;
     }
 
+    private Map<Long, MediumDistribution> calculateDistributionTimes() {
+        NavigableMap<Long, MediumDistribution> timeToDistributions = new TreeMap<>();
+        if (blockchainInfo.getBlocks().isEmpty()) {
+            log.error("No blocks found");
+            return timeToDistributions;
+        }
+        //add all possible time intervals
+        long startTime = 0;
+        long endTime = getEndTime();
+        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
+            timeToDistributions.put(i, new MediumDistribution());
+        }
+        //for each block find correct time map and recalculate medium distribution times
+        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
+            MediumDistribution distr = timeToDistributions.get
+                    (timeToDistributions.floorKey(block.getCreationTime()));
+            distr.setMediumDstrbTime95(((distr.getMediumDstrbTime95() * distr.getNumberOfBlocks()
+                    + block.getDistributionTime95())
+                    / (distr.getNumberOfBlocks() + 1)));
+            distr.setMediumDstrbTime100(((distr.getMediumDstrbTime100() * distr.getNumberOfBlocks()
+                    + block.getDistributionTime100())
+                    / (distr.getNumberOfBlocks() + 1)));
+            distr.setNumberOfBlocks(distr.getNumberOfBlocks() + 1);
+        }
+        return timeToDistributions;
+    }
+
+    /**
+     * switches all time from unix timestamp to timestamp counting from the beginning of the test
+     */
     private void updateTimeFormat() {
         long startTime = getStartTime();
         for (TransactionInfo transactionInfo : blockchainInfo.getTransactions().values()) {

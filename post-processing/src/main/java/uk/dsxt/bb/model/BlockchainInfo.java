@@ -32,9 +32,12 @@ public class BlockchainInfo {
     private Map<String, TransactionInfo> transactions;
     private List<NodeInfo> nodes;
     private NavigableMap<Long, Integer> timeToIntensities;
+//    private NavigableMap<Long, Integer> timeToSizes;
     private Map<Long, Integer> timeToUnverifiedTransactions;
     private Map<Long, Integer> timeToNumNodes;
     private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> timeInfos;
+    private Map<Long, MediumDistribution> timeToDistributionTimes;
+    private int numberOfNodes;
 
     public BlockchainInfo() {
         this.blocks = new HashMap<>();

@@ -19,36 +19,36 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb;
+package uk.dsxt.bb.general.model;
 
-import uk.dsxt.bb.model.BlockchainInfo;
-import uk.dsxt.bb.processing.ResultsAnalyzer;
-import uk.dsxt.bb.processing.CSVComposer;
-import uk.dsxt.bb.processing.CSVParser;
+import lombok.Data;
+import uk.dsxt.bb.general.model.enums.IntensityDispersionType;
+import uk.dsxt.bb.general.model.enums.NumberOfNodesType;
+import uk.dsxt.bb.general.model.enums.TransactionSizeType;
 
-import java.io.File;
+import java.util.List;
 
-public class ResultsAnalyzerMain {
+@Data
+public class GeneralInfo {
+    List<IntensityInfo> intensities;
 
-    public static void main(String[] args) {
-        BlockchainInfo blockchainInfo = CSVParser.parseCSVs();
-        if (blockchainInfo == null) {
-            return;
+    public IntensityInfo getIntensityInfo(int intensity,
+                                          TransactionSizeType size,
+                                          NumberOfNodesType numberOfNodesType,
+                                          IntensityDispersionType dispersionType) {
+        for (IntensityInfo intensityInfo : intensities) {
+            if (intensityInfo.getIntensity() == intensity
+                    && intensityInfo.getTransactionSizeType() == size
+                    && intensityInfo.getNumberOfNodesType() == numberOfNodesType
+                    && intensityInfo.getIntensityDispersionType() == dispersionType) {
+                return intensityInfo;
+            }
         }
-        ResultsAnalyzer resultsAnalyzer = new ResultsAnalyzer(blockchainInfo);
-        blockchainInfo = resultsAnalyzer.analyze();
-        File file = new File(CSVComposer.RESULT_PATH);
-        if (!file.exists() || file.isFile()) {
-            file.mkdir();
-        }
-        CSVComposer composer = new CSVComposer(blockchainInfo);
-        composer.composeCSVs();
+        return null;
+    }
 
 
-//        try {
-//            Runtime.getRuntime().exec("Rscript \\post-processing\\src\\main\\resources\\graphsDrawer.R \\post-processing\\src\\main\\resources\\results"");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+    public void addIntensity(IntensityInfo intensityInfo) {
+        intensities.add(intensityInfo);
     }
 }

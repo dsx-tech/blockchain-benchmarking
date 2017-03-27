@@ -49,6 +49,7 @@ public class CSVParser {
             log.error("Can't find blocks directory");
             return null;
         }
+        blockchainInfo.setNumberOfNodes(blocksDir.listFiles().length);
         for (File file : blocksDir.listFiles()) {
             try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
                 //call corresponding parser
