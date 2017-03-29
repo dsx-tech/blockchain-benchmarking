@@ -19,48 +19,48 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.model;
+package uk.dsxt.bb.current.scenario.model;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
-public class NodeInfo {
+public class TimeInfo {
 
-    private int nodeId;
-    private List<TimeSpan> workTimes;
-    private List<Long> startTimes;
-    private List<Long> stopTimes;
+    private TimeAndSize timeAndSize;
+    private long mediumDstrbTime95;
+    private long mediumDstrbTime100;
+    private int numberOfBlocks;
 
-    public NodeInfo(int nodeId) {
-        this.nodeId = nodeId;
-        this.startTimes = new ArrayList<>();
-        this.stopTimes = new ArrayList<>();
-        this.workTimes = new ArrayList<>();
+    public TimeInfo(TimeAndSize timeAndSize) {
+        this.timeAndSize = timeAndSize;
+        mediumDstrbTime95 = 0;
+        mediumDstrbTime100 = 0;
+        numberOfBlocks = 0;
     }
 
-    public void addStartTime(Long time) {
-        startTimes.add(time);
-    }
+    /**
+     * Sets the start of a time span paired to a size span
+     * time spans are currently of fixed size: ResultsAnalyzer.TIME_INTERVAL
+     */
+    @Data
+    public static class TimeAndSize {
+        private long time;
+        private SizeSpan sizeSpan;
 
-    public void addStopTime(Long time) {
-        stopTimes.add(time);
-    }
-
-    public void addWorkTime(TimeSpan time) {
-        workTimes.add(time);
+        public TimeAndSize(long time, SizeSpan sizeSpan) {
+            this.time = time;
+            this.sizeSpan = sizeSpan;
+        }
     }
 
     @Data
-    public static class TimeSpan {
-        private long startTime;
-        private long endTime;
+    public static class SizeSpan {
+        private int blockSizeMin;
+        private int blockSizeMax;
 
-        public TimeSpan(long startTime, long endTime) {
-            this.startTime = startTime;
-            this.endTime = endTime;
+        public SizeSpan(int blockSizeMin, int blockSizeMax) {
+            this.blockSizeMin = blockSizeMin;
+            this.blockSizeMax = blockSizeMax;
         }
     }
 }

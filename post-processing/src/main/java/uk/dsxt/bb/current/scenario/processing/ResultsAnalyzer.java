@@ -19,10 +19,10 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.processing;
+package uk.dsxt.bb.current.scenario.processing;
 
 import lombok.extern.log4j.Log4j2;
-import uk.dsxt.bb.model.*;
+import uk.dsxt.bb.current.scenario.model.*;
 
 import java.util.*;
 

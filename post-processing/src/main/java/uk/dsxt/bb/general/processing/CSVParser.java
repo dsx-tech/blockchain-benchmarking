@@ -39,7 +39,7 @@ import java.util.List;
 @Log4j2
 public class CSVParser {
 
-    private static final String PATH = "post-processing/src/main/resources/general.result/";
+    private static final String PATH = "post-processing/src/main/resources/results1/general/csv/";
     private static final String INTENSITIES_FILE = "intensities.csv";
 
     public static GeneralInfo parseCSVs() {

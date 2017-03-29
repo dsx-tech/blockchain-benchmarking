@@ -19,20 +19,26 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.model;
+package uk.dsxt.bb.current.scenario.model;
 
 import lombok.Data;
 
 @Data
-public class MediumDistribution {
+public class TransactionInfo {
 
-    private long mediumDstrbTime95;
-    private long mediumDstrbTime100;
-    private int numberOfBlocks;
+    private long time;
+    private String transactionId;
+    private int transactionSize;
+    private String nodeId;
+    private int responseCode;
+    private long blockId;
 
-    public MediumDistribution() {
-        this.mediumDstrbTime95 = 0;
-        this.mediumDstrbTime100 = 0;
-        this.numberOfBlocks = 0;
+    public TransactionInfo(long time, String transactionId, int transactionSize,
+                           String nodeId, int responseCode) {
+        this.time = time;
+        this.transactionId = transactionId;
+        this.transactionSize = transactionSize;
+        this.nodeId = nodeId;
+        this.responseCode = responseCode;
     }
 }

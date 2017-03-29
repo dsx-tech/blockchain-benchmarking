@@ -19,14 +19,14 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.processing;
+package uk.dsxt.bb.current.scenario.processing;
 
 import au.com.bytecode.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j2;
-import uk.dsxt.bb.model.BlockInfo;
-import uk.dsxt.bb.model.BlockchainInfo;
-import uk.dsxt.bb.model.TimeInfo;
-import uk.dsxt.bb.model.TransactionInfo;
+import uk.dsxt.bb.current.scenario.model.BlockchainInfo;
+import uk.dsxt.bb.current.scenario.model.TimeInfo;
+import uk.dsxt.bb.current.scenario.model.BlockInfo;
+import uk.dsxt.bb.current.scenario.model.TransactionInfo;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -36,7 +36,7 @@ import java.util.TreeSet;
 @Log4j2
 public class CSVComposer {
 
-    public static final String RESULT_PATH = "post-processing/src/main/resources/results/";
+    public static final String RESULT_PATH = "post-processing/src/main/resources/results/current scenario/csv/";
     //output file names
     private static final String INTENSITIES_FILE = "intensity.csv";
     private static final String TRANSACTIONS_FILE = "transactions.csv";

@@ -19,7 +19,7 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.model;
+package uk.dsxt.bb.current.scenario.model;
 
 import lombok.Data;
 

@@ -26,9 +26,9 @@ import uk.dsxt.bb.general.model.IntensityInfo;
 import uk.dsxt.bb.general.model.enums.IntensityDispersionType;
 import uk.dsxt.bb.general.model.enums.NumberOfNodesType;
 import uk.dsxt.bb.general.model.enums.TransactionSizeType;
-import uk.dsxt.bb.model.BlockchainInfo;
-import uk.dsxt.bb.model.TransactionInfo;
-import uk.dsxt.bb.processing.ResultsAnalyzer;
+import uk.dsxt.bb.current.scenario.model.BlockchainInfo;
+import uk.dsxt.bb.current.scenario.model.TransactionInfo;
+import uk.dsxt.bb.current.scenario.processing.ResultsAnalyzer;
 
 import java.util.*;
 
@@ -39,10 +39,10 @@ public class ResultCombiner {
     private static final long TIME_DIAPASON_FOR_DISPERSION = 2500;
     private static final long NUMBER_OF_SEGMENTS = TIME_DIAPASON_FOR_DISPERSION / ResultsAnalyzer.TIME_INTERVAL;
 
-    private static final int HIGH_DISPERSION = 500;
+    private static final int HIGH_DISPERSION = 50;
 
     private static final int BIG_TRANSACTION_SIZE = 1000;
-    private static final int SMALL_TRANSACTION_SIZE = 10;
+    private static final int SMALL_TRANSACTION_SIZE = 50;
 
     private static final int BIG_NUMBER_OF_NODES = 50;
     private static final int SMALL_NUMDER_OF_NODES = 5;
