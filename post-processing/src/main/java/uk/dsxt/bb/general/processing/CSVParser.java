@@ -25,9 +25,8 @@ import au.com.bytecode.opencsv.CSVReader;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.general.model.GeneralInfo;
 import uk.dsxt.bb.general.model.IntensityInfo;
-import uk.dsxt.bb.general.model.enums.IntensityDispersionType;
-import uk.dsxt.bb.general.model.enums.NumberOfNodesType;
-import uk.dsxt.bb.general.model.enums.TransactionSizeType;
+import uk.dsxt.bb.general.model.SizeInfo;
+import uk.dsxt.bb.general.model.enums.*;
 
 import java.io.File;
 import java.io.FileReader;
@@ -35,12 +34,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.SimpleTimeZone;
 
 @Log4j2
 public class CSVParser {
 
-    private static final String PATH = "post-processing/src/main/resources/results1/general/csv/";
-    private static final String INTENSITIES_FILE = "intensities.csv";
+    public static final String PATH = "post-processing/src/main/resources/results/general/csv/";
+    public static final String INTENSITIES_FILE = "intensities.csv";
+    public static final String SIZE_FILE = "sizes.csv";
+    public static final String NUMBER_OF_NODES_FILE = "numberOfNodes.csv";
 
     public static GeneralInfo parseCSVs() {
         GeneralInfo generalInfo = new GeneralInfo();
@@ -57,7 +59,80 @@ public class CSVParser {
         } else {
             generalInfo.setIntensities(new ArrayList<>());
         }
+        //parse sizes.csv
+        File sizesFile = new File(PATH + SIZE_FILE);
+        if (sizesFile.exists() && sizesFile.isFile()) {
+            try (CSVReader reader = new CSVReader(new FileReader(PATH + SIZE_FILE), ',')) {
+                //call corresponding parser
+                generalInfo.setSizes(parseSizes(reader));
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                return null;
+            }
+        } else {
+            generalInfo.setSizes(new ArrayList<>());
+        }
+        generalInfo.setNumberOfNodesInfos(new ArrayList<>());
         return generalInfo;
+    }
+
+    private static List<SizeInfo> parseSizes(CSVReader reader) throws IOException {
+        String[] nextLine;
+        List<SizeInfo> sizes = new ArrayList<>();
+        //Read one line at a time
+        while ((nextLine = reader.readNext()) != null) {
+            if (nextLine.length < 7) {
+                //ignore all unparseable lines
+                log.error("Unparseable line: " + Arrays.toString(nextLine));
+                continue;
+            }
+            try {
+                //size, dispersionType, numberOfNodesType, intensityType,
+                // numberOfUnverifiedTransactions, mediumDistributionTime, mediumVerificationTime
+                int size = Integer.parseInt(nextLine[0]);
+                SizeDispersionType sizeDispersionType;
+
+                if (nextLine[1].equals("HIGH")) {
+                    sizeDispersionType = SizeDispersionType.HIGH;
+                } else {
+                    sizeDispersionType = SizeDispersionType.LOW;
+                }
+
+                NumberOfNodesType numberOfNodesType;
+
+                if (nextLine[1].equals("FEW")) {
+                    numberOfNodesType = NumberOfNodesType.FEW;
+                } else if (nextLine[1].equals("SOME")) {
+                    numberOfNodesType = NumberOfNodesType.SOME;
+                } else {
+                    numberOfNodesType = NumberOfNodesType.MANY;
+                }
+
+                IntensityType intensityType;
+
+                if (nextLine[1].equals("STRONG")) {
+                    intensityType = IntensityType.STRONG;
+                } else if (nextLine[1].equals("MEDIUM")) {
+                    intensityType = IntensityType.MEDIUM;
+                } else {
+                    intensityType = IntensityType.WEAK;
+                }
+
+                int numberOfUnverifiedTransactions = Integer.parseInt(nextLine[4]);
+                long mediumDistributionTime = Long.parseLong(nextLine[5]);
+                long mediumVerificationTime = Integer.parseInt(nextLine[6]);
+                SizeInfo sizeInfo = new SizeInfo(size,
+                        sizeDispersionType, numberOfNodesType,
+                        intensityType, numberOfUnverifiedTransactions,
+                        mediumDistributionTime, mediumVerificationTime);
+
+                sizes.add(sizeInfo);
+            } catch (NumberFormatException e) {
+                log.error(e.getMessage());
+                //ignore all unparseable lines
+            }
+        }
+        return sizes;
     }
 
     private static List<IntensityInfo> parseIntensities(CSVReader reader) throws IOException {
@@ -103,12 +178,12 @@ public class CSVParser {
                 int numberOfUnverifiedTransactions = Integer.parseInt(nextLine[4]);
                 long mediumDistributionTime = Long.parseLong(nextLine[5]);
                 long mediumVerificationTime = Integer.parseInt(nextLine[6]);
-                IntensityInfo intensityInfoInfo = new IntensityInfo(intensity,
+                IntensityInfo intensityInfo = new IntensityInfo(intensity,
                         intensityDispersionType, numberOfNodesType,
                         transactionSizeType, numberOfUnverifiedTransactions,
                         mediumDistributionTime, mediumVerificationTime);
 
-                intensities.add(intensityInfoInfo);
+                intensities.add(intensityInfo);
             } catch (NumberFormatException e) {
                 log.error(e.getMessage());
                 //ignore all unparseable lines

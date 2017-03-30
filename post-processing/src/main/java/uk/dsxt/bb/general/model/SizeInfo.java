@@ -18,21 +18,32 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-
-package uk.dsxt.bb.current.scenario.model;
+package uk.dsxt.bb.general.model;
 
 import lombok.Data;
+import uk.dsxt.bb.general.model.enums.*;
 
 @Data
-public class MediumDistribution {
+public class SizeInfo {
 
-    private long mediumDstrbTime95;
-    private long mediumDstrbTime100;
-    private int numberOfBlocks;
+    private int sizeOfTransaction;
+    private SizeDispersionType sizeDispersionType;
+    private NumberOfNodesType numberOfNodesType;
+    private IntensityType intensityType;
+    private int numberOfUnverifiedTransactions;
+    private long mediumDistributionTime;
+    private long mediumVerificationTime;
 
-    public MediumDistribution() {
-        this.mediumDstrbTime95 = 0;
-        this.mediumDstrbTime100 = 0;
-        this.numberOfBlocks = 0;
+    public SizeInfo(int sizeOfTransaction, SizeDispersionType sizeDispersionType,
+                    NumberOfNodesType numberOfNodesType, IntensityType intensityType,
+                    int numberOfUnverifiedTransactions, long mediumDistributionTime,
+                    long mediumVerificationTime) {
+        this.sizeOfTransaction = sizeOfTransaction;
+        this.sizeDispersionType = sizeDispersionType;
+        this.numberOfNodesType = numberOfNodesType;
+        this.intensityType = intensityType;
+        this.numberOfUnverifiedTransactions = numberOfUnverifiedTransactions;
+        this.mediumDistributionTime = mediumDistributionTime;
+        this.mediumVerificationTime = mediumVerificationTime;
     }
 }

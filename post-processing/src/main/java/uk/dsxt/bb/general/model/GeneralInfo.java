@@ -22,15 +22,32 @@
 package uk.dsxt.bb.general.model;
 
 import lombok.Data;
-import uk.dsxt.bb.general.model.enums.IntensityDispersionType;
-import uk.dsxt.bb.general.model.enums.NumberOfNodesType;
-import uk.dsxt.bb.general.model.enums.TransactionSizeType;
+import uk.dsxt.bb.general.model.enums.*;
 
 import java.util.List;
 
 @Data
 public class GeneralInfo {
-    List<IntensityInfo> intensities;
+
+    private List<IntensityInfo> intensities;
+    private List<SizeInfo> sizes;
+    private List<NumberOfNodesInfo> numberOfNodesInfos;
+
+    public SizeInfo getSizeInfo(int size, SizeDispersionType sizeDispersionType,
+                                NumberOfNodesType numberOfNodesType, IntensityType intensityType) {
+        for (SizeInfo sizeInfo : sizes) {
+            if (sizeInfo.getSizeOfTransaction() == size && sizeInfo.getIntensityType() == intensityType
+                    && sizeInfo.getNumberOfNodesType() == numberOfNodesType
+                    && sizeInfo.getSizeDispersionType() == sizeDispersionType) {
+                return sizeInfo;
+            }
+        }
+        return null;
+    }
+
+    public void addSizeInfo(SizeInfo sizeInfo) {
+        sizes.add(sizeInfo);
+    }
 
     public IntensityInfo getIntensityInfo(int intensity,
                                           TransactionSizeType size,

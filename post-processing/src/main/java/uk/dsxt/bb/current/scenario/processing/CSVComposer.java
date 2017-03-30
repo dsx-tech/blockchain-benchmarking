@@ -24,12 +24,13 @@ package uk.dsxt.bb.current.scenario.processing;
 import au.com.bytecode.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.current.scenario.model.BlockchainInfo;
-import uk.dsxt.bb.current.scenario.model.TimeInfo;
 import uk.dsxt.bb.current.scenario.model.BlockInfo;
+import uk.dsxt.bb.current.scenario.model.MediumTimeInfo;
 import uk.dsxt.bb.current.scenario.model.TransactionInfo;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -42,17 +43,17 @@ public class CSVComposer {
     private static final String TRANSACTIONS_FILE = "transactions.csv";
     private static final String BLOCKS_FILE = "blocks.csv";
     private static final String UNVERIFIED_TRANSACTIONS_FILE = "timeToUnverifiedTransactions.csv";
-    private static final String NUMBER_OF_NODES_FILE = "numberOfNodes.csv";
-    private static final String DISTRIBUTION_WITH_SIZE_FILE = "distributionsWithSize.csv";
-    private static final String DISTRIBUTION_FILE = "distributions.csv";
+    //    private static final String NUMBER_OF_NODES_FILE = "numberOfNodes.csv";
+//    private static final String DISTRIBUTION_WITH_SIZE_FILE = "distributionsWithSize.csv";
+    private static final String MEDIUM_TIMES_FILE = "mediumTimes.csv";
     //header lines
     private static final String[] INTENSIIES_HEADER = {"time", "intensity"};
     private static final String[] TRANSACTIONS_HEADER = {"transactionId", "blockId",
             "transactionSize", "transactionCreationTime", "nodeId"};
     private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "maxNodeTime95", "maxNodeTime", "verificationTime"};
     private static final String[] UNVERIFIED_HEADER = {"time", "numberOfUnverifiedTransactions"};
-    private static final String[] NUMBER_OF_NODES_HEADER = {"time", "numberOfNodes"};
-    private static final String[] DISTRIBUTIONS_HEADER = {"time", "minSize", "maxSize", "distributionTime95", "maxDistributionTime"};
+    //    private static final String[] NUMBER_OF_NODES_HEADER = {"time", "numberOfNodes"};
+    private static final String[] MEDIUM_TIMES_HEADER = {"time", "distributionTime95", "maxDistributionTime", "verificationTime"};
     private BlockchainInfo blockchainInfo;
 
     public CSVComposer(BlockchainInfo blockchainInfo) {
@@ -80,30 +81,42 @@ public class CSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + DISTRIBUTION_WITH_SIZE_FILE), ',', '\u0000')) {
-            fillDistributionsCSV(writer);
+        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + MEDIUM_TIMES_FILE), ',', '\u0000')) {
+            fillMediumTimesCSV(writer);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
     }
 
-//    private void
-
-    private void fillDistributionsCSV(CSVWriter writer) throws IOException {
-        writer.writeNext(DISTRIBUTIONS_HEADER);
-        SortedSet<Long> times = new TreeSet<>(blockchainInfo.getTimeInfos().keySet());
-        for (Long time : times) {
-            SortedSet<Integer> sizes = new TreeSet<>(blockchainInfo.getTimeInfos().get(time).keySet());
-            for (Integer size : sizes) {
-                TimeInfo t = blockchainInfo.getTimeInfos().get(time).get(size);
-                String[] entry = {String.valueOf(time), String.valueOf(t.getTimeAndSize().getSizeSpan().getBlockSizeMin()),
-                        String.valueOf(t.getTimeAndSize().getSizeSpan().getBlockSizeMax()),
-                        String.valueOf(t.getMediumDstrbTime95()), String.valueOf(t.getMediumDstrbTime100())};
-                writer.writeNext(entry);
-                writer.flush();
-            }
+    private void fillMediumTimesCSV(CSVWriter writer) throws IOException {
+        writer.writeNext(MEDIUM_TIMES_HEADER);
+        for (Map.Entry<Long, MediumTimeInfo> element : blockchainInfo.getTimeToMediumTimes().entrySet()) {
+            String[] entry = {String.valueOf(element.getKey()),
+                    String.valueOf(element.getValue().getMediumDstrbTime95()),
+                    String.valueOf(element.getValue().getMediumDstrbTime100()),
+                    String.valueOf(element.getValue().getMediumVerificationTime())};
+            writer.writeNext(entry);
+            writer.flush();
         }
     }
+
+//    private void
+
+//    private void fillDistributionsCSV(CSVWriter writer) throws IOException {
+//        writer.writeNext(DISTRIBUTIONS_HEADER);
+//        SortedSet<Long> times = new TreeSet<>(blockchainInfo.getTimeInfos().keySet());
+//        for (Long time : times) {
+//            SortedSet<Integer> sizes = new TreeSet<>(blockchainInfo.getTimeInfos().get(time).keySet());
+//            for (Integer size : sizes) {
+//                TimeInfo t = blockchainInfo.getTimeInfos().get(time).get(size);
+//                String[] entry = {String.valueOf(time), String.valueOf(t.getTimeAndSize().getSizeSpan().getBlockSizeMin()),
+//                        String.valueOf(t.getTimeAndSize().getSizeSpan().getBlockSizeMax()),
+//                        String.valueOf(t.getMediumDstrbTime95()), String.valueOf(t.getMediumDstrbTime100())};
+//                writer.writeNext(entry);
+//                writer.flush();
+//            }
+//        }
+//    }
 
     private void fillIntensitiesCSV(CSVWriter writer) throws IOException {
         writer.writeNext(INTENSIIES_HEADER);

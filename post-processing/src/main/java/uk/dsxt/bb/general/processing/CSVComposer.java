@@ -25,18 +25,18 @@ import au.com.bytecode.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.general.model.GeneralInfo;
 import uk.dsxt.bb.general.model.IntensityInfo;
+import uk.dsxt.bb.general.model.NumberOfNodesInfo;
+import uk.dsxt.bb.general.model.SizeInfo;
 
 import java.io.FileWriter;
 import java.io.IOException;
 
+import static uk.dsxt.bb.general.processing.CSVParser.*;
+
+
 @Log4j2
 public class CSVComposer {
 
-    public static final String RESULT_PATH = "post-processing/src/main/resources/results/general/csv/";
-    //file names
-    public static final String INTENSITIES_FILE = "intensities.csv";
-    public static final String SIZE_FILE = "size.csv";
-    public static final String NUMBER_OF_NODES_FILE = "numberOfNodes.csv";
     //headers
     private static final String[] INTENSIIES_HEADER = {"intensity", "dispersionType",
             "numberOfNodesType", "sizeType", "numberOfUnverifiedTransactions",
@@ -55,20 +55,34 @@ public class CSVComposer {
     }
 
     public void composeCSVs() {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + INTENSITIES_FILE), ',', '\u0000')) {
+        try (CSVWriter writer = new CSVWriter(new FileWriter(PATH + INTENSITIES_FILE), ',', '\u0000')) {
             fillIntensitiesCSV(writer);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + SIZE_FILE), ',', '\u0000')) {
-//            fillTransactionsCSV(writer);
+        try (CSVWriter writer = new CSVWriter(new FileWriter(PATH + SIZE_FILE), ',', '\u0000')) {
+            fillSizesCSV(writer);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + NUMBER_OF_NODES_FILE), ',', '\u0000')) {
-//            fillBlocksCSV(writer);
+        try (CSVWriter writer = new CSVWriter(new FileWriter(PATH + NUMBER_OF_NODES_FILE), ',', '\u0000')) {
+            fillNumberOfNodesCSV(writer);
         } catch (IOException e) {
             log.error(e.getMessage());
+        }
+    }
+
+    private void fillNumberOfNodesCSV(CSVWriter writer) throws IOException {
+        writer.writeNext(NUMBER_OF_NODES_HEADER);
+        for (NumberOfNodesInfo numberOfNodesInfo : generalInfo.getNumberOfNodesInfos()) {
+            String[] entry = {String.valueOf(numberOfNodesInfo.getNumberOfNodes()),
+                    String.valueOf(numberOfNodesInfo.getIntensityType()),
+                    String.valueOf(numberOfNodesInfo.getTransactionSizeType()),
+                    String.valueOf(numberOfNodesInfo.getNumberOfUnverifiedTransactions()),
+                    String.valueOf(numberOfNodesInfo.getMediumDistributionTime()),
+                    String.valueOf(numberOfNodesInfo.getMediumVerificationTime())};
+            writer.writeNext(entry);
+            writer.flush();
         }
     }
 
@@ -82,6 +96,21 @@ public class CSVComposer {
                     String.valueOf(intensityInfo.getNumberOfUnverifiedTransactions()),
                     String.valueOf(intensityInfo.getMediumDistributionTime()),
                     String.valueOf(intensityInfo.getMediumVerificationTime())};
+            writer.writeNext(entry);
+            writer.flush();
+        }
+    }
+
+    private void fillSizesCSV(CSVWriter writer) throws IOException {
+        writer.writeNext(SIZE_HEADER);
+        for (SizeInfo sizeInfo : generalInfo.getSizes()) {
+            String[] entry = {String.valueOf(sizeInfo.getSizeOfTransaction()),
+                    String.valueOf(sizeInfo.getSizeDispersionType()),
+                    String.valueOf(sizeInfo.getNumberOfNodesType()),
+                    String.valueOf(sizeInfo.getIntensityType()),
+                    String.valueOf(sizeInfo.getNumberOfUnverifiedTransactions()),
+                    String.valueOf(sizeInfo.getMediumDistributionTime()),
+                    String.valueOf(sizeInfo.getMediumVerificationTime())};
             writer.writeNext(entry);
             writer.flush();
         }

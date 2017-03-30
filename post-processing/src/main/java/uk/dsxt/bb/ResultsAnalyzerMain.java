@@ -46,7 +46,8 @@ public class ResultsAnalyzerMain {
         composer.composeCSVs();
         //combine results1 of current scenario with all previous results1
         GeneralInfo generalInfo = uk.dsxt.bb.general.processing.CSVParser.parseCSVs();
-        generalInfo = ResultCombiner.combine(blockchainInfo, generalInfo);
+        ResultCombiner combiner = new ResultCombiner(blockchainInfo, generalInfo);
+        generalInfo = combiner.combine();
         uk.dsxt.bb.general.processing.CSVComposer generalComposer =
                 new uk.dsxt.bb.general.processing.CSVComposer(generalInfo);
         generalComposer.composeCSVs();
@@ -77,7 +78,7 @@ public class ResultsAnalyzerMain {
         if (!file.exists() || file.isFile()) {
             file.mkdirs();
         }
-        file = new File(uk.dsxt.bb.general.processing.CSVComposer.RESULT_PATH);
+        file = new File(uk.dsxt.bb.general.processing.CSVParser.PATH);
         if (!file.exists() || file.isFile()) {
             file.mkdirs();
         }

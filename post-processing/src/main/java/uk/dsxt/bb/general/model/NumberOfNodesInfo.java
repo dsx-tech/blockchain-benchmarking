@@ -19,39 +19,31 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.current.scenario.model;
+package uk.dsxt.bb.general.model;
 
 import lombok.Data;
-
-import java.util.*;
+import uk.dsxt.bb.general.model.enums.IntensityType;
+import uk.dsxt.bb.general.model.enums.TransactionSizeType;
 
 @Data
-public class BlockchainInfo {
+public class NumberOfNodesInfo {
 
-    private Map<Long, BlockInfo> blocks;
-    private Map<String, TransactionInfo> transactions;
-    private NavigableMap<Long, Integer> timeToIntensities;
-    private NavigableMap<Long, Integer> timeToUnverifiedTransactions;
-    private NavigableMap<Long, MediumTimeInfo> timeToMediumTimes;
     private int numberOfNodes;
+    private IntensityType intensityType;
+    private TransactionSizeType transactionSizeType;
+    private int numberOfUnverifiedTransactions;
+    private long mediumDistributionTime;
+    private long mediumVerificationTime;
 
-    public BlockchainInfo() {
-        this.blocks = new HashMap<>();
-        this.transactions = new HashMap<>();
-        this.timeToIntensities = new TreeMap<>();
-        timeToUnverifiedTransactions = new TreeMap<>();
-    }
-
-    public BlockInfo getChildBlockById(long id) {
-        for (BlockInfo block : blocks.values()) {
-            if (block.getParentBlockId() == id) {
-                return block;
-            }
-        }
-        return null;
-    }
-
-    public void addTransactions(Map<String, TransactionInfo> transactions) {
-        transactions.forEach(this.transactions::putIfAbsent);
+    public NumberOfNodesInfo(int numberOfNodes, IntensityType intensityType,
+                             TransactionSizeType transactionSizeType,
+                             int numberOfUnverifiedTransactions,
+                             long mediumDistributionTime, long mediumVerificationTime) {
+        this.numberOfNodes = numberOfNodes;
+        this.intensityType = intensityType;
+        this.transactionSizeType = transactionSizeType;
+        this.numberOfUnverifiedTransactions = numberOfUnverifiedTransactions;
+        this.mediumDistributionTime = mediumDistributionTime;
+        this.mediumVerificationTime = mediumVerificationTime;
     }
 }

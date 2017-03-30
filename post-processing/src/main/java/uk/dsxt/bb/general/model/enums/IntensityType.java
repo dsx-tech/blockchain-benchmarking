@@ -19,48 +19,10 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.current.scenario.model;
+package uk.dsxt.bb.general.model.enums;
 
-import lombok.Data;
-
-@Data
-public class TimeInfo {
-
-    private TimeAndSize timeAndSize;
-    private long mediumDstrbTime95;
-    private long mediumDstrbTime100;
-    private int numberOfBlocks;
-
-    public TimeInfo(TimeAndSize timeAndSize) {
-        this.timeAndSize = timeAndSize;
-        mediumDstrbTime95 = 0;
-        mediumDstrbTime100 = 0;
-        numberOfBlocks = 0;
-    }
-
-    /**
-     * Sets the start of a time span paired to a size span
-     * time spans are currently of fixed size: ResultsAnalyzer.TIME_INTERVAL
-     */
-    @Data
-    public static class TimeAndSize {
-        private long time;
-        private SizeSpan sizeSpan;
-
-        public TimeAndSize(long time, SizeSpan sizeSpan) {
-            this.time = time;
-            this.sizeSpan = sizeSpan;
-        }
-    }
-
-    @Data
-    public static class SizeSpan {
-        private int blockSizeMin;
-        private int blockSizeMax;
-
-        public SizeSpan(int blockSizeMin, int blockSizeMax) {
-            this.blockSizeMin = blockSizeMin;
-            this.blockSizeMax = blockSizeMax;
-        }
-    }
+public enum IntensityType {
+    WEAK,
+    MEDIUM,
+    STRONG
 }

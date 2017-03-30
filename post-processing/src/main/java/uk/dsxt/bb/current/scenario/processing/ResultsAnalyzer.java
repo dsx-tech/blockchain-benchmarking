@@ -32,7 +32,6 @@ public class ResultsAnalyzer {
     //note: time is counted from the start of the test in milliseconds
     public static final long TIME_INTERVAL = 500;
     private static final int NUMBER_OF_VERIFICATION = 6;
-    private static final int NUMBER_OF_SIZES = 3;
     private BlockchainInfo blockchainInfo;
 
     public ResultsAnalyzer(BlockchainInfo blockchainInfo) {
@@ -45,14 +44,13 @@ public class ResultsAnalyzer {
         blockchainInfo.setTimeToIntensities(calculateIntensity());
         // calculate creation time and times of distribution
         updateBlockInfos();
-        blockchainInfo.setTimeToUnverifiedTransactions(calculateUnverifiedTransactions());
-        blockchainInfo.setTimeInfos(calculateTimeInfos());
-        blockchainInfo.setTimeToDistributionTimes(calculateDistributionTimes());
+        blockchainInfo.setTimeToUnverifiedTransactions(countUnverifiedTransactions());
+        blockchainInfo.setTimeToMediumTimes(calculateDistributionTimes());
         return blockchainInfo;
     }
 
-    private Map<Long, MediumDistribution> calculateDistributionTimes() {
-        NavigableMap<Long, MediumDistribution> timeToDistributions = new TreeMap<>();
+    private NavigableMap<Long, MediumTimeInfo> calculateDistributionTimes() {
+        NavigableMap<Long, MediumTimeInfo> timeToDistributions = new TreeMap<>();
         if (blockchainInfo.getBlocks().isEmpty()) {
             log.error("No blocks found");
             return timeToDistributions;
@@ -61,21 +59,32 @@ public class ResultsAnalyzer {
         long startTime = 0;
         long endTime = getEndTime();
         for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
-            timeToDistributions.put(i, new MediumDistribution());
+            timeToDistributions.put(i, new MediumTimeInfo());
         }
         //for each block find correct time map and recalculate medium distribution times
         for (BlockInfo block : blockchainInfo.getBlocks().values()) {
-            MediumDistribution distr = timeToDistributions.get
+            MediumTimeInfo distr = timeToDistributions.get
                     (timeToDistributions.floorKey(block.getCreationTime()));
-            distr.setMediumDstrbTime95(((distr.getMediumDstrbTime95() * distr.getNumberOfBlocks()
-                    + block.getDistributionTime95())
-                    / (distr.getNumberOfBlocks() + 1)));
-            distr.setMediumDstrbTime100(((distr.getMediumDstrbTime100() * distr.getNumberOfBlocks()
-                    + block.getDistributionTime100())
-                    / (distr.getNumberOfBlocks() + 1)));
-            distr.setNumberOfBlocks(distr.getNumberOfBlocks() + 1);
+            int numberOfBlocks = distr.getNumberOfBlocks();
+            distr.setMediumDstrbTime95
+                    (recalculateMediumValue(numberOfBlocks,
+                            distr.getMediumDstrbTime95(),
+                            block.getDistributionTime95()));
+            distr.setMediumDstrbTime100
+                    (recalculateMediumValue(numberOfBlocks,
+                            distr.getMediumDstrbTime100(),
+                            block.getDistributionTime100()));
+            distr.setMediumVerificationTime
+                    (recalculateMediumValue(numberOfBlocks,
+                            distr.getMediumVerificationTime(),
+                            block.getVerificationTime()));
+            distr.setNumberOfBlocks(numberOfBlocks + 1);
         }
         return timeToDistributions;
+    }
+
+    private long recalculateMediumValue(int numberOfElements, long prevMediumValue, long newValue) {
+        return ((prevMediumValue * numberOfElements) + newValue) / (numberOfElements + 1);
     }
 
     /**
@@ -93,55 +102,9 @@ public class ResultsAnalyzer {
         }
     }
 
-    private NavigableMap<Long, NavigableMap<Integer, TimeInfo>> calculateTimeInfos() {
-        NavigableMap<Long, NavigableMap<Integer, TimeInfo>> timeInfos = new TreeMap<>();
-        if (blockchainInfo.getBlocks().isEmpty()) {
-            log.error("No blocks found");
-            return timeInfos;
-        }
-        int minBlockSize = blockchainInfo.getBlocks().values().iterator().next().getSize();
-        int maxBlockSize = 0;
-        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
-            if (minBlockSize > block.getSize()) {
-                minBlockSize = block.getSize();
-            }
-            if (maxBlockSize < block.getSize()) {
-                maxBlockSize = block.getSize();
-            }
-        }
-        //add all possible time intervals
-        long startTime = 0;
-        long endTime = getEndTime();
-        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
-            timeInfos.put(i, new TreeMap<>());
-        }
-        //add all size spans to every map
-        int step = (maxBlockSize - minBlockSize) / NUMBER_OF_SIZES;
-        for (Map.Entry<Long, NavigableMap<Integer, TimeInfo>> timeInfo : timeInfos.entrySet()) {
-            for (int i = 0; i < NUMBER_OF_SIZES; i++) {
-                int startSize = minBlockSize + i * step;
-                timeInfo.getValue().put(startSize, new TimeInfo
-                        (new TimeInfo.TimeAndSize(timeInfo.getKey(), new TimeInfo.SizeSpan
-                                (startSize, startSize + step))));
-            }
-        }
-        //for each block find correct time and size map and recalculate medium distribution times
-        for (BlockInfo block : blockchainInfo.getBlocks().values()) {
-            NavigableMap<Integer, TimeInfo> timeInfoInside = timeInfos.get(timeInfos.floorKey(block.getCreationTime()));
-            TimeInfo t = timeInfoInside.get(timeInfoInside.floorKey(block.getSize()));
-            t.setMediumDstrbTime95(((t.getMediumDstrbTime95() * t.getNumberOfBlocks() + block.getDistributionTime95())
-                    / (t.getNumberOfBlocks() + 1)));
-            t.setMediumDstrbTime100(((t.getMediumDstrbTime100() * t.getNumberOfBlocks() + block.getDistributionTime100())
-                    / (t.getNumberOfBlocks() + 1)));
-            t.setNumberOfBlocks(t.getNumberOfBlocks() + 1);
-        }
-        return timeInfos;
-
-    }
-
     //transaction is verified when block with it is verified
-    private Map<Long, Integer> calculateUnverifiedTransactions() {
-        Map<Long, Integer> numUnverifiedTrans = new HashMap<>();
+    private NavigableMap<Long, Integer> countUnverifiedTransactions() {
+        NavigableMap<Long, Integer> numUnverifiedTrans = new TreeMap<>();
         long startTime = 0;
         long endTime = getEndTime();
         //add all intervals to list
@@ -223,43 +186,6 @@ public class ResultsAnalyzer {
         }
         return intensities;
     }
-
-//    private Map<Long, Integer> calculateNumberOfNodes() {
-//        Map<Long, Integer> numOfNodes = new HashMap<>();
-//        long startTime = 0;
-//        long endTime = getEndTime();
-//        //add all intervals to list
-//        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
-//            numOfNodes.put(i, 0);
-//        }
-//        for (Long time : numOfNodes.keySet()) {
-//            for (NodeInfo node : blockchainInfo.getNodes()) {
-//                for (NodeInfo.TimeSpan workTime : node.getWorkTimes()) {
-//                    if (workTime.getStartTime() < time && time < workTime.getEndTime()) {
-//                        numOfNodes.replace(time, numOfNodes.get(time) + 1);
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//        return numOfNodes;
-//    }
-
-//    private void updateNodeInfos() {
-//        for (NodeInfo node : blockchainInfo.getNodes()) {
-//            List<Long> startTimes = node.getStartTimes();
-//            List<Long> stopTimes = node.getStopTimes();
-//            startTimes.sort(Long::compareTo);
-//            stopTimes.sort(Long::compareTo);
-//            if (startTimes.size() != stopTimes.size()) {
-//                log.error("Start and stop times of node " + node.getNodeId() + " doesn't correspond");
-//                continue;
-//            }
-//            for (int i = 0; i < startTimes.size(); i++) {
-//                node.addWorkTime(new NodeInfo.TimeSpan(startTimes.get(i), stopTimes.get(i)));
-//            }
-//        }
-//    }
 
     private long getStartTime() {
         long minTime = blockchainInfo.getTransactions().entrySet().iterator().next().getValue().getTime();

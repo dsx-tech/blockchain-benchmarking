@@ -19,48 +19,9 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.current.scenario.model;
+package uk.dsxt.bb.general.model.enums;
 
-import lombok.Data;
-
-import java.util.ArrayList;
-import java.util.List;
-
-@Data
-public class NodeInfo {
-
-    private int nodeId;
-    private List<TimeSpan> workTimes;
-    private List<Long> startTimes;
-    private List<Long> stopTimes;
-
-    public NodeInfo(int nodeId) {
-        this.nodeId = nodeId;
-        this.startTimes = new ArrayList<>();
-        this.stopTimes = new ArrayList<>();
-        this.workTimes = new ArrayList<>();
-    }
-
-    public void addStartTime(Long time) {
-        startTimes.add(time);
-    }
-
-    public void addStopTime(Long time) {
-        stopTimes.add(time);
-    }
-
-    public void addWorkTime(TimeSpan time) {
-        workTimes.add(time);
-    }
-
-    @Data
-    public static class TimeSpan {
-        private long startTime;
-        private long endTime;
-
-        public TimeSpan(long startTime, long endTime) {
-            this.startTime = startTime;
-            this.endTime = endTime;
-        }
-    }
+public enum SizeDispersionType {
+    HIGH,
+    LOW
 }

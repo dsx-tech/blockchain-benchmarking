@@ -23,35 +23,18 @@ package uk.dsxt.bb.current.scenario.model;
 
 import lombok.Data;
 
-import java.util.*;
-
 @Data
-public class BlockchainInfo {
+public class MediumTimeInfo {
 
-    private Map<Long, BlockInfo> blocks;
-    private Map<String, TransactionInfo> transactions;
-    private NavigableMap<Long, Integer> timeToIntensities;
-    private NavigableMap<Long, Integer> timeToUnverifiedTransactions;
-    private NavigableMap<Long, MediumTimeInfo> timeToMediumTimes;
-    private int numberOfNodes;
+    private long mediumDstrbTime95;
+    private long mediumDstrbTime100;
+    private long mediumVerificationTime;
+    private int numberOfBlocks;
 
-    public BlockchainInfo() {
-        this.blocks = new HashMap<>();
-        this.transactions = new HashMap<>();
-        this.timeToIntensities = new TreeMap<>();
-        timeToUnverifiedTransactions = new TreeMap<>();
-    }
-
-    public BlockInfo getChildBlockById(long id) {
-        for (BlockInfo block : blocks.values()) {
-            if (block.getParentBlockId() == id) {
-                return block;
-            }
-        }
-        return null;
-    }
-
-    public void addTransactions(Map<String, TransactionInfo> transactions) {
-        transactions.forEach(this.transactions::putIfAbsent);
+    public MediumTimeInfo() {
+        this.mediumDstrbTime95 = 0;
+        this.mediumDstrbTime100 = 0;
+        this.mediumVerificationTime = -1;
+        this.numberOfBlocks = 0;
     }
 }
