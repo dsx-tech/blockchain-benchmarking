@@ -35,7 +35,6 @@ public class BlockInfo {
     private List<DistributionTime> distributionTimes;
     private long distributionTime95;
     private long distributionTime100;
-    private long verificationTime;
     private int size;
     private long creationTime;
 

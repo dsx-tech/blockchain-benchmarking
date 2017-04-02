@@ -18,32 +18,25 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.bb.general.model;
+package uk.dsxt.bb.current.scenario.model;
 
 import lombok.Data;
-import uk.dsxt.bb.general.model.enums.*;
 
 @Data
-public class SizeInfo {
+public class TimeInfo {
 
-    private int sizeOfTransaction;
-    private SizeDispersionType sizeDispersionType;
-    private NumberOfNodesType numberOfNodesType;
-    private IntensityType intensityType;
-    private int numberOfUnverifiedTransactions;
-    private long mediumDistributionTime;
-    private long mediumVerificationTime;
+    private long time = 0;
+    // number of transactions in all blocks created at this time period
+    private int throughput = 0;
+    private long latency = 0;
+    private int intensity = 0;
+    private int transactionSize = 0;
+    private int numberOfTransactions = 0;
+    private int blockSize = 0;
+    private int numberOfBlocks = 0;
+    private int numberTransactionsInBlock = 0;
 
-    public SizeInfo(int sizeOfTransaction, SizeDispersionType sizeDispersionType,
-                    NumberOfNodesType numberOfNodesType, IntensityType intensityType,
-                    int numberOfUnverifiedTransactions, long mediumDistributionTime,
-                    long mediumVerificationTime) {
-        this.sizeOfTransaction = sizeOfTransaction;
-        this.sizeDispersionType = sizeDispersionType;
-        this.numberOfNodesType = numberOfNodesType;
-        this.intensityType = intensityType;
-        this.numberOfUnverifiedTransactions = numberOfUnverifiedTransactions;
-        this.mediumDistributionTime = mediumDistributionTime;
-        this.mediumVerificationTime = mediumVerificationTime;
+    public TimeInfo(long time) {
+        this.time = time;
     }
 }

@@ -30,25 +30,12 @@ public class BlockchainInfo {
 
     private Map<Long, BlockInfo> blocks;
     private Map<String, TransactionInfo> transactions;
-    private NavigableMap<Long, Integer> timeToIntensities;
-    private NavigableMap<Long, Integer> timeToUnverifiedTransactions;
-    private NavigableMap<Long, MediumTimeInfo> timeToMediumTimes;
+    private Map<Long, TimeInfo> timeInfos;
     private int numberOfNodes;
 
     public BlockchainInfo() {
         this.blocks = new HashMap<>();
         this.transactions = new HashMap<>();
-        this.timeToIntensities = new TreeMap<>();
-        timeToUnverifiedTransactions = new TreeMap<>();
-    }
-
-    public BlockInfo getChildBlockById(long id) {
-        for (BlockInfo block : blocks.values()) {
-            if (block.getParentBlockId() == id) {
-                return block;
-            }
-        }
-        return null;
     }
 
     public void addTransactions(Map<String, TransactionInfo> transactions) {
