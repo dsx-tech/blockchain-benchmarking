@@ -1,6 +1,6 @@
 args = commandArgs(trailingOnly=TRUE)
 if (length(args)==0) {
-  stop("At least one argument must be supplied (path to results directory)", call.=FALSE)
+ stop("At least one argument must be supplied (path to results directory)", call.=FALSE)
 }
 path <- args[1]
 #path <-
@@ -14,32 +14,32 @@ setwd("..\\graphs\\intensities")
 
 intensities <- data.frame(times["time"], times["intensity"])
 bmp(filename = "intensities.bmp")
-plot(intensities)
+plot(intensities, type = "l")
 dev.off()
 
 throughput <- data.frame(times["time"], times["throughput"])
 bmp(filename = "throughput.bmp")
-plot(throughput)
+plot(throughput, type = "l")
 dev.off()
 
 latency <- data.frame(times["time"], times["distributionLatency"])
 bmp(filename = "latency.bmp")
-plot(latency) 
+plot(latency, type = "l") 
 dev.off()
 
 transactionSize <- data.frame(times["time"], times["transactionSize"])
 bmp(filename = "transactionSize.bmp")
-plot(transactionSize) 
+plot(transactionSize, type = "l") 
 dev.off()
 
 blockSize <- data.frame(times["time"], times["blockSize"])
 bmp(filename = "blockSize.bmp")
-plot(blockSize)
+plot(blockSize, type = "l")
 dev.off()
 
 number <- data.frame(times["time"], times["numberTransactionsInBlock"])
 bmp(filename = "numberTransactionsInBlock.bmp")
-plot(number)
+plot(number, type = "l")
 dev.off()
 
 #throughput graphs

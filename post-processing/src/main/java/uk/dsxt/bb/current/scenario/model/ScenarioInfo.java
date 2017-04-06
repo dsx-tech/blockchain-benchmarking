@@ -18,28 +18,31 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-
 package uk.dsxt.bb.current.scenario.model;
 
 import lombok.Data;
 
-import java.util.*;
-
 @Data
-public class BlockchainInfo {
+public class ScenarioInfo {
 
-    private Map<Long, BlockInfo> blocks;
-    private Map<String, TransactionInfo> transactions;
-    private Map<Long, TimeInfo> timeInfos;
-    private ScenarioInfo scenarioInfo;
     private int numberOfNodes;
+    private int throughputMax;
+   //todo private int throughput95;
+    private int mediumThroughput;
+    private int mediumIntensity;
+    private int mediumTransactionSize;
+    private int mediumBlockSize;
+    private long mediumLatency;
 
-    public BlockchainInfo() {
-        this.blocks = new HashMap<>();
-        this.transactions = new HashMap<>();
-    }
-
-    public void addTransactions(Map<String, TransactionInfo> transactions) {
-        transactions.forEach(this.transactions::putIfAbsent);
+    public ScenarioInfo(int numberOfNodes, int throughputMax,
+                        int mediumThroughput, int mediumIntensity,
+                        int mediumTransactionSize, int mediumBlockSize, long mediumLatency) {
+        this.numberOfNodes = numberOfNodes;
+        this.throughputMax = throughputMax;
+        this.mediumThroughput = mediumThroughput;
+        this.mediumIntensity = mediumIntensity;
+        this.mediumTransactionSize = mediumTransactionSize;
+        this.mediumBlockSize = mediumBlockSize;
+        this.mediumLatency = mediumLatency;
     }
 }

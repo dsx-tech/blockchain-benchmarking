@@ -43,7 +43,39 @@ public class ResultsAnalyzer {
         // calculate creation time and times of distribution
         updateBlockInfos();
         blockchainInfo.setTimeInfos(calculateTimeInfos());
+        blockchainInfo.setScenarioInfo(calculateScenarioInfo());
         return blockchainInfo;
+    }
+
+    private ScenarioInfo calculateScenarioInfo() {
+        int numberOfNodes = blockchainInfo.getNumberOfNodes();
+        int throughputMax = 0;
+        //todo throughput95
+        //int throughput95;
+        int mediumThroughput = 0;
+        int mediumIntensity = 0;
+        int mediumTransactionSize = 0;
+        int mediumBlockSize = 0;
+        long mediumLatency = 0;
+        for (TimeInfo timeInfo : blockchainInfo.getTimeInfos().values()) {
+            if (timeInfo.getThroughput() > throughputMax) {
+                throughputMax = timeInfo.getThroughput();
+            }
+            mediumTransactionSize += timeInfo.getTransactionSize();
+            mediumThroughput += timeInfo.getThroughput();
+            mediumIntensity += timeInfo.getIntensity();
+            mediumBlockSize += timeInfo.getBlockSize();
+            mediumLatency += timeInfo.getLatency();
+        }
+        int numberOfTimeSegments = blockchainInfo.getTimeInfos().values().size();
+        mediumThroughput /= numberOfTimeSegments;
+        mediumIntensity /= numberOfTimeSegments;
+        mediumBlockSize /= numberOfTimeSegments;
+        mediumLatency /= numberOfTimeSegments;
+        mediumTransactionSize /= numberOfTimeSegments;
+        return new ScenarioInfo(numberOfNodes, throughputMax,
+                mediumThroughput, mediumIntensity,
+                mediumTransactionSize, mediumBlockSize, mediumLatency);
     }
 
     private long recalculateMediumValue(int numberOfElements, long prevMediumValue, long newValue) {

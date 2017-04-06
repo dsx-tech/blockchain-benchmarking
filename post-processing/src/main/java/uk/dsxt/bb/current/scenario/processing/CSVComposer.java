@@ -23,10 +23,7 @@ package uk.dsxt.bb.current.scenario.processing;
 
 import au.com.bytecode.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j2;
-import uk.dsxt.bb.current.scenario.model.BlockchainInfo;
-import uk.dsxt.bb.current.scenario.model.BlockInfo;
-import uk.dsxt.bb.current.scenario.model.TimeInfo;
-import uk.dsxt.bb.current.scenario.model.TransactionInfo;
+import uk.dsxt.bb.current.scenario.model.*;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,6 +36,7 @@ public class CSVComposer {
     private static final String TRANSACTIONS_FILE = "transactions.csv";
     private static final String BLOCKS_FILE = "blocks.csv";
     private static final String TIME_FILE = "time.csv";
+    private static final String GENERAL_FILE = "general.csv";
 
     //header lines
     private static final String[] TIME_HEADER = {"time", "throughput",
@@ -46,6 +44,9 @@ public class CSVComposer {
     private static final String[] TRANSACTIONS_HEADER = {"transactionId", "blockId",
             "transactionSize", "transactionCreationTime", "nodeId"};
     private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "maxNodeTime95", "maxNodeTime"};
+    //todo don't recreate file every time
+    private static final String[] GENERAL_HEADER = {"numberOfNodes", "maxThroughput", "mediumThroughput",
+            "mediumIntensity", "mediumTransactionSize", "mediumBlockSize", "mediumLatency"};
     private BlockchainInfo blockchainInfo;
 
     public CSVComposer(BlockchainInfo blockchainInfo) {
@@ -68,6 +69,25 @@ public class CSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + GENERAL_FILE), ',', '\u0000')) {
+            fillGeneralCSV(writer);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void fillGeneralCSV(CSVWriter writer) throws IOException {
+        writer.writeNext(GENERAL_HEADER);
+        ScenarioInfo info = blockchainInfo.getScenarioInfo();
+        String[] entry = {String.valueOf(info.getNumberOfNodes()),
+                String.valueOf(info.getThroughputMax()),
+                String.valueOf(info.getMediumThroughput()),
+                String.valueOf(info.getMediumIntensity()),
+                String.valueOf(info.getMediumTransactionSize()),
+                String.valueOf(info.getMediumBlockSize()),
+                String.valueOf(info.getMediumLatency())};
+        writer.writeNext(entry);
+        writer.flush();
     }
 
     private void fillTimeCSV(CSVWriter writer) throws IOException {
