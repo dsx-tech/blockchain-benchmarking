@@ -26,6 +26,7 @@ package uk.dsxt.bb.utils;
 import com.google.gson.*;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Strings;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -35,8 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Log4j2
 public class JSONRPCHelper {
 
-    private static AtomicInteger id = new AtomicInteger();
-    private static HttpHelper httpHelper = new HttpHelper(5000, 5000);
+    public static AtomicInteger id = new AtomicInteger();
+    public static HttpHelper httpHelper = new HttpHelper(5000, 5000);
 
     public static String post(String url, String method, Object... parameters) throws InternalLogicException {
         try {
@@ -58,7 +59,7 @@ public class JSONRPCHelper {
 
             String requestData = req.toString();
 
-            String request = httpHelper.request(url, requestData, RequestType.POST);
+            String request = httpHelper.request(url, requestData, RequestType.GET);
             JsonParser parser = new JsonParser();
             JsonObject resp = (JsonObject) parser.parse(new StringReader(request));
             JsonElement result = resp.get("result");
@@ -82,7 +83,6 @@ public class JSONRPCHelper {
 
     public static String postToSendMessageEthereum(String url, String method, String sender, String receiver, String amount)
             throws IOException {
-
         try {
             String params = String.format("{\"jsonrpc\":\"2.0\"," +
                     "\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"%s\",\"to\":\"%s\"," +
@@ -91,7 +91,7 @@ public class JSONRPCHelper {
 
             return httpHelper.request(url, params, RequestType.POST);
         } catch (Exception e) {
-            log.error("Cannot run post method for sending transactoins in Ethereum", e);
+            log.error("Cannot run post method for sending transactions in Ethereum", e);
         }
 
         return Strings.EMPTY;

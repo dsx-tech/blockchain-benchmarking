@@ -30,6 +30,7 @@ import uk.dsxt.bb.bitcoin.BitcoinManager;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainPeer;
 import uk.dsxt.bb.fabric.FabricManager;
+import uk.dsxt.bb.multichain.MultichainManager;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,9 +56,12 @@ public class BlockchainManager implements Manager {
             case "ethereum":
                 manager = new EthereumManager(url);
                 break;
+            case "multichain":
+                manager = new MultichainManager(url);
+                break;
             default:
                 log.error(String.format("%s blockchain currently not supported or not exist. Currently supported: " +
-                        "fabric, bitcoin, ethereum", blockchainType));
+                        "fabric, bitcoin, ethereum, multichain", blockchainType));
                 break;
         }
     }
@@ -115,5 +119,11 @@ public class BlockchainManager implements Manager {
     public void authorize(String user, String password) {
         if (manager != null)
             manager.authorize(user, password);
+    }
+
+    public static void main(String[] args) throws IOException {
+        BlockchainManager manager = new BlockchainManager("bitcoin", "http://127.0.0.1:6290");
+        manager.authorize("multichainrpc", "3NPieLHgUEfEsdJeQpQstPDmHX1yasatPAw3SYGtY2Jr");
+        System.out.println(manager.getBlock(0));
     }
 }

@@ -54,7 +54,7 @@ class LoadManager {
             "          \"name\":\"mycc\"\n" +
             "      },\n" +
             "      \"ctorMsg\": {\n" +
-            "         \"args\":[\"write\", \"{message}\"]\n" +
+            "         \"args\":[\"write\", \"{message}\", \"150\"]\n" +
             "      }\n" +
             "  },\n" +
             "  \"id\": 3\n" +

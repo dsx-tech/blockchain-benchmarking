@@ -51,7 +51,7 @@ public class HttpHelper {
         connection.setReadTimeout(readTimeout);
 
         if (content != null && type == RequestType.POST) {
-            connection.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
+            connection.setRequestProperty("Content-type", "application/json");
             connection.setDoOutput(true);
             DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
             wr.writeBytes(content);

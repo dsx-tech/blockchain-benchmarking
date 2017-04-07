@@ -59,13 +59,9 @@ public class BitcoinBlock implements BlockchainBlock {
         return previousblockhash;
     }
 
-    //todo implement bitcoin transaction
     @Override
     public BitcoinTransaction[] getTransactions() {
         BitcoinTransaction[] transactions = new BitcoinTransaction[tx.length];
-        System.out.println(tx.length);
-        System.out.println(transactions.length);
-
         for (int i = 0; i < tx.length; i++) {
             transactions[i] = new BitcoinTransaction(tx[i]);
         }

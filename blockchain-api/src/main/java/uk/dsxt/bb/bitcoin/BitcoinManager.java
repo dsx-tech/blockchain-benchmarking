@@ -66,7 +66,7 @@ public class BitcoinManager implements Manager {
         try {
             return sendMessage(to, amount.getBytes());
         } catch (IOException e) {
-            log.error("Sending transaction failed");
+            log.error("Sending transaction failed", e);
         }
         return null;
     }
@@ -86,7 +86,7 @@ public class BitcoinManager implements Manager {
             return JSONRPCHelper.post(url, BitcoinMethods.SENDTOADDRESS.name().toLowerCase(),
                     address, BitcoinManager.toBigDecimal(body));
         } catch (InternalLogicException e) {
-            log.error("Cannot spend transaction", e);
+            log.error("Cannot send transaction", e);
         }
         return Strings.EMPTY;
     }
