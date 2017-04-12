@@ -131,7 +131,7 @@ public class BlockchainLogger {
                     while (true) {
                         boolean anyUpdate = log();
                         log.info("Is blockchain updated: " + anyUpdate);
-                        if (!anyUpdate && (System.currentTimeMillis() - lasUpdateTime > 120000)) {
+                        if (!anyUpdate && (System.currentTimeMillis() - lasUpdateTime > 20 * 60 * 1000)) {
                             ObjectMapper mapper = new ObjectMapper();
                             WorkFinishedTO remoteInstanceStateTO = new WorkFinishedTO(ip);
 

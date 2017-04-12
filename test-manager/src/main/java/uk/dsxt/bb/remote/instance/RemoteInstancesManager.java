@@ -91,6 +91,14 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
         uploadFiles(allInstances, files);
     }
 
+    public void uploadFolderForRoot(Path src, String dst) {
+        uploadFolder(singletonList(rootInstance), src, dst);
+    }
+
+    public void uploadFolderForCommon(Path src, String dst) {
+        uploadFolder(commonInstances, src, dst);
+    }
+
     public void uploadFilesForCommon(List<Path> files) {
         uploadFiles(commonInstances, files);
     }
@@ -121,6 +129,17 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
         try {
             List<Callable<Boolean>> tasks = remoteInstances.stream()
                     .map(instances -> (Callable<Boolean>) () -> instances.uploadFiles(files))
+                    .collect(Collectors.toList());
+            executorService.invokeAll(tasks);
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
+    private void uploadFolder(List<T> remoteInstances, Path src, String dst) {
+        try {
+            List<Callable<Boolean>> tasks = remoteInstances.stream()
+                    .map(instances -> (Callable<Boolean>) () -> instances.uploadFolder(src, dst))
                     .collect(Collectors.toList());
             executorService.invokeAll(tasks);
         } catch (Exception e) {

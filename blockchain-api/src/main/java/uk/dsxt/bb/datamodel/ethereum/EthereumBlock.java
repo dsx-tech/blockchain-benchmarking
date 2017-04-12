@@ -66,6 +66,6 @@ public class EthereumBlock implements BlockchainBlock {
 
     @Override
     public long getTime() {
-        return Long.parseLong(timestamp);
+        return Long.parseLong(timestamp.replace("0x", ""), 16);
     }
 }

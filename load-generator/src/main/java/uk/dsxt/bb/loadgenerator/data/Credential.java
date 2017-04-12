@@ -21,27 +21,15 @@
  ******************************************************************************
  */
 
-package uk.dsxt.bb.datamodel.ethereum;
+package uk.dsxt.bb.loadgenerator.data;
 
 import lombok.Data;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
 
+/**
+ * @author phd
+ */
 @Data
-public class EthereumTransaction implements BlockchainTransaction {
-    String hash;
-    String nonce;
-    String blockHash;
-    String blockNumber;
-    String transactionIndex;
-    String from;
-    String to;
-    String value;
-    String gas;
-    String gasPrice;
-    String input;
-
-    @Override
-    public String getTxId() {
-        return hash;
-    }
+public class Credential {
+    private final String account;
+    private final String password;
 }

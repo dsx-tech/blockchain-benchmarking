@@ -29,9 +29,12 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import lombok.extern.log4j.Log4j2;
+import uk.dsxt.bb.loadgenerator.data.Credential;
 import uk.dsxt.bb.remote.instance.WorkFinishedTO;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +44,7 @@ import java.util.List;
  */
 @Log4j2
 public class LoadGeneratorMain {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         try {
             if (args.length < 8) {
                 log.error("Incorrect arguments count in LoadGeneratorMain.main(). Need min 8. Actual args: {}", Arrays.toString(args));
@@ -54,10 +57,22 @@ public class LoadGeneratorMain {
             int delay = Integer.parseInt(args[4]);
             String ip = args[5];
             String masterHost = args[6];
+            String credentialsPath = args[7];
             List<String> targets = new ArrayList<>();
-            targets.addAll(Arrays.asList(args).subList(6, args.length));
+            targets.addAll(Arrays.asList(args).subList(8, args.length));
 
-            LoadManager loadManager = new LoadManager(targets, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay);
+            List<Credential> accounts = new ArrayList<>();
+            Files.readAllLines(Paths.get(credentialsPath)).forEach(line -> {
+                    String[] credential = line.split(" ");
+                    if (credential.length != 2) {
+                        log.error("Invalid credential: " + line);
+                        return;
+                    }
+                    accounts.add(new Credential(credential[0], credential[1]));
+                }
+            );
+
+            LoadManager loadManager = new LoadManager(targets, accounts, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay);
 
             loadManager.start();
             loadManager.waitCompletion();
@@ -71,6 +86,9 @@ public class LoadGeneratorMain {
             log.info("Info sended to master node, response {}", response);
         } catch (IOException | UnirestException e) {
             log.error("Couldn't start Load Generator module. {}", e);
+        }
+        finally {
+            Unirest.shutdown();
         }
     }
 }
