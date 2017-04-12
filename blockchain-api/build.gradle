@@ -21,7 +21,7 @@ dependencies {
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.55'
     compile group: 'io.grpc', name: 'grpc-all', version: '1.0.1'
     compile "com.fasterxml.jackson.core:jackson-databind:2.5.3"
-
+    compile "org.json:json:20090211"
     // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
     compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.2'
 

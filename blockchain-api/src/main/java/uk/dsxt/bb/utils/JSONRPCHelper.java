@@ -25,8 +25,8 @@ package uk.dsxt.bb.utils;
 
 import com.google.gson.*;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.util.Strings;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -81,7 +81,7 @@ public class JSONRPCHelper {
         return new Gson().fromJson(post, (Type) tClass);
     }
 
-    public static String postToSendMessageEthereum(String url, String method, String sender, String receiver, String amount)
+    public static String postToSendTransactionEthereum(String url, String sender, String receiver, String amount)
             throws IOException {
         try {
             String params = String.format("{\"jsonrpc\":\"2.0\"," +
@@ -96,4 +96,21 @@ public class JSONRPCHelper {
 
         return Strings.EMPTY;
     }
+
+    public static String postToSendMessageEthereum(String url, String sender, String receiver, String message, String amount)
+            throws IOException {
+        try {
+            String params = String.format("{\"jsonrpc\":\"2.0\"," +
+                            "\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"%s\",\"to\":\"%s\"," +
+                            "\"value\":\"%s\", \"data\":\"%s\"}],\"id\":%s}",
+                    sender, receiver, amount, Hex.encodeHexString(message.getBytes()), id);
+
+            return httpHelper.request(url, params, RequestType.POST);
+        } catch (Exception e) {
+            log.error("Cannot run post method for sending transactions in Ethereum", e);
+        }
+
+        return Strings.EMPTY;
+    }
+
 }

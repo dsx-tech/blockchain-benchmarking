@@ -229,7 +229,6 @@ public class FabricManager implements Manager {
                         " },\n" +
                     "\"id\":1\n" +
                     "}", path);
-            System.out.println(params);
             log.info("chaincode deployed");
             JSONObject chaincodeID = new JSONObject(httpHelper.request(url, params, RequestType.POST));
             return chaincodeID.getJSONObject("result").getString("message");
@@ -253,7 +252,6 @@ public class FabricManager implements Manager {
                     "  },\n" +
                     "  \"id\":%s \n" +
                     "}", chaincodeID, message, timestamp, id);
-            System.out.println(params);
             return httpHelper.request(url, params, RequestType.POST);
         } catch (Exception e) {
             log.error("Cannot run post method for sending transactions to fabric", e);
@@ -274,7 +272,6 @@ public class FabricManager implements Manager {
                     "}\n" +
                     "},\n" +
                     "\"id\":%s}", chaincodeID, timestamp, id);
-            System.out.println(params);
             return httpHelper.request(url, params, RequestType.POST);
 
         } catch (Exception e) {
