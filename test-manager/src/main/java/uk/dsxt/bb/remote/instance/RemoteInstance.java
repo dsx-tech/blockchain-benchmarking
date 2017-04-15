@@ -57,7 +57,8 @@ public class RemoteInstance {
     private int id;
     private Path logPath;
 
-    @Getter @Setter private boolean isRunning;
+    @Getter @Setter
+    protected boolean isRunning;
 
     public String getHost() {
         return host;

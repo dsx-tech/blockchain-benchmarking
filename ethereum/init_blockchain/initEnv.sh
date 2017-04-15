@@ -13,7 +13,7 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH;
 
 mkdir gopath;
 cd gopath;
-git clone https://github.com/ethereum/go-ethereum;
+git clone -b release/1.6 https://github.com/ethereum/go-ethereum;
 sudo apt-get install -y build-essential golang;
 
 

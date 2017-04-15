@@ -41,6 +41,7 @@ public class LoggerInstance extends RemoteInstance {
 
     public LoggerInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String logFile, int requestPeriod) {
         super(userName, host, port, keyPath, logPath);
+        this.isRunning = true;
         this.blockchainType = blockchainType;
         this.target = target;
         this.logFile = logFile;

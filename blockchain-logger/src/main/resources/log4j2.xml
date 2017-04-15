@@ -22,29 +22,19 @@
   ~  ******************************************************************************/
   -->
 
-<configuration monitorInterval="3">
-    <appenders>
-        <File name="FILE" fileName="logs/info.log">
-            <PatternLayout pattern="%d{ISO8601} [%-5p] (%F:%L) - %m%n"/>
-        </File>
-        <File name="BLOCKCHAIN_NODE" fileName="logs/peer.log">
-            <PatternLayout pattern="%d{ISO8601} [%-5p] (%F:%L) - %m%n"/>
-        </File>
-        <Console name="STDOUT" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{ABSOLUTE} [%-5p] (%F:%L) - %m%n"/>
+<Configuration status="INFO">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
-    </appenders>
-    <loggers>
-        <Logger name="uk.dsxt.logger.BlockchainLogger">
-            <level value="info"/>
-            <appender-ref ref="BLOCKCHAIN_NODE"/>
-        </Logger>
-        <Logger name="uk.dsxt.logger.BlockchainLogger">
-            <level value="info"/>
-            <appender-ref ref = "FILE"/>
-        </Logger>
-        <root level="info">
-            <appender-ref ref="STDOUT"/>
-        </root>
-    </loggers>
-</configuration>
+        <File name="BlockchainLogger" fileName="blockchain_logger.log" immediateFlush="true" append="false">
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="BlockchainLogger"/>
+        </Root>
+    </Loggers>
+</Configuration>

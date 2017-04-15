@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-export GETH_COMMON_PROPERTIES="--datadir=/home/ubuntu/eth-root/datadir --targetgaslimit 100 --gasprice 1000 --networkid 497 --rpc --rpcport 8101 --rpccorsdomain \"*\" --rpcaddr 0.0.0.0 --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3 --port 30303 --ipcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3"
+export GETH_COMMON_PROPERTIES="--datadir=/home/ubuntu/eth-root/datadir --networkid 497 --rpc --rpcport 8101 --rpccorsdomain \"*\" --rpcaddr 0.0.0.0 --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3 --port 30303"
 export GETH="/home/ubuntu/gopath/go-ethereum/build/bin/geth ${GETH_COMMON_PROPERTIES}"
 echo $GETH
 
@@ -19,7 +19,7 @@ for i in `seq 0 1`;
                 accounts[$i]=${acc}
                 echo ${acc} >> ~/root_init_result/accounts
                 echo -e "0x${acc} 0000" >> ~/root_init_result/credentials;
-                acc="\"${acc}\": { \"balance\": \"1000000000\" }"
+                acc="\"${acc}\": { \"balance\": \"10000000000000000000000\" }"
                 if [ "$i" -ne "1" ]
                 then
                 	acc="${acc},${NEWLINE}"
@@ -37,7 +37,7 @@ genesis="{${NEWLINE}
         \"eip155Block\": 0,${NEWLINE}
         \"eip158Block\": 0${NEWLINE}
     },${NEWLINE}
-    \"difficulty\": \"0x0400\",${NEWLINE}
+    \"difficulty\": \"0x1000\",${NEWLINE}
     \"gasLimit\": \"0x4c4b40\",${NEWLINE}
     \"alloc\": {${NEWLINE}
         ${allocated_accounts}
@@ -60,4 +60,4 @@ raw_node=${raw_node:1:137}
 raw_node="${raw_node}${ROOT_NODE}:30303"
 echo $raw_node
 echo $raw_node > ~/root_init_result/enode
-nohup $GETH --mine --etherbase=$(shuf -n 1 ~/root_init_result/accounts) >/dev/null 2>ethereum.log &
+nohup $GETH --mine --minerthreads=1 --etherbase=$(shuf -n 1 ~/root_init_result/accounts) >/dev/null 2>ethereum.log &

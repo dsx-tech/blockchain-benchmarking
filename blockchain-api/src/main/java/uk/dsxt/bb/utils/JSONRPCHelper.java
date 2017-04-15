@@ -38,8 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Log4j2
 public class JSONRPCHelper {
 
-    private static AtomicInteger id = new AtomicInteger();
-    private static HttpHelper httpHelper = new HttpHelper(10000, 10000);
+    public static AtomicInteger id = new AtomicInteger();
+    public static HttpHelper httpHelper = new HttpHelper(120000, 120000);
 
     public static String post(String url, String method, Object... parameters) throws InternalLogicException {
         try {

@@ -120,7 +120,7 @@ class LoadManager {
                             stringJoiner.add(id);
                             stringJoiner.add(Long.toString(startTime));
                             stringJoiner.add(Integer.toString(message.getBytes().length));
-                            stringJoiner.add(id != null ? "OK" : "FAIL");
+                            stringJoiner.add(id != null && !id.isEmpty() ? "OK" : "FAIL");
 
                             logs.add(stringJoiner.toString());
                             if (j == amountOfTransactions - 1 || j % BATCH_SIZE == 0) {
