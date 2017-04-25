@@ -31,7 +31,7 @@ public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGe
 
     @Override
     protected String getEnvVariables(LoadGeneratorInstance remoteInstance) {
-        String params = String.format("%d %d %d %d %d %s %s %s",
+        String params = String.format("%d %d %d %d %d %s %s %s %s",
                 remoteInstance.getAmountOfTransactions(),
                 remoteInstance.getAmountOfThreadsPerTarget(),
                 remoteInstance.getMinLength(),
@@ -39,6 +39,7 @@ public class LoadGeneratorInstancesManager extends RemoteInstancesManager<LoadGe
                 remoteInstance.getDelay(),
                 remoteInstance.getHost(),
                 getMasterIp() + ":" + getMasterPort(),
+                "/home/ubuntu/credentials",
                 String.join(" ", remoteInstance.getLoadTargets()));
         return String.format("export LOAD_PARAMS=\"%s\"; ", params);
     }

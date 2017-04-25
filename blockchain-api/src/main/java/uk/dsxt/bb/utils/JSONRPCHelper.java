@@ -23,8 +23,11 @@
 
 package uk.dsxt.bb.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.util.Strings;
 
 import java.io.IOException;
@@ -35,8 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Log4j2
 public class JSONRPCHelper {
 
-    private static AtomicInteger id = new AtomicInteger();
-    private static HttpHelper httpHelper = new HttpHelper(5000, 5000);
+    public static AtomicInteger id = new AtomicInteger();
+    public static HttpHelper httpHelper = new HttpHelper(120000, 120000);
 
     public static String post(String url, String method, Object... parameters) throws InternalLogicException {
         try {
@@ -80,7 +83,7 @@ public class JSONRPCHelper {
         return new Gson().fromJson(post, (Type) tClass);
     }
 
-    public static String postToSendMessageEthereum(String url, String method, String sender, String receiver, String amount)
+    public static String postToSendTransactionEthereum(String url, String sender, String receiver, String amount)
             throws IOException {
 
         try {
@@ -88,10 +91,28 @@ public class JSONRPCHelper {
                     "\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"%s\",\"to\":\"%s\"," +
                             "\"value\":\"%s\"}],\"id\":%s}",
                     sender, receiver, amount, id);
+            String responseString = httpHelper.request(url, params, RequestType.POST);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode responseJson = mapper.readTree(responseString);
+            return responseJson.get("result").textValue();
+        } catch (Exception e) {
+            log.error("Cannot run post method for sending transactions in Ethereum", e);
+        }
+
+        return Strings.EMPTY;
+    }
+
+    public static String postToSendMessageEthereum(String url, String sender, String receiver, String message, String amount)
+            throws IOException {
+        try {
+            String params = String.format("{\"jsonrpc\":\"2.0\"," +
+                            "\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"%s\",\"to\":\"%s\"," +
+                            "\"value\":\"%s\", \"data\":\"%s\"}],\"id\":%s}",
+                    sender, receiver, amount, Hex.encodeHexString(message.getBytes()), id);
 
             return httpHelper.request(url, params, RequestType.POST);
         } catch (Exception e) {
-            log.error("Cannot run post method for sending transactoins in Ethereum", e);
+            log.error("Cannot run post method for sending transactions in Ethereum", e);
         }
 
         return Strings.EMPTY;

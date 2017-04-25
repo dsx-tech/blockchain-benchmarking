@@ -26,49 +26,25 @@ package uk.dsxt.bb;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.test_manager.TestManager;
 import uk.dsxt.bb.test_manager.TestManagerProperties;
+import uk.dsxt.bb.utils.PropertiesHelper;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author phd
  */
 @Log4j2
 public class TestManagerMain {
-    private final static String userNameOnRemoteInstance = "ec2-user";
-    private final static String pathToBlockchainResources = "hyperledger";
-
     public static void main(String[] args) throws Exception {
-        Path logPath = Paths.get(pathToBlockchainResources, "log");
-        if (logPath.toFile().exists()) {
-            logPath.toFile().delete();
-        }
-        logPath.toFile().mkdir();
+        String propertiesPath = args[0];
+        Properties properties = PropertiesHelper.loadPropertiesFromPath(propertiesPath);
 
-        TestManagerProperties testManagerProperties = TestManagerProperties
-                .builder()
-                .pemKeyPath(args[0])
-                .amountOfTransactionsPerTarget(Integer.parseInt(args[1]))
-                .amountOfThreadsPerTarget(Integer.parseInt(args[2]))
-                .minMessageLength(Integer.parseInt(args[3]))
-                .maxMessageLength(Integer.parseInt(args[4]))
-                .blockchainType(args[5])
-                .fileToLogBlocks(args[6])
-                .requestPeriod(Integer.parseInt(args[7]))
-                .chaincodeFile(args[8])
-                .blockchainInstancesAmount(Integer.parseInt(args[9]))
-                .loadGeneratorInstancesAmount(Integer.parseInt(args[10]))
-                .delayBeetweenRequests(Integer.parseInt(args[11]))
-                .pathToBlockchainResources(pathToBlockchainResources)
-                .userNameOnRemoteInstances(userNameOnRemoteInstance)
-                .deployLogPath(logPath.toAbsolutePath().toFile().toString())
-                .masterIpAddress(args[12])
-                .masterPort(8080)
-                .build();
+        TestManagerProperties testManagerProperties = TestManagerProperties.fromProperties(properties);
 
-        List<String> allHosts = Files.readAllLines(Paths.get(pathToBlockchainResources, "instances"));
+        List<String> allHosts = Files.readAllLines(Paths.get(testManagerProperties.getInstancesPath()));
         TestManager testManager = new TestManager(allHosts, testManagerProperties);
         testManager.start();
     }

@@ -21,55 +21,15 @@
  ******************************************************************************
  */
 
-package uk.dsxt.bb.datamodel.bitcoin;
+package uk.dsxt.bb.loadgenerator.data;
 
 import lombok.Data;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 
-import java.math.BigDecimal;
-
+/**
+ * @author phd
+ */
 @Data
-public class BitcoinBlock implements BlockchainBlock {
-    String hash;
-    long confirmations;
-    long strippedsize;
-    long size;
-    long weight;
-    long height;
-    long version;
-    String versionHex;
-    String merkleroot;
-    String[] tx;
-    long time;
-    long mediantime;
-    long nonce;
-    String bits;
-    BigDecimal difficulty;
-    String chainwork;
-    String previousblockhash;
-    String nextblockhash;
-
-    @Override
-    public String getHash() {
-        return hash;
-    }
-
-    @Override
-    public String getPreviousBlockHash() {
-        return previousblockhash;
-    }
-
-    @Override
-    public BitcoinTransaction[] getTransactions() {
-        BitcoinTransaction[] transactions = new BitcoinTransaction[tx.length];
-        for (int i = 0; i < tx.length; i++) {
-            transactions[i] = new BitcoinTransaction(tx[i]);
-        }
-        return transactions;
-    }
-
-    @Override
-    public long getTime() {
-        return time;
-    }
+public class Credential {
+    private final String account;
+    private final String password;
 }

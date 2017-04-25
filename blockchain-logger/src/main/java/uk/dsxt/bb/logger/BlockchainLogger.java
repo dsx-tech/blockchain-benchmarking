@@ -28,6 +28,7 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.blockchain.BlockchainManager;
+import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
 import uk.dsxt.bb.remote.instance.WorkFinishedTO;
 
@@ -36,22 +37,19 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.LongStream;
 
 @Log4j2
 public class BlockchainLogger {
 
     private BlockchainManager blockchainManager;
-    private long counterForHeight;
     private long requestFrequency;
-    private long checkTime;
-    private String url;
     private FileWriter fw;
     private String ip;
     private String masterHost;
 
     public BlockchainLogger(String blockchainType, String url, String csv, int requestFrequency, String ip, String masterHost) throws IOException {
         this.requestFrequency = requestFrequency;
-        this.url = url;
         this.blockchainManager = new BlockchainManager(blockchainType, url);
         Paths.get(csv).toAbsolutePath().getParent().toFile().mkdirs();
         this.fw = new FileWriter(csv, true);
@@ -89,49 +87,56 @@ public class BlockchainLogger {
         }
     }
 
-    private boolean log() throws IOException {
-        long timeMillis = System.currentTimeMillis();
-        long startTime = TimeUnit.MILLISECONDS.toSeconds(timeMillis);
-        long lastBlockNumber = blockchainManager.getChain().getLastBlockNumber();
-        long time = 0;
-        boolean isHaveAnyUpdate = lastBlockNumber - 1 > counterForHeight;
-        if (isHaveAnyUpdate) {
-            time = blockchainManager.getBlock(counterForHeight).getTime();
-        }
-        while (lastBlockNumber - 1 > counterForHeight) {
-            counterForHeight++;
-
+    private void log(long lastLoggedBlockId, long currentBlockId, long time) throws IOException {
+        for (long i = lastLoggedBlockId + 1; i <= currentBlockId; ++i) {
             StringJoiner stringJoiner = new StringJoiner(",");
-            stringJoiner.add(String.valueOf(counterForHeight));
-            stringJoiner.add(String.valueOf(startTime));
+            stringJoiner.add(String.valueOf(i));
             stringJoiner.add(String.valueOf(time));
             fw.write(stringJoiner.toString() + '\n');
-
-            log.debug("{} Start time: {}", counterForHeight, startTime);
-            log.debug("{} Block committed: {}", counterForHeight, time);
         }
         fw.flush();
-        return isHaveAnyUpdate;
     }
 
+    private boolean isBlocksInRangeHasTransactions(long start, long end) {
+        return LongStream.rangeClosed(start + 1, end)
+                .parallel()
+                .anyMatch(i -> {
+                    try {
+                        return blockchainManager.getBlock(i).getTransactions().length > 0;
+                    } catch (IOException e) {
+                        log.error(e);
+                        return false;
+                    }
+                });
+    }
     public void logInLoop() {
         try {
             if (blockchainManager != null) {
                 BlockchainChainInfo info = blockchainManager.getChain();
                 if (info != null) {
-                    counterForHeight = info.getLastBlockNumber();
                     StringJoiner stringJoiner = new StringJoiner(",");
                     stringJoiner.add("id");
-                    stringJoiner.add("Start time");
-                    stringJoiner.add("Block committed");
-
+                    stringJoiner.add("Appeared time");
                     fw.write(stringJoiner.toString() + '\n');
                     fw.flush();
-                    double lasUpdateTime = System.currentTimeMillis();
+
+                    long currentBlockId;
+                    long previousBlockId = -1;
+                    long lastNonEmptyBlockId = -1;
+                    long lastNonEmptyBlockTime = System.currentTimeMillis();
+
                     while (true) {
-                        boolean anyUpdate = log();
-                        log.info("Is blockchain updated: " + anyUpdate);
-                        if (!anyUpdate && (System.currentTimeMillis() - lasUpdateTime > 120000)) {
+                        long startLoopTime = System.currentTimeMillis();
+                        currentBlockId = blockchainManager.getChain().getLastBlockNumber();
+                        long currentBlockTime = System.currentTimeMillis();
+                        BlockchainBlock currentBlock = blockchainManager.getBlock(currentBlockId);
+
+
+                        if (currentBlockId > previousBlockId) {
+                            log(previousBlockId, currentBlockId, currentBlockTime);
+                        }
+
+                        if ((startLoopTime - lastNonEmptyBlockTime > 10 * 60 * 1000) && !isBlocksInRangeHasTransactions(previousBlockId, currentBlockId)) {
                             ObjectMapper mapper = new ObjectMapper();
                             WorkFinishedTO remoteInstanceStateTO = new WorkFinishedTO(ip);
 
@@ -139,10 +144,21 @@ public class BlockchainLogger {
                                     .body(mapper.writeValueAsString(remoteInstanceStateTO)).asJson();
                             break;
                         }
-                        if (anyUpdate) {
-                            lasUpdateTime = System.currentTimeMillis();
+
+                        if (currentBlock.getTransactions().length != 0) {
+                            lastNonEmptyBlockId = currentBlockId;
+                            lastNonEmptyBlockTime = currentBlockTime;
                         }
-                        TimeUnit.MILLISECONDS.sleep(requestFrequency);
+
+                        previousBlockId = currentBlockId;
+
+                        long endLoopTime = System.currentTimeMillis();
+                        long loopTime = endLoopTime - startLoopTime;
+                        if (requestFrequency > loopTime) {
+                            TimeUnit.MILLISECONDS.sleep(requestFrequency - loopTime);
+                        } else {
+                            log.warn("Request for new block was longer than request.blocks.period, it is can impact on results.");
+                        }
                     }
                 }
             }

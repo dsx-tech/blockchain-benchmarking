@@ -25,6 +25,10 @@ package uk.dsxt.bb.test_manager;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
+
 /**
  * @author phd
  */
@@ -32,7 +36,9 @@ import lombok.Getter;
 @Builder
 public class TestManagerProperties {
     final private String pemKeyPath;
-    final private String pathToBlockchainResources;
+    final private String instancesPath;
+    final private Path blockchainInitResourcesPath;
+    final private Path testManagerModulesPath;
     final private int amountOfTransactionsPerTarget;
     final private int amountOfThreadsPerTarget;
     final private int delayBeetweenRequests;
@@ -40,12 +46,39 @@ public class TestManagerProperties {
     final private int maxMessageLength;
     final private String blockchainType;
     final private String fileToLogBlocks;
-    final private int requestPeriod;
+    final private int requestBlocksPeriod;
     final private String chaincodeFile;
     final private int blockchainInstancesAmount;
     final private int loadGeneratorInstancesAmount;
-    final private String deployLogPath;
+    final private String resultLogsPath;
     final private String userNameOnRemoteInstances;
     final private String masterIpAddress;
     final private int masterPort;
+
+    public static TestManagerProperties fromProperties(Properties properties) {
+        return TestManagerProperties.builder()
+                .resultLogsPath(properties.getProperty("log.path"))
+                .pemKeyPath(properties.getProperty("pem.key.path"))
+                .instancesPath(properties.getProperty("instances.path"))
+                .blockchainInitResourcesPath(Paths.get(properties.getProperty("blockchain.init.resources")))
+                .testManagerModulesPath(Paths.get(properties.getProperty("test_manager.modules.path")))
+                .amountOfTransactionsPerTarget(convertToInt(properties.getProperty("amount.transactions.per.target")))
+                .amountOfThreadsPerTarget(convertToInt(properties.getProperty("amount.threads.per.target")))
+                .minMessageLength(convertToInt(properties.getProperty("message.length.min")))
+                .maxMessageLength(convertToInt(properties.getProperty("message.length.max")))
+                .blockchainType(properties.getProperty("blockchain.type"))
+                .fileToLogBlocks(properties.getProperty("file.log.blocks"))
+                .requestBlocksPeriod(convertToInt(properties.getProperty("request.blocks.period")))
+                .blockchainInstancesAmount(convertToInt(properties.getProperty("blockchain.instances.amount")))
+                .loadGeneratorInstancesAmount(convertToInt(properties.getProperty("load_generator.instances.amount")))
+                .delayBeetweenRequests(convertToInt(properties.getProperty("message.delay")))
+                .userNameOnRemoteInstances(properties.getProperty("remote.instance.user.name"))
+                .masterIpAddress(properties.getProperty("test_manager.ip"))
+                .masterPort(convertToInt(properties.getProperty("test_manager.port")))
+                .build();
+    }
+
+    private static int convertToInt(String potentialInt) {
+        return Integer.valueOf(potentialInt);
+    }
 }

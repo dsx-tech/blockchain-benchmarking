@@ -28,8 +28,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,7 +57,8 @@ public class RemoteInstance {
     private int id;
     private Path logPath;
 
-    @Getter @Setter private boolean isRunning;
+    @Getter @Setter
+    protected boolean isRunning;
 
     public String getHost() {
         return host;
@@ -71,6 +76,7 @@ public class RemoteInstance {
         this.port = port;
         this.id = globalCounter.getAndIncrement();
         this.logPath = logPath;
+        this.isRunning = true;
         jsch = new JSch();
         try {
             jsch.addIdentity(keyPath);
@@ -110,8 +116,6 @@ public class RemoteInstance {
             channelShell.setOutputStream(logStream);
             PrintStream shellStream = new PrintStream(channel.getOutputStream());
             channel.connect();
-            commands.add("exit");
-            commands.add("exit");
             for (String command : commands) {
                 logger.debug("Executing command on: " + channel.getSession().getHost());
                 shellStream.println(command);
@@ -121,6 +125,8 @@ public class RemoteInstance {
             {
                 logger.info("----- Executing commads... ----");
                 Thread.sleep(10000);
+                shellStream.println("exit");
+                shellStream.flush();
             }
             return true;
         } catch (Exception e) {
@@ -157,6 +163,36 @@ public class RemoteInstance {
         return false;
     }
 
+    public boolean uploadFolder(Path src, String dst) {
+        try {
+            ChannelSftp channel = getOrCreateChannelSftp();
+            logger.debug("Uploading folders to: " + channel.getSession().getHost());
+            channel.connect();
+            uploadFolder(channel, src, dst);
+            logger.info("Folder {} uploaded to: {}", src.getFileName().toString(), channel.getSession().getHost());
+        } catch (SftpException | JSchException e) {
+            logger.error(e);
+        } finally {
+            channelSftp.disconnect();
+        }
+        return false;
+    }
+
+    private void uploadFolder(ChannelSftp openedChannel, Path src, String dst) throws SftpException {
+        openedChannel.mkdir(dst);
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(src)) {
+            for (Path path: ds) {
+                if (path.toFile().isDirectory()) {
+                    uploadFolder(openedChannel, path, dst + "/" + path.getFileName().toString());
+                } else {
+                    openedChannel.put(path.toString(), dst + "/" + path.getFileName().toString());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public boolean downloadFiles(List<String> from, Path to) {
         try {
             ChannelSftp channel = getOrCreateChannelSftp();
@@ -173,6 +209,47 @@ public class RemoteInstance {
             channelSftp.disconnect();
         }
         return false;
+    }
+
+    public boolean downloadFolder(String src, Path dst) {
+        try {
+            if (!dst.toFile().exists()) {
+                dst.toFile().mkdirs();
+            }
+            ChannelSftp channel = getOrCreateChannelSftp();
+            logger.debug("Download folder from: " + channel.getSession().getHost());
+            channel.connect();
+            src = src.replace("~", channel.getHome());
+            downloadFolder(channel, src, dst);
+            return true;
+        } catch (Exception e) {
+            logger.error(e);
+        }
+        finally {
+            channelSftp.disconnect();
+        }
+        return false;
+    }
+
+    private void downloadFolder(ChannelSftp openedChannel, String src, Path dst) throws SftpException {
+        if (!dst.toFile().exists()) {
+            dst.toFile().mkdirs();
+        }
+        List<ChannelSftp.LsEntry> files = new ArrayList<>();
+        openedChannel.ls(src, entry -> {
+            files.add(entry);
+            return ChannelSftp.LsEntrySelector.CONTINUE;
+        });
+        for (ChannelSftp.LsEntry file: files) {
+            if (file.getFilename().equals(".") || file.getFilename().equals("..")) {
+                continue;
+            }
+            if (file.getAttrs().isDir()) {
+                downloadFolder(openedChannel,src + "/" + file.getFilename(), dst.resolve(file.getFilename()));
+            } else {
+                openedChannel.get(src + "/" + file.getFilename(), dst.resolve(file.getFilename()).toString());
+            }
+        }
     }
 
     @Override

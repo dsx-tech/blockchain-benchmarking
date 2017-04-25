@@ -32,6 +32,7 @@ import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.ChainCodeException;
 import org.hyperledger.fabric.sdk.exception.EnrollmentException;
 import org.hyperledger.fabric.sdk.exception.RegistrationException;
+import org.json.JSONObject;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
@@ -40,6 +41,7 @@ import uk.dsxt.bb.datamodel.fabric.FabricChain;
 import uk.dsxt.bb.datamodel.fabric.FabricPeer;
 import uk.dsxt.bb.utils.PrintOutputToConsole;
 import uk.dsxt.bb.utils.PropertiesHelper;
+import uk.dsxt.bb.utils.RequestType;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -48,6 +50,9 @@ import java.nio.file.Paths;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static uk.dsxt.bb.utils.JSONRPCHelper.httpHelper;
+import static uk.dsxt.bb.utils.JSONRPCHelper.id;
 
 public class FabricManager implements Manager {
 
@@ -206,6 +211,73 @@ public class FabricManager implements Manager {
         request.setChaincodeName(chainCodeName);
 
         return member.deploy(request);
+    }
+
+    private String initChaincodeWithHttp(String url, String path) {
+        try {
+            String params = String.format("{\"jsonrpc\":\"2.0\", \n" +
+                    "\"method\":\"deploy\", \n" +
+                    "\"params\": {\n" +
+                        "\"type\":1, \n" +
+                        "\"chaincodeID\":{" +
+                        "\"path\":\"%s\",\n" +
+                        "\"name\":\"mycc\"" +
+                    "\n }," +
+                    "\"CtorMsg\": {\n" +
+                        "\"args\":[\"init\"]\n" +
+                        " }\n" +
+                        " },\n" +
+                    "\"id\":1\n" +
+                    "}", path);
+            log.info("chaincode deployed");
+            JSONObject chaincodeID = new JSONObject(httpHelper.request(url, params, RequestType.POST));
+            return chaincodeID.getJSONObject("result").getString("message");
+        } catch (Exception e) {
+            log.error("Cannot run post method for init fabric chaincode", e);
+        }
+        return null;
+    }
+
+    private String sendMessageWithHttp(String url, String chaincodeID, String message, long timestamp) {
+        try {
+            String params = String.format("{\"jsonrpc\":\"2.0\",\n" +
+                    "\"method\": \"invoke\", \n" +
+                    "\"params\": {\n" +
+                    "      \"chaincodeID\":{\n" +
+                    "          \"name\":\"%s\"\n" +
+                    "      },\n" +
+                    "      \"ctorMsg\": {\n" +
+                    "         \"args\":[\"write\", \"%s\", \"%s\"]\n" +
+                    "      }\n" +
+                    "  },\n" +
+                    "  \"id\":%s \n" +
+                    "}", chaincodeID, message, timestamp, id);
+            return httpHelper.request(url, params, RequestType.POST);
+        } catch (Exception e) {
+            log.error("Cannot run post method for sending transactions to fabric", e);
+        }
+        return null;
+    }
+
+    private String getMessagesWithHttp(String url, String chaincodeID, long timestamp) {
+        try {
+            String params = String.format("{\n\"jsonrpc\":\"2.0\",\n" +
+                    "\"method\":\"query\", \n" +
+                    "\"params\": {" +
+                    "\"type\":1," +
+                    "\"chaincodeID\":{" +
+                    "\"name\":\"%s\"\n}," +
+                    "\"ctorMsg\": {\n" +
+                    "\"args\":[\"read\", \"%d\"]\n" +
+                    "}\n" +
+                    "},\n" +
+                    "\"id\":%s}", chaincodeID, timestamp, id);
+            return httpHelper.request(url, params, RequestType.POST);
+
+        } catch (Exception e) {
+            log.error("Cannot query chaincode", e);
+        }
+        return null;
     }
 
     @Override

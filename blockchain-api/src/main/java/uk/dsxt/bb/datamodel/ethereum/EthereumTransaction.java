@@ -42,6 +42,6 @@ public class EthereumTransaction implements BlockchainTransaction {
 
     @Override
     public String getTxId() {
-        return transactionIndex;
+        return hash;
     }
 }

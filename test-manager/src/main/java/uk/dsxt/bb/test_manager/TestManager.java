@@ -24,9 +24,6 @@ package uk.dsxt.bb.test_manager;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
 import lombok.extern.log4j.Log4j2;
 import spark.Spark;
 import uk.dsxt.bb.blockchain.BlockchainManager;
@@ -76,16 +73,21 @@ public class TestManager {
         this.allHosts = allHosts;
         this.properties = properties;
         validateProperties(properties);
-        blocksLog = getEmptyFolder(Paths.get(properties.getPathToBlockchainResources(), "blocks"));
-        transactionsLog = getEmptyFolder(Paths.get(properties.getPathToBlockchainResources(), "transactions"));
+        blocksLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "blocks"));
+        transactionsLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "transactions"));
     }
 
     private void validateProperties(TestManagerProperties properties) {
         log.debug("pem key path: {}", properties.getPemKeyPath());
-        if (!Files.exists(Paths.get(properties.getPathToBlockchainResources(), "instances"))) {
+        if (!Files.exists(Paths.get(properties.getInstancesPath()))) {
             log.error("File \"instances\" doesn't exists");
             return;
         }
+        Path logPath = Paths.get(properties.getResultLogsPath());
+        if (logPath.toFile().exists()) {
+            logPath.toFile().delete();
+        }
+        logPath.toFile().mkdir();
     }
 
     public void start() {
@@ -103,8 +105,8 @@ public class TestManager {
             List<LoggerInstance> loggerInstances = new ArrayList<>();
             blockchainInstancesManager.getAllInstances().forEach(i -> loggerInstances.add(new LoggerInstance(
                     properties.getUserNameOnRemoteInstances(), i.getHost(), 22, properties.getPemKeyPath(),
-                    Paths.get(properties.getDeployLogPath()), properties.getBlockchainType(),
-                    i.getHost(), properties.getFileToLogBlocks(), properties.getRequestPeriod())));
+                    Paths.get(properties.getResultLogsPath()), properties.getBlockchainType(),
+                    i.getHost(), properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
             loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
             loggerInstancesManager = runLoggers(loggerInstances);
             Thread.sleep(10000);
@@ -113,7 +115,7 @@ public class TestManager {
             for (int i = 0; i < properties.getLoadGeneratorInstancesAmount(); ++i) {
                 loadGeneratorInstances.add(new LoadGeneratorInstance(properties.getUserNameOnRemoteInstances(),
                         allHosts.get(i + properties.getBlockchainInstancesAmount()), 22,
-                        properties.getPemKeyPath(), Paths.get(properties.getDeployLogPath()),
+                        properties.getPemKeyPath(), Paths.get(properties.getResultLogsPath()),
                         properties.getAmountOfTransactionsPerTarget(), properties.getAmountOfThreadsPerTarget(),
                         properties.getMinMessageLength(), properties.getMaxMessageLength(), properties.getDelayBeetweenRequests()));
             }
@@ -130,7 +132,7 @@ public class TestManager {
                 .stream()
                 .map(host -> new RemoteInstance(properties.getUserNameOnRemoteInstances(),
                         host, 22,
-                        properties.getPemKeyPath(), Paths.get(properties.getDeployLogPath())))
+                        properties.getPemKeyPath(), Paths.get(properties.getResultLogsPath())))
                 .collect(Collectors.toList());
         try {
             RemoteInstancesManager<RemoteInstance> blockchainInstancesManager = new RemoteInstancesManager<>(
@@ -140,51 +142,26 @@ public class TestManager {
             blockchainInstancesManager.addCommonInstances(blockchainInstances.subList(1, blockchainInstances.size()));
 
             blockchainInstancesManager.uploadFilesForAll(Arrays.asList(
-                    Paths.get(properties.getPathToBlockchainResources(), properties.getChaincodeFile()),
-                    Paths.get(properties.getPathToBlockchainResources(), "initEnv.sh")
+                    properties.getBlockchainInitResourcesPath().resolve("initEnv.sh")
             ));
 
             blockchainInstancesManager.executeCommandsForAll(singletonList("bash initEnv.sh"));
 
-            List<Path> rootFiles = new ArrayList<>();
-            rootFiles.add(Paths.get(properties.getPathToBlockchainResources(), "root", "docker-compose.yml"));
-            rootFiles.add(Paths.get(properties.getPathToBlockchainResources(), "root", "startRoot.sh"));
-            blockchainInstancesManager.uploadFilesForRoot(rootFiles);
+            blockchainInstancesManager.uploadFolderForRoot(properties.getBlockchainInitResourcesPath().resolve("root"), "root_init_files");
             blockchainInstancesManager.executeCommandsForRoot(singletonList(
-                    "bash startRoot.sh && touch startRoot.complete")
+                    "bash root_init_files/startRoot.sh && touch startRoot.complete")
             );
+            blockchainInstancesManager.getRootInstance().downloadFolder("~/root_init_result",
+                    Paths.get("tmp", "root_init_result"));
 
-            List<Path> commonFiles = new ArrayList<>();
-            commonFiles.add(Paths.get(properties.getPathToBlockchainResources(), "common", "docker-compose.yml"));
-            commonFiles.add(Paths.get(properties.getPathToBlockchainResources(), "common", "startCommon.sh"));
-            blockchainInstancesManager.uploadFilesForCommon(commonFiles);
+            blockchainInstancesManager.uploadFolderForCommon(properties.getBlockchainInitResourcesPath().resolve("common"), "common_init_files");
+            blockchainInstancesManager.uploadFolderForCommon(Paths.get("tmp", "root_init_result"), "common_init_files/root_init_result");
             blockchainInstancesManager.executeCommandsForCommon(Collections.singletonList(
-                    "bash startCommon.sh && touch startCommon.complete")
+                    "bash common_init_files/startCommon.sh && touch startCommon.complete")
             );
 
-            sleep(20000);
-            blockchainInstancesManager.executeCommandsForAll(singletonList("CORE_CHAINCODE_ID_NAME=mycc " +
-                    "CORE_PEER_ADDRESS=0.0.0.0:7051 " +
-                    "nohup ./" + properties.getChaincodeFile() + " >/dev/null 2>chaincode.log &")
-            );
+            sleep(5 * 60 * 1000);
             log.info("Blockchain instances started");
-            sleep(3000);
-            HttpResponse<JsonNode> response = Unirest.post(
-                    "http://" + blockchainInstancesManager.getRootInstance().getHost() + ":7050/chaincode").body("{\n" +
-                    "  \"jsonrpc\": \"2.0\",\n" +
-                    "  \"method\": \"deploy\",\n" +
-                    "  \"params\": {\n" +
-                    "    \"type\": 1,\n" +
-                    "    \"chaincodeID\":{\n" +
-                    "        \"name\": \"mycc\"\n" +
-                    "    },\n" +
-                    "    \"CtorMsg\": {\n" +
-                    "        \"args\":[\"init\"]\n" +
-                    "    }\n" +
-                    "  },\n" +
-                    "  \"id\": 1\n" +
-                    "}").asJson();
-            log.info("chaincode deployed: {}", response.getBody());
             return blockchainInstancesManager;
         } catch (Exception e) {
             e.printStackTrace();
@@ -199,11 +176,11 @@ public class TestManager {
                 properties.getMasterPort());
         loggerInstancesManager.setRootInstance(loggers.get(0));
         loggerInstancesManager.addCommonInstances(loggers.subList(1, loggers.size()));
-        loggerInstancesManager.uploadFilesForAll(singletonList(Paths.get(properties.getPathToBlockchainResources(), "blockchain-logger.jar")));
+        loggerInstancesManager.uploadFilesForAll(singletonList(properties.getTestManagerModulesPath().resolve("blockchain-logger.jar")));
         loggerInstancesManager.executeCommandsForAll(Arrays.asList(
-                "pkill -f 'java -jar'",
-                "sudo yum -y install java-1.8.0",
-                "nohup java8 -jar blockchain-logger.jar ${LOG_PARAMS} >/dev/null 2>blockchain-logger-stdout.log &"
+                "pkill -f 'java -jar';",
+                "sudo apt-get -y install default-jre;",
+                "nohup java -jar blockchain-logger.jar ${LOG_PARAMS} >/dev/null 2>blockchain-logger-stdout.log &"
         ));
 
         log.debug("runLoggers stop");
@@ -237,13 +214,16 @@ public class TestManager {
         loadGeneratorsManager.addCommonInstances(loadGeneratorInstances.subList(1, loadGeneratorInstances.size()));
 
         loadGeneratorsManager.executeCommandsForAll(Arrays.asList(
-                "pkill -f 'java -jar'",
-                "sudo yum -y install java-1.8.0")
+                "pkill -f 'java -jar';",
+                "sudo apt-get -y install default-jre;")
         );
-        loadGeneratorsManager.uploadFilesForAll(singletonList(Paths.get(properties.getPathToBlockchainResources(), "load-generator.jar")));
+        loadGeneratorsManager.uploadFilesForAll(Arrays.asList(
+                properties.getTestManagerModulesPath().resolve("load-generator.jar"),
+                Paths.get("tmp", "root_init_result", "credentials")
+        ));
 
         loadGeneratorsManager.executeCommandsForAll(singletonList(
-                "nohup java8 -jar load-generator.jar ${LOAD_PARAMS} >/dev/null 2>load-generator-stdout.log &"));
+                "nohup java -jar load-generator.jar ${LOAD_PARAMS} >/dev/null 2>load-generator-stdout.log &"));
 
         log.debug("runLoadGenerators end");
         return loadGeneratorsManager;
@@ -351,11 +331,11 @@ public class TestManager {
     private void getTransactionsForBlocks() {
         log.info("Extracting transactions from blockchain...");
         try (FileWriter fw = new FileWriter(
-                getEmptyFolder(Paths.get(properties.getPathToBlockchainResources(), "transactionsPerBlock"))
+                getEmptyFolder(Paths.get(properties.getResultLogsPath(), "transactionsPerBlock"))
                         .resolve("transactionsPerBlock").toFile())) {
             fw.write("blockID, transactionID\n");
             BlockchainManager blockchainManager = new BlockchainManager(properties.getBlockchainType(),
-                    "grpc://" +blockchainInstancesManager.getRootInstance().getHost() + ":7051");
+                    "http://" +blockchainInstancesManager.getRootInstance().getHost() + ":8101");
             long lastBlock = blockchainManager.getChain().getLastBlockNumber();
             for (int i = 0; i < lastBlock; ++i) {
                 for (BlockchainTransaction blockchainTransaction: blockchainManager.getBlock(i).getTransactions()) {

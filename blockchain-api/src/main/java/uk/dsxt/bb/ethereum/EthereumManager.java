@@ -54,15 +54,13 @@ public class EthereumManager implements Manager {
 
     @Override
     public String sendMessage(byte[] body) {
-
         return Strings.EMPTY;
     }
 
     @Override
     public String sendTransaction(String from, String to, String amount) {
         try {
-            return JSONRPCHelper.postToSendMessageEthereum(url, EthereumMethods.SEND_TRANSACTION.getMethod(), from, to,
-                    amount);
+            return JSONRPCHelper.postToSendTransactionEthereum(url, from, to, amount);
         } catch (IOException e) {
             log.error("Cannot send message", e);
         }
