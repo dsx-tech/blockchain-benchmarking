@@ -25,6 +25,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.current.scenario.model.*;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -39,15 +40,17 @@ public class CSVComposer {
     private static final String GENERAL_FILE = "general.csv";
 
     //header lines
-    private static final String[] TIME_HEADER = {"time", "throughput",
+    private static final String[] TIME_HEADER = {"time", "throughput","throughputDistributed",
             "distributionLatency", "intensity", "transactionSize", "blockSize", "numberTransactionsInBlock"};
     private static final String[] TRANSACTIONS_HEADER = {"transactionId", "blockId",
             "transactionSize", "transactionCreationTime", "nodeId"};
-    private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "maxNodeTime95", "maxNodeTime"};
+    private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "latency95", "latencyMax"};
     //todo don't recreate file every time
-    private static final String[] GENERAL_HEADER = {"numberOfNodes", "maxThroughput", "mediumThroughput",
-            "mediumIntensity", "mediumTransactionSize", "mediumBlockSize", "mediumLatency"};
+    private static final String[] GENERAL_HEADER = {"numberOfNodes", "maxThroughput", "averageThroughput",
+            "averageIntensity", "averageTransactionSize", "averageBlockSize", "averageLatency"};
     private BlockchainInfo blockchainInfo;
+
+    private boolean generalExists = false;
 
     public CSVComposer(BlockchainInfo blockchainInfo) {
         this.blockchainInfo = blockchainInfo;
@@ -69,7 +72,8 @@ public class CSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + GENERAL_FILE), ',', '\u0000')) {
+        generalExists = new File(RESULT_PATH + GENERAL_FILE).exists();
+        try (CSVWriter writer = new CSVWriter(new FileWriter(RESULT_PATH + GENERAL_FILE, true), ',', '\u0000')) {
             fillGeneralCSV(writer);
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -77,29 +81,32 @@ public class CSVComposer {
     }
 
     private void fillGeneralCSV(CSVWriter writer) throws IOException {
-        writer.writeNext(GENERAL_HEADER);
+        if(!generalExists) {
+            writer.writeNext(GENERAL_HEADER);
+        }
         ScenarioInfo info = blockchainInfo.getScenarioInfo();
         String[] entry = {String.valueOf(info.getNumberOfNodes()),
-                String.valueOf(info.getThroughputMax()),
-                String.valueOf(info.getMediumThroughput()),
-                String.valueOf(info.getMediumIntensity()),
-                String.valueOf(info.getMediumTransactionSize()),
-                String.valueOf(info.getMediumBlockSize()),
-                String.valueOf(info.getMediumLatency())};
+                String.valueOf(info.getMaxThroughput()),
+                String.valueOf(info.getAverageThroughput()),
+                String.valueOf(info.getAverageIntensity()),
+                String.valueOf(info.getAverageTransactionSize()),
+                String.valueOf(info.getAverageBlockSize()),
+                String.valueOf(info.getAverageLatency())};
         writer.writeNext(entry);
         writer.flush();
     }
 
     private void fillTimeCSV(CSVWriter writer) throws IOException {
         writer.writeNext(TIME_HEADER);
-        for (TimeInfo timeInfo : blockchainInfo.getTimeInfos().values()) {
-            String[] entry = {String.valueOf(timeInfo.getTime()),
-                    String.valueOf(timeInfo.getThroughput()),
-                    String.valueOf(timeInfo.getLatency()),
-                    String.valueOf(timeInfo.getIntensity()),
-                    String.valueOf(timeInfo.getTransactionSize()),
-                    String.valueOf(timeInfo.getBlockSize()),
-                    String.valueOf(timeInfo.getNumberTransactionsInBlock())};
+        for (TimeSegmentInfo timeSegmentInfo : blockchainInfo.getTimeSegments().values()) {
+            String[] entry = {String.valueOf(timeSegmentInfo.getTime()),
+                    String.valueOf(timeSegmentInfo.getThroughput()),
+                    String.valueOf(timeSegmentInfo.getDistributionThroughput()),
+                    String.valueOf(timeSegmentInfo.getLatency()),
+                    String.valueOf(timeSegmentInfo.getIntensity()),
+                    String.valueOf(timeSegmentInfo.getTransactionSize()),
+                    String.valueOf(timeSegmentInfo.getBlockSize()),
+                    String.valueOf(timeSegmentInfo.getNumberTransactionsInBlock())};
             writer.writeNext(entry);
             writer.flush();
         }

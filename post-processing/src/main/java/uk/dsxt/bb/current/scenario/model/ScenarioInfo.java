@@ -26,23 +26,23 @@ import lombok.Data;
 public class ScenarioInfo {
 
     private int numberOfNodes;
-    private int throughputMax;
+    private int maxThroughput;
    //todo private int throughput95;
-    private int mediumThroughput;
-    private int mediumIntensity;
-    private int mediumTransactionSize;
-    private int mediumBlockSize;
-    private long mediumLatency;
+    private int averageThroughput;
+    private int averageIntensity;
+    private int averageTransactionSize;
+    private int averageBlockSize;
+    private long averageLatency;
 
-    public ScenarioInfo(int numberOfNodes, int throughputMax,
-                        int mediumThroughput, int mediumIntensity,
-                        int mediumTransactionSize, int mediumBlockSize, long mediumLatency) {
+    public ScenarioInfo(int numberOfNodes, int maxThroughput,
+                        int averageThroughput, int averageIntensity,
+                        int averageTransactionSize, int averageBlockSize, long averageLatency) {
         this.numberOfNodes = numberOfNodes;
-        this.throughputMax = throughputMax;
-        this.mediumThroughput = mediumThroughput;
-        this.mediumIntensity = mediumIntensity;
-        this.mediumTransactionSize = mediumTransactionSize;
-        this.mediumBlockSize = mediumBlockSize;
-        this.mediumLatency = mediumLatency;
+        this.maxThroughput = maxThroughput;
+        this.averageThroughput = averageThroughput;
+        this.averageIntensity = averageIntensity;
+        this.averageTransactionSize = averageTransactionSize;
+        this.averageBlockSize = averageBlockSize;
+        this.averageLatency = averageLatency;
     }
 }

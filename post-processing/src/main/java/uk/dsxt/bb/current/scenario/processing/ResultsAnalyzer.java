@@ -30,7 +30,8 @@ import java.util.*;
 public class ResultsAnalyzer {
 
     //note: time is counted from the start of the test in milliseconds
-    public static final long TIME_INTERVAL = 1000;
+    private long timeInterval;
+    private static final int NUMBER_OF_TIME_SEGMENTS = 100;
     private BlockchainInfo blockchainInfo;
 
     public ResultsAnalyzer(BlockchainInfo blockchainInfo) {
@@ -40,42 +41,45 @@ public class ResultsAnalyzer {
     public BlockchainInfo analyze() {
         // change time to counting from zero
         updateTimeFormat();
+        //calculate timeInterval
+        timeInterval = (getEndTime() - getStartTime()) / NUMBER_OF_TIME_SEGMENTS;
         // calculate creation time and times of distribution
         updateBlockInfos();
-        blockchainInfo.setTimeInfos(calculateTimeInfos());
+        blockchainInfo.setTimeSegments(calculateTimeSegments());
         blockchainInfo.setScenarioInfo(calculateScenarioInfo());
         return blockchainInfo;
     }
 
     private ScenarioInfo calculateScenarioInfo() {
         int numberOfNodes = blockchainInfo.getNumberOfNodes();
-        int throughputMax = 0;
+        int maxThroughput = 0;
+
         //todo throughput95
         //int throughput95;
-        int mediumThroughput = 0;
-        int mediumIntensity = 0;
-        int mediumTransactionSize = 0;
-        int mediumBlockSize = 0;
-        long mediumLatency = 0;
-        for (TimeInfo timeInfo : blockchainInfo.getTimeInfos().values()) {
-            if (timeInfo.getThroughput() > throughputMax) {
-                throughputMax = timeInfo.getThroughput();
+        int averageThroughput = 0;
+        int averageIntensity = 0;
+        int averageTransactionSize = 0;
+        int averageBlockSize = 0;
+        long averageLatency = 0;
+        for (TimeSegmentInfo timeSegmentInfo : blockchainInfo.getTimeSegments().values()) {
+            if (timeSegmentInfo.getThroughput() > maxThroughput) {
+                maxThroughput = timeSegmentInfo.getThroughput();
             }
-            mediumTransactionSize += timeInfo.getTransactionSize();
-            mediumThroughput += timeInfo.getThroughput();
-            mediumIntensity += timeInfo.getIntensity();
-            mediumBlockSize += timeInfo.getBlockSize();
-            mediumLatency += timeInfo.getLatency();
+            averageTransactionSize += timeSegmentInfo.getTransactionSize();
+            averageThroughput += timeSegmentInfo.getThroughput();
+            averageIntensity += timeSegmentInfo.getIntensity();
+            averageBlockSize += timeSegmentInfo.getBlockSize();
+            averageLatency += timeSegmentInfo.getLatency();
         }
-        int numberOfTimeSegments = blockchainInfo.getTimeInfos().values().size();
-        mediumThroughput /= numberOfTimeSegments;
-        mediumIntensity /= numberOfTimeSegments;
-        mediumBlockSize /= numberOfTimeSegments;
-        mediumLatency /= numberOfTimeSegments;
-        mediumTransactionSize /= numberOfTimeSegments;
-        return new ScenarioInfo(numberOfNodes, throughputMax,
-                mediumThroughput, mediumIntensity,
-                mediumTransactionSize, mediumBlockSize, mediumLatency);
+        int numberOfTimeSegments = blockchainInfo.getTimeSegments().values().size();
+        averageThroughput /= numberOfTimeSegments;
+        averageIntensity /= numberOfTimeSegments;
+        averageBlockSize /= numberOfTimeSegments;
+        averageLatency /= numberOfTimeSegments;
+        averageTransactionSize /= numberOfTimeSegments;
+        return new ScenarioInfo(numberOfNodes, maxThroughput,
+                averageThroughput, averageIntensity,
+                averageTransactionSize, averageBlockSize, averageLatency);
     }
 
     private long recalculateMediumValue(int numberOfElements, long prevMediumValue, long newValue) {
@@ -97,50 +101,71 @@ public class ResultsAnalyzer {
         }
     }
 
-    private Map<Long, TimeInfo> calculateTimeInfos() {
-        NavigableMap<Long, TimeInfo> timeInfos = new TreeMap<>();
+    private Map<Long, TimeSegmentInfo> calculateTimeSegments() {
+        NavigableMap<Long, TimeSegmentInfo> timeSegments = new TreeMap<>();
         // get max/min time
         long startTime = 0;
         long endTime = getEndTime();
         //add all intervals to list
-        for (long i = startTime; i < endTime; i += TIME_INTERVAL) {
-            timeInfos.put(i, new TimeInfo(i));
+        for (long i = startTime; i < endTime; i += timeInterval) {
+            timeSegments.put(i, new TimeSegmentInfo(i));
         }
         //fill intensity and transactionSize fields from transactionInfo data
         for (TransactionInfo transaction : blockchainInfo.getTransactions().values()) {
             long time = transaction.getTime();
-            TimeInfo timeInfo = timeInfos.get(timeInfos.floorKey(time));
-            timeInfo.setIntensity(timeInfo.getIntensity() + 1);
-            timeInfo.setTransactionSize((int) recalculateMediumValue(
-                    timeInfo.getNumberOfTransactions(),
-                    timeInfo.getTransactionSize(),
+            if (time < 0) {
+                log.error("Time out of range: " + time);
+                continue;
+            }
+            //find correct time segment and increase intensity
+            long floorTime = timeSegments.floorKey(time);
+            TimeSegmentInfo timeSegment = timeSegments.get(floorTime);
+            timeSegment.setIntensity(timeSegment.getIntensity() + 1);
+            //recalculate medium transaction size
+            timeSegment.setTransactionSize((int) recalculateMediumValue(
+                    timeSegment.getNumberOfTransactions(),
+                    timeSegment.getTransactionSize(),
                     transaction.getTransactionSize()));
-            timeInfo.setNumberOfTransactions(timeInfo.getNumberOfTransactions() + 1);
+            timeSegment.setNumberOfTransactions(timeSegment.getNumberOfTransactions() + 1);
         }
         //fill latency, throughput, numberOfTransactionsInBlock and blockSize fields from blockInfo data
         for (BlockInfo block : blockchainInfo.getBlocks().values()) {
             long time = block.getCreationTime();
-            TimeInfo timeInfo = timeInfos.get(timeInfos.floorKey(time));
-            int numberOfBlocks = timeInfo.getNumberOfBlocks();
-            timeInfo.setLatency((int) recalculateMediumValue(
+            if (time < 0) {
+                log.error("Time out of range: " + time + " in block " + block.getBlockId());
+                continue;
+            }
+            long floorTime = timeSegments.floorKey(time);
+            TimeSegmentInfo timeSegmentInfo = timeSegments.get(floorTime);
+            int numberOfBlocks = timeSegmentInfo.getNumberOfBlocks();
+            //recalculate medium latency
+            timeSegmentInfo.setLatency((int) recalculateMediumValue(
                     numberOfBlocks,
-                    timeInfo.getLatency(),
-                    block.getDistributionTime95()));
-            timeInfo.setNumberTransactionsInBlock((int) recalculateMediumValue(
+                    timeSegmentInfo.getLatency(),
+                    block.getDistributionTime100()));
+            //recalculate medium number of transactions in block
+            timeSegmentInfo.setNumberTransactionsInBlock((int) recalculateMediumValue(
                     numberOfBlocks,
-                    timeInfo.getNumberTransactionsInBlock(),
+                    timeSegmentInfo.getNumberTransactionsInBlock(),
                     block.getTransactions().size()));
-            timeInfo.setBlockSize((int) recalculateMediumValue(
+            //recalculate medium block size
+            timeSegmentInfo.setBlockSize((int) recalculateMediumValue(
                     numberOfBlocks,
-                    timeInfo.getBlockSize(),
+                    timeSegmentInfo.getBlockSize(),
                     block.getSize()));
-            timeInfo.setThroughput(timeInfo.getThroughput() + block.getTransactions().size());
-            timeInfo.setNumberOfBlocks(numberOfBlocks + 1);
+            //calculating throughput as number of transactions in just created blocks
+            timeSegmentInfo.setThroughput(timeSegmentInfo.getThroughput() + block.getTransactions().size());
+            timeSegmentInfo.setNumberOfBlocks(numberOfBlocks + 1);
+            //calculating throughput as number of transactions in distributed blocks
+            timeSegmentInfo = timeSegments.get(timeSegments.floorKey(block.getCreationTime() + block.getDistributionTime100()));
+            timeSegmentInfo.setDistributionThroughput
+                    (timeSegmentInfo.getThroughput() + block.getTransactions().size());
         }
-        return timeInfos;
+        return timeSegments;
     }
 
     //calculate maxTime and verificationTime
+    //currently calculating blockSize as sum of transaction sizes in it
     private void updateBlockInfos() {
         for (BlockInfo block : blockchainInfo.getBlocks().values()) {
             block.calculateCreationTime();
@@ -162,6 +187,13 @@ public class ResultsAnalyzer {
                 minTime = transaction.getTime();
             }
         }
+//        for(BlockInfo block : blockchainInfo.getBlocks().values()) {
+//            for(BlockInfo.DistributionTime time : block.getDistributionTimes()) {
+//                if(time.getTime() < minTime) {
+//                    minTime = time.getTime();
+//                }
+//            }
+//        }
         return minTime;
     }
 

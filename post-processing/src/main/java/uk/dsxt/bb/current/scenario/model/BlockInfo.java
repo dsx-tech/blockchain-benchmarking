@@ -25,6 +25,7 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 public class BlockInfo {
@@ -46,12 +47,15 @@ public class BlockInfo {
     }
 
     public void calculateCreationTime() {
-        List<Long> times = new ArrayList<>();
-        for (DistributionTime distributionTime : distributionTimes) {
-            times.add(distributionTime.getTime());
+        List<Long> times = distributionTimes.stream().map(DistributionTime::getTime).collect(Collectors.toList());
+        if (times.isEmpty()){
+
+            //todo
+            creationTime = 0;
+            return;
         }
         times.sort(Long::compareTo);
-        creationTime = times.get(1);
+        creationTime = times.get(0);
     }
 
     public void calculateMaxTime() {

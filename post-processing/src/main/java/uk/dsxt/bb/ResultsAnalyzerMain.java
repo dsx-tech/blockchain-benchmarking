@@ -21,16 +21,24 @@
 
 package uk.dsxt.bb;
 
+
+import org.renjin.script.RenjinScriptContext;
 import uk.dsxt.bb.current.scenario.model.BlockchainInfo;
-import uk.dsxt.bb.current.scenario.processing.ResultsAnalyzer;
 import uk.dsxt.bb.current.scenario.processing.CSVComposer;
+
+import org.renjin.script.RenjinScriptEngineFactory;
+import org.renjin.sexp.DoubleVector;
 import uk.dsxt.bb.current.scenario.processing.CSVParser;
+import uk.dsxt.bb.current.scenario.processing.ResultsAnalyzer;
+
+import javax.script.ScriptException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 public class ResultsAnalyzerMain {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ScriptException, InterruptedException, FileNotFoundException {
         //create all dirs if they don't exist
         createAllDirs();
         BlockchainInfo blockchainInfo = CSVParser.parseCSVs();

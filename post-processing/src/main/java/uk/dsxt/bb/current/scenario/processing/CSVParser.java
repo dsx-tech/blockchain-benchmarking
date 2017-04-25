@@ -70,6 +70,7 @@ public class CSVParser {
             try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
                 //call corresponding parser
                 String nodeId = FilenameUtils.removeExtension(file.getName());
+                nodeId = nodeId.substring(0, nodeId.length() - 4);
                 blockchainInfo.addTransactions(parseLoadCSV(reader, nodeId));
             } catch (IOException e) {
                 log.error(e.getMessage());
@@ -108,7 +109,7 @@ public class CSVParser {
                 String transactionId = nextLine[0];
                 long creationTime = Long.parseLong(nextLine[1]);
                 int size = Integer.parseInt(nextLine[2]);
-                int status = Integer.parseInt(nextLine[3]);
+                int status = 200;//Integer.parseInt(nextLine[3]);
                 TransactionInfo transactionInfo = new TransactionInfo(creationTime, transactionId, size, nodeId, status);
                 transactions.put(transactionId, transactionInfo);
             } catch (NumberFormatException e) {
@@ -133,7 +134,7 @@ public class CSVParser {
             }
             try {
                 long blockId = Long.parseLong(nextLine[0]);
-                long time = Long.parseLong(nextLine[1]) * 1000;
+                long time = Long.parseLong(nextLine[1]); // * 1000;
                 if (blocks.containsKey(blockId)) {
                     BlockInfo block = blocks.get(blockId);
                     block.addDistributionTime(new BlockInfo.DistributionTime(nodeId, time));

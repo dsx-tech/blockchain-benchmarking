@@ -30,7 +30,7 @@ public class BlockchainInfo {
 
     private Map<Long, BlockInfo> blocks;
     private Map<String, TransactionInfo> transactions;
-    private Map<Long, TimeInfo> timeInfos;
+    private Map<Long, TimeSegmentInfo> timeSegments;
     private ScenarioInfo scenarioInfo;
     private int numberOfNodes;
 

@@ -23,7 +23,7 @@ package uk.dsxt.bb.current.scenario.model;
 import lombok.Data;
 
 @Data
-public class TimeInfo {
+public class TimeSegmentInfo {
 
     private long time = 0;
     // number of transactions in all blocks created at this time period
@@ -35,8 +35,9 @@ public class TimeInfo {
     private int blockSize = 0;
     private int numberOfBlocks = 0;
     private int numberTransactionsInBlock = 0;
+    private int distributionThroughput = 0;
 
-    public TimeInfo(long time) {
+    public TimeSegmentInfo(long time) {
         this.time = time;
     }
 }

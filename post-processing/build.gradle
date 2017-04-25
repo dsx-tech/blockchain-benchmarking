@@ -9,6 +9,7 @@ ext.lombockVersion = "1.16.6"
 
 repositories {
     mavenCentral()
+    maven { url "https://nexus.bedatadriven.com/content/groups/public" }
 }
 
 dependencies {
@@ -16,4 +17,15 @@ dependencies {
     compile "org.projectlombok:lombok:$lombockVersion"
     compile 'commons-io:commons-io:2.4'
     compile 'net.sf.opencsv:opencsv:2.3'
+//    // https://mvnrepository.com/artifact/org.rosuda.REngine/REngine
+//    compile group: 'org.rosuda.REngine', name: 'REngine', version: '2.1.0'
+//    // https://mvnrepository.com/artifact/org.rosuda.REngine/Rserve
+//    compile group: 'org.rosuda.REngine', name: 'Rserve', version: '1.8.1'
+//    // https://mvnrepository.com/artifact/org.nuiton.thirdparty/JRI
+//    compile group: 'org.nuiton.thirdparty', name: 'JRI', version: '0.8-4'
+    compile "org.renjin:renjin-script-engine:0.8.2356";
+
+// https://mvnrepository.com/artifact/com.github.jbytecode/RCaller
+    compile group: 'com.github.jbytecode', name: 'RCaller', version: '2.8'
+
 }
