@@ -19,25 +19,27 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb.current.scenario.model;
+package uk.dsxt.bb.scenario.proccessing.model;
 
 import lombok.Data;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Data
+@Log4j2
 public class BlockInfo {
 
     private long blockId;
     private List<TransactionInfo> transactions;
     private long parentBlockId;
     private List<DistributionTime> distributionTimes;
-    private long distributionTime95;
-    private long distributionTime100;
-    private int size;
-    private long creationTime;
+    //private double latency95;
+    private double latency;
+    private double size;
+    private double creationTime;
 
 
     public BlockInfo(long blockId, List<DistributionTime> distributionTimes) {
@@ -47,25 +49,29 @@ public class BlockInfo {
     }
 
     public void calculateCreationTime() {
-        List<Long> times = distributionTimes.stream().map(DistributionTime::getTime).collect(Collectors.toList());
-        if (times.isEmpty()){
-
-            //todo
-            creationTime = 0;
+        List<Double> times = distributionTimes.stream()
+                .map(DistributionTime::getTime).collect(Collectors.toList());
+        if (times.isEmpty()) {
+            log.error("No distribution times found in block " + blockId);
+            creationTime = -1;
             return;
         }
-        times.sort(Long::compareTo);
+        times.sort(Double::compareTo);
         creationTime = times.get(0);
     }
 
-    public void calculateMaxTime() {
-        List<Long> times = new ArrayList<>();
+    public void calculateLatency() {
+        List<Double> times = new ArrayList<>();
         for (DistributionTime distributionTime : distributionTimes) {
             times.add(distributionTime.getTime());
         }
-        times.sort(Long::compareTo);
-        distributionTime100 = times.get(times.size() - 1) - creationTime;
-        distributionTime95 = times.get((int) (times.size() * 0.95 - 1)) - creationTime;
+        if(times.isEmpty()) {
+            log.error("No distribution times found in block " + blockId);
+            latency = -1;
+            return;
+        }
+        times.sort(Double::compareTo);
+        latency = times.get((int)(times.size()* 0.9 - 1)) - creationTime;
     }
 
     public void addTransaction(TransactionInfo transaction) {
@@ -79,9 +85,9 @@ public class BlockInfo {
     @Data
     public static class DistributionTime {
         private String nodeId;
-        private long time;
+        private double time;
 
-        public DistributionTime(String nodeId, long time) {
+        public DistributionTime(String nodeId, double time) {
             this.nodeId = nodeId;
             this.time = time;
         }

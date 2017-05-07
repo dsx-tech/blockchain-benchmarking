@@ -19,48 +19,48 @@
  * *
  ******************************************************************************/
 
-package uk.dsxt.bb;
+package uk.dsxt.bb.general;
 
+import uk.dsxt.bb.properties.proccessing.model.PropertiesFileInfo;
+import uk.dsxt.bb.properties.proccessing.model.ResultType;
+import uk.dsxt.bb.scenario.proccessing.model.ScenarioInfo;
 
-import org.renjin.script.RenjinScriptContext;
-import uk.dsxt.bb.current.scenario.model.BlockchainInfo;
-import uk.dsxt.bb.current.scenario.processing.CSVComposer;
-
-import org.renjin.script.RenjinScriptEngineFactory;
-import org.renjin.sexp.DoubleVector;
-import uk.dsxt.bb.current.scenario.processing.CSVParser;
-import uk.dsxt.bb.current.scenario.processing.ResultsAnalyzer;
+import uk.dsxt.bb.scenario.proccessing.ScenarioParser;
+import uk.dsxt.bb.properties.proccessing.PropertiesComparator;
 
 import javax.script.ScriptException;
 
-import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
 
 public class ResultsAnalyzerMain {
 
-    public static void main(String[] args) throws ScriptException, InterruptedException, FileNotFoundException {
+    public static void main(String[] args) throws ScriptException,
+            InterruptedException, FileNotFoundException {
+
         //create all dirs if they don't exist
-        createAllDirs();
-        BlockchainInfo blockchainInfo = CSVParser.parseCSVs();
-        if (blockchainInfo == null) {
+        if (!DirOrganizer.createDirStructure()) {
             return;
         }
-        ResultsAnalyzer resultsAnalyzer = new ResultsAnalyzer(blockchainInfo);
-        blockchainInfo = resultsAnalyzer.analyze();
-        CSVComposer composer = new CSVComposer(blockchainInfo);
-        composer.composeCSVs();
+        if (!GeneralCSVComposer.createGeneralResultFiles()) {
+            return;
+        }
+        process(ResultType.INTENSITY);
+        process(ResultType.SIZE);
+        process(ResultType.SCALABILITY);
     }
 
-    public static final String CURRENT_GRAPHS_PATH = "post-processing/src/main/resources/results/graphs";
-
-    private static void createAllDirs() {
-        File file = new File(CSVComposer.RESULT_PATH);
-        if (!file.exists() || file.isFile()) {
-            file.mkdirs();
-        }
-        file = new File(CURRENT_GRAPHS_PATH);
-        if (!file.exists() || file.isFile()) {
-            file.mkdirs();
+    private static void process(ResultType type) {
+        PropertiesComparator comparator = new PropertiesComparator();
+        List<PropertiesFileInfo> properties = comparator.compare(type);
+        if (properties != null) {
+            for (PropertiesFileInfo property : properties) {
+                ScenarioInfo scenarioInfo = ScenarioParser.parseScenario(property);
+                if (scenarioInfo != null) {
+                    GeneralCSVComposer.addToIntensity(scenarioInfo, type);
+                }
+            }
         }
     }
 }
+

@@ -18,26 +18,23 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.bb.current.scenario.model;
+package uk.dsxt.bb.scenario.proccessing;
 
-import lombok.Data;
+import uk.dsxt.bb.properties.proccessing.model.PropertiesFileInfo;
+import uk.dsxt.bb.scenario.proccessing.model.BlockchainInfo;
+import uk.dsxt.bb.scenario.proccessing.model.ScenarioInfo;
 
-@Data
-public class TimeSegmentInfo {
+public class ScenarioParser {
 
-    private long time = 0;
-    // number of transactions in all blocks created at this time period
-    private int throughput = 0;
-    private long latency = 0;
-    private int intensity = 0;
-    private int transactionSize = 0;
-    private int numberOfTransactions = 0;
-    private int blockSize = 0;
-    private int numberOfBlocks = 0;
-    private int numberTransactionsInBlock = 0;
-    private int distributionThroughput = 0;
-
-    public TimeSegmentInfo(long time) {
-        this.time = time;
+    public static ScenarioInfo parseScenario(PropertiesFileInfo props) {
+        BlockchainInfo blockchainInfo = CSVParser.parseCSVs(props);
+        if (blockchainInfo == null) {
+            return null;
+        }
+        ResultsAnalyzer resultsAnalyzer = new ResultsAnalyzer(blockchainInfo, props);
+        blockchainInfo = resultsAnalyzer.analyze();
+        CSVComposer composer = new CSVComposer(blockchainInfo);
+        composer.composeCSVs(props.getPathToScenarioDir());
+        return blockchainInfo.getScenarioInfo();
     }
 }

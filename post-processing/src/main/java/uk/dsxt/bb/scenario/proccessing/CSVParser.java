@@ -18,14 +18,15 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.bb.current.scenario.processing;
+package uk.dsxt.bb.scenario.proccessing;
 
 import au.com.bytecode.opencsv.CSVReader;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FilenameUtils;
-import uk.dsxt.bb.current.scenario.model.BlockchainInfo;
-import uk.dsxt.bb.current.scenario.model.BlockInfo;
-import uk.dsxt.bb.current.scenario.model.TransactionInfo;
+import uk.dsxt.bb.properties.proccessing.model.PropertiesFileInfo;
+import uk.dsxt.bb.scenario.proccessing.model.BlockchainInfo;
+import uk.dsxt.bb.scenario.proccessing.model.BlockInfo;
+import uk.dsxt.bb.scenario.proccessing.model.TransactionInfo;
 
 import java.io.File;
 import java.io.FileReader;
@@ -35,18 +36,19 @@ import java.util.*;
 @Log4j2
 public class CSVParser {
 
-    //input files
-    private static final String PATH = "post-processing/src/main/resources/logs";
+    private static final String LOGS_DIR = "/logs";
+
     private static final String BLOCKS_DIR = "/blocks";
     private static final String TRANSACTIONS_DIR = "/transactions";
     private static final String TRANSACTIONS_PER_BLOCK_DIR = "/transactionsPerBlock";
 
-    public static BlockchainInfo parseCSVs() {
-        BlockchainInfo blockchainInfo = new BlockchainInfo();
+    public static BlockchainInfo parseCSVs(PropertiesFileInfo properties) {
+        String scenarioDir  = properties.getPathToScenarioDir() + LOGS_DIR;
+        BlockchainInfo blockchainInfo = new BlockchainInfo(properties.getBlockchainType());
         //blocks
-        File blocksDir = new File(PATH + BLOCKS_DIR);
+        File blocksDir = new File(scenarioDir + BLOCKS_DIR);
         if (!blocksDir.isDirectory() || blocksDir.listFiles() == null) {
-            log.error("Can't find blocks directory");
+            log.error("Can't find blocks directory in " + scenarioDir);
             return null;
         }
         blockchainInfo.setNumberOfNodes(blocksDir.listFiles().length);
@@ -54,23 +56,24 @@ public class CSVParser {
             try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
                 //call corresponding parser
                 String nodeId = FilenameUtils.removeExtension(file.getName());
-                blockchainInfo.setBlocks(parseBlockCSV(reader, nodeId, blockchainInfo.getBlocks()));
+                blockchainInfo.setBlocks
+                        (parseBlockCSV(reader, nodeId, blockchainInfo.getBlocks()));
             } catch (IOException e) {
                 log.error(e.getMessage());
                 return null;
             }
         }
         //transactions
-        File transactionsDir = new File(PATH + TRANSACTIONS_DIR);
+        File transactionsDir = new File(scenarioDir + TRANSACTIONS_DIR);
         if (!transactionsDir.isDirectory() || transactionsDir.listFiles() == null) {
-            log.error("Can't find transactions directory");
+            log.error("Can't find transactions directory in " + scenarioDir);
             return null;
         }
         for (File file : transactionsDir.listFiles()) {
             try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
                 //call corresponding parser
                 String nodeId = FilenameUtils.removeExtension(file.getName());
-                nodeId = nodeId.substring(0, nodeId.length() - 4);
+                nodeId = nodeId.substring(0, nodeId.length() - 5);
                 blockchainInfo.addTransactions(parseLoadCSV(reader, nodeId));
             } catch (IOException e) {
                 log.error(e.getMessage());
@@ -78,15 +81,16 @@ public class CSVParser {
             }
         }
         //transactions per block
-        File transactionsPerBlockDir = new File(PATH + TRANSACTIONS_PER_BLOCK_DIR);
+        File transactionsPerBlockDir = new File(scenarioDir + TRANSACTIONS_PER_BLOCK_DIR);
         if (!transactionsPerBlockDir.isDirectory() || transactionsPerBlockDir.listFiles() == null) {
-            log.error("Can't find transactionsPerBlock directory");
+            log.error("Can't find transactionsPerBlock directory in " + scenarioDir);
             return null;
         }
         for (File file : transactionsPerBlockDir.listFiles()) {
             try (CSVReader reader = new CSVReader(new FileReader(file), ',')) {
                 //call corresponding parser
-                parseTransactionsPerBlockCSV(reader, blockchainInfo.getBlocks(), blockchainInfo.getTransactions());
+                parseTransactionsPerBlockCSV(reader,
+                        blockchainInfo.getBlocks(), blockchainInfo.getTransactions());
             } catch (IOException e) {
                 log.error(e.getMessage());
                 return null;
@@ -110,7 +114,9 @@ public class CSVParser {
                 long creationTime = Long.parseLong(nextLine[1]);
                 int size = Integer.parseInt(nextLine[2]);
                 int status = 200;//Integer.parseInt(nextLine[3]);
-                TransactionInfo transactionInfo = new TransactionInfo(creationTime, transactionId, size, nodeId, status);
+                TransactionInfo transactionInfo = new TransactionInfo(creationTime,
+                        transactionId, size, nodeId, status);
+
                 transactions.put(transactionId, transactionInfo);
             } catch (NumberFormatException e) {
                 log.error(e.getMessage());
@@ -139,9 +145,10 @@ public class CSVParser {
                     BlockInfo block = blocks.get(blockId);
                     block.addDistributionTime(new BlockInfo.DistributionTime(nodeId, time));
                 } else {
-                    BlockInfo block = new BlockInfo(blockId, new ArrayList<BlockInfo.DistributionTime>() {{
-                        add(new BlockInfo.DistributionTime(nodeId, time));
-                    }});
+                    BlockInfo block = new BlockInfo(blockId,
+                            new ArrayList<BlockInfo.DistributionTime>() {{
+                                add(new BlockInfo.DistributionTime(nodeId, time));
+                            }});
                     blocks.put(blockId, block);
                 }
             } catch (NumberFormatException e) {

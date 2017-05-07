@@ -18,27 +18,10 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
+package uk.dsxt.bb.properties.proccessing.model;
 
-package uk.dsxt.bb.current.scenario.model;
-
-import lombok.Data;
-
-@Data
-public class TransactionInfo {
-
-    private long time;
-    private String transactionId;
-    private int transactionSize;
-    private String nodeId;
-    private int responseCode;
-    private long blockId;
-
-    public TransactionInfo(long time, String transactionId, int transactionSize,
-                           String nodeId, int responseCode) {
-        this.time = time;
-        this.transactionId = transactionId;
-        this.transactionSize = transactionSize;
-        this.nodeId = nodeId;
-        this.responseCode = responseCode;
-    }
+public enum ResultType {
+    INTENSITY,
+    SIZE,
+    SCALABILITY
 }

@@ -18,31 +18,40 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-package uk.dsxt.bb.current.scenario.model;
+package uk.dsxt.bb.general;
 
-import lombok.Data;
+import java.io.File;
 
-@Data
-public class ScenarioInfo {
+public class DirOrganizer {
 
-    private int numberOfNodes;
-    private int maxThroughput;
-   //todo private int throughput95;
-    private int averageThroughput;
-    private int averageIntensity;
-    private int averageTransactionSize;
-    private int averageBlockSize;
-    private long averageLatency;
+    public static final String MAIN_LOG_PATH = "post-processing/src/main/resources/logs/";
 
-    public ScenarioInfo(int numberOfNodes, int maxThroughput,
-                        int averageThroughput, int averageIntensity,
-                        int averageTransactionSize, int averageBlockSize, long averageLatency) {
-        this.numberOfNodes = numberOfNodes;
-        this.maxThroughput = maxThroughput;
-        this.averageThroughput = averageThroughput;
-        this.averageIntensity = averageIntensity;
-        this.averageTransactionSize = averageTransactionSize;
-        this.averageBlockSize = averageBlockSize;
-        this.averageLatency = averageLatency;
+    public static final String INTENSITY_LOGS_PATH =
+            MAIN_LOG_PATH + "intensity/";
+    public static final String SIZE_LOGS_PATH =
+            MAIN_LOG_PATH + "size/";
+    public static final String SCALABILITY_LOGS_PATH =
+            MAIN_LOG_PATH + "scalability/";
+
+    public static final String ETHEREUM_RESULTS_PATH =
+            "post-processing/src/main/resources/results/ethereum/";
+    public static final String FABRIC_RESULTS_PATH =
+            "post-processing/src/main/resources/results/fabric/";
+    public static final String GENERAL_RESULTS_PATH =
+            "post-processing/src/main/resources/results/general/csv/";
+
+
+    public static boolean createDirStructure() {
+        return createDir(ETHEREUM_RESULTS_PATH)
+                && createDir(FABRIC_RESULTS_PATH)
+                && createDir(GENERAL_RESULTS_PATH);
+    }
+
+    private static boolean createDir(String path) {
+        File file = new File(path);
+        if (!file.exists() || file.isFile()) {
+            return file.mkdirs();
+        }
+        return true;
     }
 }
