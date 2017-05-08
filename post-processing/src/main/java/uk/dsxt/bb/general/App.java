@@ -33,7 +33,7 @@ import javax.script.ScriptException;
 import java.io.FileNotFoundException;
 import java.util.List;
 
-public class ResultsAnalyzerMain {
+public class App {
 
     public static void main(String[] args) throws ScriptException,
             InterruptedException, FileNotFoundException {

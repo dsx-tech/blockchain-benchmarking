@@ -25,6 +25,11 @@ bmp(filename = "throughput.bmp")
 plot(throughput, type = "l")
 dev.off()
 
+queue <- data.frame(times["time"], times["transactionQueue"])
+bmp(filename = "transactionQueue.bmp")
+plot(queue, type = "l")
+dev.off()
+
 # throughput <- general.frame(times["time"], times["throughputDistributed"])
 # bmp(filename = "throughputDistributed.bmp")
 # plot(throughput, type = "l")

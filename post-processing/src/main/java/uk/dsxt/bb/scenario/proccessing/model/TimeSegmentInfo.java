@@ -31,10 +31,12 @@ public class TimeSegmentInfo {
     private double latency = 0;
     private double intensity = 0;
     private double transactionSize = 0;
-    private int numberOfTransactions = 0;
+    private int numberOfTransactionsIntegrated = 0;
+    private int numberOfTransactionsGenerated = 0;
     private double blockSize = 0;
     private int numberOfBlocks = 0;
     private int numberTransactionsInBlock = 0;
+    private int transactionQueueLength = 0;
 
     public TimeSegmentInfo(long time) {
         this.time = time;

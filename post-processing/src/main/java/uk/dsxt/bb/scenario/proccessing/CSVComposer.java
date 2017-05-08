@@ -45,7 +45,7 @@ public class CSVComposer {
 
     //header lines
     private static final String[] TIME_HEADER = {"time", "throughput",
-            "latency", "intensity", "transactionSize", "blockSize", "numberTransactionsInBlock"};
+            "latency", "intensity", "transactionSize", "blockSize", "numberTransactionsInBlock", "transactionQueue"};
     private static final String[] TRANSACTIONS_HEADER = {"transactionId", "blockId",
             "transactionSize", "transactionCreationTime", "nodeId"};
     private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "latency"};
@@ -105,7 +105,7 @@ public class CSVComposer {
         int end = blockchainInfo.getTimeSegments().values().size() -
                 (int) (blockchainInfo.getTimeSegments().values().size() * 0.05);
         for (TimeSegmentInfo timeSegmentInfo : blockchainInfo.getTimeSegments().values()) {
-            if(i < start || i >end) {
+            if (i < start || i > end) {
                 i++;
                 continue;
             }
@@ -115,7 +115,8 @@ public class CSVComposer {
                     String.valueOf(timeSegmentInfo.getIntensity()),
                     String.valueOf(timeSegmentInfo.getTransactionSize()),
                     String.valueOf(timeSegmentInfo.getBlockSize()),
-                    String.valueOf(timeSegmentInfo.getNumberTransactionsInBlock())};
+                    String.valueOf(timeSegmentInfo.getNumberTransactionsInBlock()),
+                    String.valueOf(timeSegmentInfo.getTransactionQueueLength())};
             writer.writeNext(entry);
             writer.flush();
             i++;

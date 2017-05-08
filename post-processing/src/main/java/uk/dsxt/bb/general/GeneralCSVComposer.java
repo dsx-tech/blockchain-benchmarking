@@ -41,14 +41,14 @@ public class GeneralCSVComposer {
 
     private static final String[] INTENSITY_HEADER = {"blockchainType", "intensity", "maxThroughput",
             "per90Throughput", "averageThroughput",
-            "maxLatency", "per90Latency", "averageLatency"};
+            "maxLatency", "per90Latency", "averageLatency", "averageQueueInc"};
 
     private static final String[] SIZE_HEADER = {"blockchainType", "transactionSize", "maxThroughput",
             "per90Throughput", "averageThroughput",
-            "maxLatency", "per90Latency", "averageLatency"};
+            "maxLatency", "per90Latency", "averageLatency", "averageQueueInc"};
 
     private static final String[] SCALABILITY_HEADER = {"blockchainType", "numberOfNodes", "averageThroughput",
-            "averageLatency"};
+            "averageLatency", "averageQueueInc"};
 
 
     public static boolean createGeneralResultFiles() {
@@ -118,7 +118,8 @@ public class GeneralCSVComposer {
                 String.valueOf(scenarioInfo.getBlockchainType()),
                 String.valueOf(scenarioInfo.getNumberOfNodes()),
                 String.valueOf(scenarioInfo.getAverageThroughput()),
-                String.valueOf(scenarioInfo.getAverageLatency())};
+                String.valueOf(scenarioInfo.getAverageLatency()),
+                String.valueOf(scenarioInfo.getAverageQueueInc())};
         writer.writeNext(entry);
         writer.flush();
     }
@@ -133,7 +134,8 @@ public class GeneralCSVComposer {
                 String.valueOf(scenarioInfo.getAverageThroughput()),
                 String.valueOf(scenarioInfo.getMaxLatency()),
                 String.valueOf(scenarioInfo.getPer95Latency()),
-                String.valueOf(scenarioInfo.getAverageLatency())};
+                String.valueOf(scenarioInfo.getAverageLatency()),
+                String.valueOf(scenarioInfo.getAverageQueueInc())};
         writer.writeNext(entry);
         writer.flush();
     }
@@ -148,7 +150,8 @@ public class GeneralCSVComposer {
                 String.valueOf(scenarioInfo.getAverageThroughput()),
                 String.valueOf(scenarioInfo.getMaxLatency()),
                 String.valueOf(scenarioInfo.getPer95Latency()),
-                String.valueOf(scenarioInfo.getAverageLatency())};
+                String.valueOf(scenarioInfo.getAverageLatency()),
+                String.valueOf(scenarioInfo.getAverageQueueInc())};
         writer.writeNext(entry);
         writer.flush();
     }

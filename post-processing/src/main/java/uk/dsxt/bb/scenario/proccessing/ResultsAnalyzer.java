@@ -94,6 +94,13 @@ public class ResultsAnalyzer {
             TimeSegmentInfo timeSegmentInfo = timeSegments.get(floorTime);
             fillTimeSegmentInfo(timeSegmentInfo, block);
         }
+        //calculate intensity and throughput
+        for (TimeSegmentInfo time : timeSegments.values()) {
+            time.setIntensity((1000 * time.getNumberOfTransactionsGenerated()) / timeInterval);
+            time.setThroughput((1000 * time.getNumberOfTransactionsIntegrated()) / timeInterval);
+            time.setTransactionSize(time.getTransactionSize() / time.getNumberOfTransactionsIntegrated());
+        }
+        fillQueue(timeSegments);
         return timeSegments;
     }
 
@@ -108,15 +115,21 @@ public class ResultsAnalyzer {
         //recalculate medium block size
         time.setBlockSize(calcMedium(numberOfBlocks, time.getBlockSize(), block.getSize()));
         //recalculate throughput
-        time.setThroughput(time.getThroughput() + block.getTransactions().size());
+        time.setNumberOfTransactionsIntegrated(time.getNumberOfTransactionsIntegrated()
+                + block.getTransactions().size());
         //recalculate medium transaction size
-        time.setTransactionSize(calculateMediumTransactionSize(time, block));
+        time.setTransactionSize(time.getTransactionSize() + block.getSize());
         time.setNumberOfBlocks(numberOfBlocks + 1);
     }
 
-    private double calculateMediumTransactionSize(TimeSegmentInfo time, BlockInfo block) {
-        return (time.getNumberOfTransactions() * time.getTransactionSize() + block.getSize())
-                / (time.getNumberOfTransactions() + block.getTransactions().size());
+    private void fillQueue(Map<Long, TimeSegmentInfo> timeSegments) {
+        int numberGenerated = 0;
+        int numberIntegrated = 0;
+        for(TimeSegmentInfo time : timeSegments.values()) {
+            numberGenerated += time.getNumberOfTransactionsGenerated();
+            numberIntegrated += time.getNumberOfTransactionsIntegrated();
+            time.setTransactionQueueLength(numberGenerated - numberIntegrated);
+        }
     }
 
     /**
@@ -135,7 +148,8 @@ public class ResultsAnalyzer {
             //find correct time segment and increase intensity
             long floorTime = timeSegments.floorKey(time);
             TimeSegmentInfo timeSegment = timeSegments.get(floorTime);
-            timeSegment.setIntensity(timeSegment.getIntensity() + 1);
+            timeSegment.setNumberOfTransactionsGenerated
+                    (timeSegment.getNumberOfTransactionsGenerated() + 1);
         }
     }
 

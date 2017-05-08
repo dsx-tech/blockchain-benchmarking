@@ -40,6 +40,7 @@ public class ScenarioInfo {
     private double maxLatency;
     private double per95Latency;
     private double averageLatency;
+    private double averageQueueInc;
     private BlockchainType blockchainType;
 
 
@@ -49,16 +50,23 @@ public class ScenarioInfo {
 
     private void calculateInfo(BlockchainInfo blockchainInfo, PropertiesFileInfo properties) {
         blockchainType = properties.getBlockchainType();
-        intensity = 1000 / properties.getTransactionDelay();
+        intensity = properties.getNumOfThreads() * properties.getNumOfNodes() *
+                (1000.0 / properties.getTransactionDelay());
         minTransactionSize = properties.getMinMessageLength();
         maxTransactionSize = properties.getMaxMessageLength();
 
         List<Double> throughputs = new ArrayList<>();
         List<Double> latencies = new ArrayList<>();
+        List<Double> queues = new ArrayList<>();
 
+        int prevQueue;
+        int queue = 0;
         for (TimeSegmentInfo timeSegmentInfo : blockchainInfo.getTimeSegments().values()) {
             throughputs.add(timeSegmentInfo.getThroughput());
             latencies.add(timeSegmentInfo.getLatency());
+            prevQueue = queue;
+            queue = timeSegmentInfo.getTransactionQueueLength();
+            queues.add((double) (queue - prevQueue));
         }
         throughputs.sort(Double::compareTo);
         latencies.sort(Double::compareTo);
@@ -67,6 +75,7 @@ public class ScenarioInfo {
 
         averageThroughput = calculateAverage(throughputs);
         averageLatency = calculateAverage(latencies);
+        averageQueueInc = calculateAverage(queues);
 
         per95Throughput = calculate95Percentile(throughputs);
         per95Latency = calculate95Percentile(latencies);
