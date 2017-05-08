@@ -1,3 +1,25 @@
+/*
+ ******************************************************************************
+ * Blockchain benchmarking framework                                          *
+ * Copyright (C) 2016 DSX Technologies Limited.                               *
+ *                                                                            *
+ * This program is free software: you can redistribute it and/or modify       *
+ * it under the terms of the GNU General Public License as published by       *
+ * the Free Software Foundation, either version 3 of the License, or          *
+ * (at your option) any later version.                                        *
+ *                                                                            *
+ * This program is distributed in the hope that it will be useful,            *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of             *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                       *
+ * See the GNU General Public License for more details.                       *
+ *                                                                            *
+ * You should have received a copy of the GNU General Public License          *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
+ *                                                                            *
+ * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************
+ */
 package uk.dsxt.bb;
 
 import org.hyperic.sigar.*;
@@ -8,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * @author phd
+ */
 public class NetworkData {
 
     static Map<String, Long> rxCurrentMap = new HashMap<>();
@@ -28,40 +53,15 @@ public class NetworkData {
         Thread.sleep(1000);
     }
 
-//    public static void main(String[] args) throws SigarException,
-//            InterruptedException {
-//        new NetworkData(new Sigar());
-//        NetworkData.newMetrickThread();
-//    }
-
     public static String networkInfo() throws SigarException {
         String info = sigar.getNetInfo().toString();
         info += "\n"+ sigar.getNetInterfaceConfig().toString();
         return info;
     }
 
-    public static String getDefaultGateway() throws SigarException {
-        return sigar.getNetInfo().getDefaultGateway();
-    }
-
-    public static void newMetricThread() throws SigarException, InterruptedException {
-        while (true) {
-            Long[] m = getMetric();
-            long totalrx = m[0];
-            long totaltx = m[1];
-            System.out.print("totalrx(download): ");
-            System.out.println("\t" + Sigar.formatSize(totalrx));
-            System.out.print("totaltx(upload): ");
-            System.out.println("\t" + Sigar.formatSize(totaltx));
-            System.out.println("-----------------------------------");
-            Thread.sleep(1000);
-        }
-
-    }
 
     public static Long[] getMetric() throws SigarException {
         for (String ni : sigar.getNetInterfaceList()) {
-            // System.out.println(ni);
             NetInterfaceStat netStat = sigar.getNetInterfaceStat(ni);
             NetInterfaceConfig ifConfig = sigar.getNetInterfaceConfig(ni);
             String hwaddr = null;
