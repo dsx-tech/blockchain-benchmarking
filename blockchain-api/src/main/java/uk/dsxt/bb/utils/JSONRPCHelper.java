@@ -108,9 +108,12 @@ public class JSONRPCHelper {
             String params = String.format("{\"jsonrpc\":\"2.0\"," +
                             "\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"%s\",\"to\":\"%s\"," +
                             "\"value\":\"%s\", \"data\":\"%s\"}],\"id\":%s}",
-                    sender, receiver, amount, Hex.encodeHexString(message.getBytes()), id);
+                    sender, receiver, amount, "0x" + Hex.encodeHexString(message.getBytes()), id);
 
-            return httpHelper.request(url, params, RequestType.POST);
+            String responseString = httpHelper.request(url, params, RequestType.POST);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode responseJson = mapper.readTree(responseString);
+            return responseJson.get("result").textValue();
         } catch (Exception e) {
             log.error("Cannot run post method for sending transactions in Ethereum", e);
         }

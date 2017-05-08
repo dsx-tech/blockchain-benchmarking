@@ -21,6 +21,16 @@ task copyJars(type: Copy) {
     subprojects {
         from tasks.withType(Jar)
     }
+    rename { f ->
+        return stripVersion(f)
+    }
+}
+
+static String stripVersion(String fileNameWithVersion) {
+    String ext = fileNameWithVersion.substring(fileNameWithVersion.lastIndexOf("."),fileNameWithVersion.length())
+    int end = fileNameWithVersion.lastIndexOf("-"); //assumes that: name-version.ext. Will not work with name-version-SNAPSHOT.ext
+    String fileNameWithoutVersion = fileNameWithVersion.substring(0, end) + ext
+    return fileNameWithoutVersion
 }
 
 task copyFiles(dependsOn: [copyJars])

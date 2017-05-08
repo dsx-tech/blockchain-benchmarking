@@ -68,6 +68,12 @@ public class MultichainManager implements Manager {
         }
         return Strings.EMPTY;
     }
+
+    @Override
+    public String sendMessage(String from, String to, String message) {
+        return null;
+    }
+
     @Override
     public String sendTransaction(String to, String from, String amount) {
         try {

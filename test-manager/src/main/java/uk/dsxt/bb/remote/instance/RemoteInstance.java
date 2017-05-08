@@ -26,10 +26,7 @@ import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,7 +55,7 @@ public class RemoteInstance {
     private Path logPath;
 
     @Getter @Setter
-    protected boolean isRunning;
+    protected volatile boolean isRunning;
 
     public String getHost() {
         return host;
@@ -110,6 +107,15 @@ public class RemoteInstance {
     }
 
     public boolean sendCommands(List<String> commands) {
+        File logFile = logPath.resolve(host + "_deploy.log").toFile();
+        if (!logFile.exists()) {
+            try {
+                logFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
         try (FileOutputStream logStream = new FileOutputStream(logPath.resolve(host + "_deploy.log").toFile(), true)){
             ChannelShell channel = getOrCreateChannelShell();
             logger.debug("Executing commands on: " + channel.getSession().getHost());

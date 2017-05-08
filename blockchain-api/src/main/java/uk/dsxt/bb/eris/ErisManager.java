@@ -66,6 +66,11 @@ public class ErisManager implements Manager {
     }
 
     @Override
+    public String sendMessage(String from, String to, String message) {
+        return null;
+    }
+
+    @Override
     public List<Message> getNewMessages() {
         return null;
     }

@@ -24,11 +24,11 @@
 package uk.dsxt.bb.blockchain;
 
 import lombok.extern.log4j.Log4j2;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
-import uk.dsxt.bb.ethereum.EthereumManager;
 import uk.dsxt.bb.bitcoin.BitcoinManager;
+import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainPeer;
+import uk.dsxt.bb.ethereum.EthereumManager;
 import uk.dsxt.bb.fabric.FabricManager;
 import uk.dsxt.bb.multichain.MultichainManager;
 
@@ -74,6 +74,14 @@ public class BlockchainManager implements Manager {
 
         return null;
     }
+    @Override
+    public String sendMessage(String from, String to, String message) {
+        if (manager != null) {
+            return manager.sendMessage(from, to, message);
+        }
+        return null;
+    }
+
 
     @Override
     public String sendMessage(byte[] body) {

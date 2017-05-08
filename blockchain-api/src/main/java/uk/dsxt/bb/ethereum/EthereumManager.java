@@ -57,6 +57,19 @@ public class EthereumManager implements Manager {
         return Strings.EMPTY;
     }
 
+    public String sendMessage(String from, String to, String message) {
+        return sendTransactionWithMessage(from, to, message, "0x1");
+    }
+
+    public String sendTransactionWithMessage(String from, String to, String message, String amount) {
+        try {
+            return JSONRPCHelper.postToSendMessageEthereum(url, from, to, message, amount);
+        } catch (IOException e) {
+            log.error("Cannot send message", e);
+        }
+        return Strings.EMPTY;
+    }
+
     @Override
     public String sendTransaction(String from, String to, String amount) {
         try {
@@ -118,7 +131,7 @@ public class EthereumManager implements Manager {
     @Override
     public EthereumBlock getBlock(long id) throws IOException {
         return JSONRPCHelper.post(url, EthereumMethods.GET_BLOCK_BY_NUMBER.getMethod(), EthereumBlock.class,
-                Long.toString(id), true);
+                "0x" + Long.toHexString(id), true);
     }
 
     @Override

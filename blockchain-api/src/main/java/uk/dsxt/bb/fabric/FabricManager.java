@@ -286,6 +286,11 @@ public class FabricManager implements Manager {
     }
 
     @Override
+    public String sendMessage(String from, String to, String message) {
+        return sendMessage(message.getBytes());
+    }
+
+    @Override
     public String sendMessage(byte[] body) {
 
         InvokeRequest request = new InvokeRequest();
