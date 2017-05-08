@@ -81,6 +81,11 @@ public class BitcoinManager implements Manager {
         return null;
     }
 
+    @Override
+    public String sendMessage(String from, String to, String message) {
+        return null;
+    }
+
     private String sendMessage(String address, byte[] body) throws IOException {
         try {
             return JSONRPCHelper.post(url, BitcoinMethods.SENDTOADDRESS.name().toLowerCase(),

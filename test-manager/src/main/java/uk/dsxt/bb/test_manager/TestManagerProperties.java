@@ -54,6 +54,7 @@ public class TestManagerProperties {
     final private String userNameOnRemoteInstances;
     final private String masterIpAddress;
     final private int masterPort;
+    final private int testTimeout;
 
     public static TestManagerProperties fromProperties(Properties properties) {
         return TestManagerProperties.builder()
@@ -75,6 +76,7 @@ public class TestManagerProperties {
                 .userNameOnRemoteInstances(properties.getProperty("remote.instance.user.name"))
                 .masterIpAddress(properties.getProperty("test_manager.ip"))
                 .masterPort(convertToInt(properties.getProperty("test_manager.port")))
+                .testTimeout(convertToInt(properties.getProperty("test_manager.test_timeout")))
                 .build();
     }
 

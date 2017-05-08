@@ -1,0 +1,31 @@
+group 'blockchain-benchmarking'
+version 'DEVELOP'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+
+
+task fatJar(type: Jar) {
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA', 'META-INF/*.MF'
+    manifest {
+        attributes 'Implementation-Title': 'Resource monitor',
+                'Implementation-Version': version,
+                'Main-Class': 'uk.dsxt.bb.Main'
+    }
+    baseName = project.name
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile files("./lib")
+    compile files("./lib/sigar.jar")
+}

@@ -109,12 +109,13 @@ class LoadManager {
                     for (int j = 0; j < amountOfTransactions; ++j) {
                         try {
                             Thread.sleep(delay);
-                            String message = "0x" + Integer.toHexString(random.nextInt(1000) + 1000);
+//                            String message = "0x" + Integer.toHexString(random.nextInt(1000) + 1000);
+                            String message = generateMessage(random, 25, 100);
                             long startTime = System.currentTimeMillis();
 
                             int credentialToIndex = getRandomIntExcept(random, credentials.size(), credentialFromIndex);
                             Credential credentialTo = credentials.get(credentialToIndex);
-                            String id = manager.sendTransaction(credentialFrom.getAccount(), credentialTo.getAccount(), message);
+                            String id = manager.sendMessage(credentialFrom.getAccount(), credentialTo.getAccount(), message);
 
                             StringJoiner stringJoiner = new StringJoiner(",");
                             stringJoiner.add(id);

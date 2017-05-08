@@ -19,7 +19,7 @@ local.properties
 build/
 
 #Project
-/benchmark-bundle
+/benchmark-bundle/*.jar
 /logs
 *.log
 block.csv

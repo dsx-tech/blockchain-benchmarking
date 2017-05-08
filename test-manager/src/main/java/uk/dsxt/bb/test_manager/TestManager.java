@@ -59,13 +59,16 @@ public class TestManager {
 
     private TestManagerProperties properties;
     private RemoteInstancesManager<RemoteInstance> blockchainInstancesManager;
+    private RemoteInstancesManager<RemoteInstance> resourceMonitorsInstancesManager;
     private LoggerInstancesManager loggerInstancesManager;
     private LoadGeneratorInstancesManager loadGeneratorInstancesManager;
     private Path blocksLog;
     private Path transactionsLog;
+    private Path resourceMonitorsLog;
 
     private volatile AtomicBoolean isLoggersLogLoaded = new AtomicBoolean(false);
     private volatile AtomicBoolean isLoadGeneratorsLogsLoaded = new AtomicBoolean(false);
+    private volatile AtomicBoolean isResourceMonitorsLogsLoaded = new AtomicBoolean(false);
     private volatile AtomicBoolean isTerminated = new AtomicBoolean(false);
 
 
@@ -75,6 +78,7 @@ public class TestManager {
         validateProperties(properties);
         blocksLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "blocks"));
         transactionsLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "transactions"));
+        resourceMonitorsLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "resource_monitors"));
     }
 
     private void validateProperties(TestManagerProperties properties) {
@@ -108,6 +112,7 @@ public class TestManager {
                     Paths.get(properties.getResultLogsPath()), properties.getBlockchainType(),
                     i.getHost(), properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
             loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
+            resourceMonitorsInstancesManager = runResourceMonitors();
             loggerInstancesManager = runLoggers(loggerInstances);
             Thread.sleep(10000);
 
@@ -121,10 +126,58 @@ public class TestManager {
             }
             loadGeneratorInstances.forEach(instance -> this.loadGeneratorInstances.put(instance.getHost(), instance));
             loadGeneratorInstancesManager = runLoadGenerators(loadGeneratorInstances, blockchainInstancesManager.getAllInstances());
+            initTimeoutForFinishTest();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    private void initTimeoutForFinishTest() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(properties.getTestTimeout());
+                loggerInstances.values().forEach(v -> v.setRunning(false));
+                loadGeneratorInstances.values().forEach(v -> v.setRunning(false));
+                checkInstancesStatus();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private RemoteInstancesManager<RemoteInstance> runResourceMonitors() {
+        List<RemoteInstance> monitorsInstances = allHosts
+                .stream()
+                .map(host -> new RemoteInstance(properties.getUserNameOnRemoteInstances(),
+                        host, 22,
+                        properties.getPemKeyPath(), resourceMonitorsLog))
+                .collect(Collectors.toList());
+
+        RemoteInstancesManager<RemoteInstance> monitorsInstancesManager = new RemoteInstancesManager<>(
+                properties.getMasterIpAddress(),
+                properties.getMasterPort());
+        monitorsInstancesManager.setRootInstance(monitorsInstances.get(0));
+        monitorsInstancesManager.addCommonInstances(monitorsInstances.subList(1, monitorsInstances.size()));
+
+        monitorsInstancesManager.uploadFilesForAll(Arrays.asList(
+                properties.getTestManagerModulesPath().resolve("resource-monitor.jar")
+        ));
+
+        monitorsInstancesManager.uploadFolderForRoot(properties.getTestManagerModulesPath().resolve("lib"), "lib");
+        monitorsInstancesManager.uploadFolderForCommon(properties.getTestManagerModulesPath().resolve("lib"), "lib");
+
+//        monitorsInstancesManager.executeCommandsForAll(Arrays.asList(
+//                "sudo apt-get update;",
+//                "sudo apt-get -y install default-jre;",
+//                "nohup java -jar resource-monitor.jar >/dev/null 2>resource-monitor-stdout.log &"
+//                )
+//        );
+        Arrays.asList("sudo apt-get update;", "sudo apt-get -y install default-jre;", "nohup java -jar resource-monitor.jar >/dev/null 2>resource-monitor-stdout.log &")
+                .forEach(c -> monitorsInstancesManager.executeCommandsForAll(singletonList(c)));
+
+        log.info("resource monitors started");
+        return monitorsInstancesManager;
     }
 
     private RemoteInstancesManager<RemoteInstance> runBlockchain() {
@@ -178,8 +231,8 @@ public class TestManager {
         loggerInstancesManager.addCommonInstances(loggers.subList(1, loggers.size()));
         loggerInstancesManager.uploadFilesForAll(singletonList(properties.getTestManagerModulesPath().resolve("blockchain-logger.jar")));
         loggerInstancesManager.executeCommandsForAll(Arrays.asList(
-                "pkill -f 'java -jar';",
-                "sudo apt-get -y install default-jre;",
+//                "pkill -f 'java -jar';",
+//                "sudo apt-get -y install default-jre;",
                 "nohup java -jar blockchain-logger.jar ${LOG_PARAMS} >/dev/null 2>blockchain-logger-stdout.log &"
         ));
 
@@ -213,10 +266,11 @@ public class TestManager {
         loadGeneratorsManager.setRootInstance(loadGeneratorInstances.get(0));
         loadGeneratorsManager.addCommonInstances(loadGeneratorInstances.subList(1, loadGeneratorInstances.size()));
 
-        loadGeneratorsManager.executeCommandsForAll(Arrays.asList(
-                "pkill -f 'java -jar';",
-                "sudo apt-get -y install default-jre;")
-        );
+//        loadGeneratorsManager.executeCommandsForAll(Arrays.asList(
+//                "pkill -f 'java -jar';",
+//                "sudo apt-get update;",
+//                "sudo apt-get -y install default-jre;")
+//        );
         loadGeneratorsManager.uploadFilesForAll(Arrays.asList(
                 properties.getTestManagerModulesPath().resolve("load-generator.jar"),
                 Paths.get("tmp", "root_init_result", "credentials")
@@ -319,12 +373,41 @@ public class TestManager {
     public void stop() {
         if (isTerminated.compareAndSet(false, true)) {
 
+            getResourceMonitorsLogs();
             getTransactionsForBlocks();
 
-            blockchainInstancesManager.stop();
-            loggerInstancesManager.stop();
-            loadGeneratorInstancesManager.stop();
-            Spark.stop();
+            List<Runnable> stopActions = Arrays.asList(
+                    () -> blockchainInstancesManager.stop(),
+                    () -> loggerInstancesManager.stop(),
+                    () -> loadGeneratorInstancesManager.stop(),
+                    () -> resourceMonitorsInstancesManager.stop(),
+                    Spark::stop
+            );
+
+            boolean success = stopActions.stream().map(this::safeExecute).allMatch(a -> a);
+            log.info(success ? "Test completed" : "You can stop test, but something went wrong");
+        }
+    }
+
+    private boolean safeExecute(Runnable action) {
+        try {
+            action.run();
+            return true;
+        }
+        catch (Exception e) {
+            log.error(e);
+        }
+        return false;
+    }
+
+    private void getResourceMonitorsLogs() {
+        log.info("Getting logs from resource-monitors");
+        if (isResourceMonitorsLogsLoaded.compareAndSet(false, true)) {
+            resourceMonitorsInstancesManager.getAllInstances().forEach(monitor ->
+                    monitor.downloadFiles(
+                            singletonList("resource_usage.csv"),
+                            resourceMonitorsLog.resolve(monitor.getHost() + "_res_usage.csv"))
+            );
         }
     }
 
