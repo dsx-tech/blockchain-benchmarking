@@ -109,8 +109,7 @@ class LoadManager {
                     for (int j = 0; j < amountOfTransactions; ++j) {
                         try {
                             Thread.sleep(delay);
-//                            String message = "0x" + Integer.toHexString(random.nextInt(1000) + 1000);
-                            String message = generateMessage(random, 25, 100);
+                            String message = generateMessage(random, minLength, maxLength);
                             long startTime = System.currentTimeMillis();
 
                             int credentialToIndex = getRandomIntExcept(random, credentials.size(), credentialFromIndex);
