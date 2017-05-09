@@ -39,6 +39,10 @@ public class GeneralCSVComposer {
     private static final String GENERAL_SIZE_FILE = "size.csv";
     private static final String GENERAL_SCALABILITY_FILE = "scalability.csv";
 
+    private static final String RESOURCES_INTENSITY_FILE = "resources_intensity.csv";
+    private static final String RESOURCES_SIZE_FILE = "resources_size.csv";
+    private static final String RESOURCES_SCALABILITY_FILE = "resources_scalability.csv";
+
     private static final String[] INTENSITY_HEADER = {"blockchainType", "intensity", "maxThroughput",
             "per90Throughput", "averageThroughput",
             "maxLatency", "per90Latency", "averageLatency", "averageQueueInc"};
@@ -50,19 +54,24 @@ public class GeneralCSVComposer {
     private static final String[] SCALABILITY_HEADER = {"blockchainType", "numberOfNodes", "averageThroughput",
             "averageLatency", "averageQueueInc"};
 
+    private static final String[] INTENSITY_R_HEADER = {"blockchainType", "intensity", "averageCPU",
+            "averageMem", "averageMemPercent", "averageIn", "averageOut"};
 
-    public static boolean createGeneralResultFiles() {
-        File generalResDir = new File(GENERAL_RESULTS_PATH);
-        if (!generalResDir.exists() || generalResDir.isFile()) {
-            if (!generalResDir.mkdirs()) {
-                log.error("Couldn't create general results directory");
-                return false;
-            }
-        }
+    private static final String[] SIZE_R_HEADER = {"blockchainType", "transactionSize", "averageCPU",
+            "averageMem", "averageMemPercent", "averageIn", "averageOut"};
+
+    private static final String[] SCALABILITY_R_HEADER = {"blockchainType", "numberOfNodes", "averageCPU",
+            "averageMem", "averageMemPercent", "averageIn", "averageOut"};
+
+
+    public static boolean createResultFiles() {
         try {
-            tryCreateFile(GENERAL_INTENSITY_FILE, INTENSITY_HEADER);
-            tryCreateFile(GENERAL_SIZE_FILE, SIZE_HEADER);
-            tryCreateFile(GENERAL_SCALABILITY_FILE, SCALABILITY_HEADER);
+            tryCreateFile(GENERAL_RESULTS_PATH, GENERAL_INTENSITY_FILE, INTENSITY_HEADER);
+            tryCreateFile(GENERAL_RESULTS_PATH, GENERAL_SIZE_FILE, SIZE_HEADER);
+            tryCreateFile(GENERAL_RESULTS_PATH, GENERAL_SCALABILITY_FILE, SCALABILITY_HEADER);
+            tryCreateFile(GENERAL_RESOURCES_PATH, RESOURCES_INTENSITY_FILE, INTENSITY_HEADER);
+            tryCreateFile(GENERAL_RESOURCES_PATH, RESOURCES_SIZE_FILE, SIZE_HEADER);
+            tryCreateFile(GENERAL_RESOURCES_PATH, RESOURCES_SCALABILITY_FILE, SCALABILITY_HEADER);
         } catch (IOException e) {
             log.error(e.getMessage());
             return false;
@@ -70,8 +79,8 @@ public class GeneralCSVComposer {
         return true;
     }
 
-    private static void tryCreateFile(String name, String[] header) throws IOException {
-        File file = new File(GENERAL_RESULTS_PATH + name);
+    private static void tryCreateFile(String path, String name, String[] header) throws IOException {
+        File file = new File(path + name);
         file.createNewFile();
         CSVWriter writer = new CSVWriter(new FileWriter(file),
                 ',', '\u0000');
@@ -79,18 +88,21 @@ public class GeneralCSVComposer {
         writer.flush();
     }
 
-
-    public static void addToIntensity(ScenarioInfo scenarioInfo, ResultType type) {
+    public static void addScenarioInfo(ScenarioInfo scenarioInfo, ResultType type) {
         String path = null;
+        String resPath = null;
         switch (type) {
             case INTENSITY:
                 path = GENERAL_INTENSITY_FILE;
+                resPath = RESOURCES_INTENSITY_FILE;
                 break;
             case SIZE:
                 path = GENERAL_SIZE_FILE;
+                resPath = RESOURCES_SIZE_FILE;
                 break;
             case SCALABILITY:
                 path = GENERAL_SCALABILITY_FILE;
+                resPath = RESOURCES_SCALABILITY_FILE;
                 break;
         }
         try (CSVWriter writer = new CSVWriter(new FileWriter
@@ -110,6 +122,65 @@ public class GeneralCSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+        try (CSVWriter writer = new CSVWriter(new FileWriter
+                (GENERAL_RESOURCES_PATH + resPath, true),
+                ',', '\u0000')) {
+            switch (type) {
+                case INTENSITY:
+                    fillIntensityResourcesCSV(scenarioInfo, writer);
+                    break;
+                case SIZE:
+                    fillSizeResourcesCSV(scenarioInfo, writer);
+                    break;
+                case SCALABILITY:
+                    fillScalaResourcesCSV(scenarioInfo, writer);
+                    break;
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private static void fillScalaResourcesCSV(ScenarioInfo scenarioInfo, CSVWriter writer)
+            throws IOException {
+        String[] entry = {
+                String.valueOf(scenarioInfo.getBlockchainType()),
+                String.valueOf(scenarioInfo.getNumberOfNodes()),
+                String.valueOf(scenarioInfo.getAverageCPU()),
+                String.valueOf(scenarioInfo.getAverageMem()),
+                String.valueOf(scenarioInfo.getAverageMemPercent()),
+                String.valueOf(scenarioInfo.getAverageIn()),
+                String.valueOf(scenarioInfo.getAverageOut())};
+        writer.writeNext(entry);
+        writer.flush();
+    }
+
+    private static void fillSizeResourcesCSV(ScenarioInfo scenarioInfo, CSVWriter writer)
+            throws IOException {
+        String[] entry = {
+                String.valueOf(scenarioInfo.getBlockchainType()),
+                String.valueOf(scenarioInfo.getAverageTransactionSize()),
+                String.valueOf(scenarioInfo.getAverageCPU()),
+                String.valueOf(scenarioInfo.getAverageMem()),
+                String.valueOf(scenarioInfo.getAverageMemPercent()),
+                String.valueOf(scenarioInfo.getAverageIn()),
+                String.valueOf(scenarioInfo.getAverageOut())};
+        writer.writeNext(entry);
+        writer.flush();
+    }
+
+    private static void fillIntensityResourcesCSV(ScenarioInfo scenarioInfo, CSVWriter writer)
+            throws IOException {
+        String[] entry = {
+                String.valueOf(scenarioInfo.getBlockchainType()),
+                String.valueOf(scenarioInfo.getIntensity()),
+                String.valueOf(scenarioInfo.getAverageCPU()),
+                String.valueOf(scenarioInfo.getAverageMem()),
+                String.valueOf(scenarioInfo.getAverageMemPercent()),
+                String.valueOf(scenarioInfo.getAverageIn()),
+                String.valueOf(scenarioInfo.getAverageOut())};
+        writer.writeNext(entry);
+        writer.flush();
     }
 
     private static void fillScalabilityCSV(ScenarioInfo scenarioInfo, CSVWriter writer)
@@ -144,7 +215,7 @@ public class GeneralCSVComposer {
             throws IOException {
         String[] entry = {
                 String.valueOf(scenarioInfo.getBlockchainType()),
-                String.valueOf(scenarioInfo.getMaxTransactionSize()),
+                String.valueOf(scenarioInfo.getAverageTransactionSize()),
                 String.valueOf(scenarioInfo.getMaxThroughput()),
                 String.valueOf(scenarioInfo.getPer95Throughput()),
                 String.valueOf(scenarioInfo.getAverageThroughput()),

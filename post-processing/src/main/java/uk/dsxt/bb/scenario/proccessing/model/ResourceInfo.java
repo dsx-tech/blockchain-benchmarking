@@ -18,37 +18,29 @@
  * Removal or modification of this copyright notice is prohibited.            *
  * *
  ******************************************************************************/
-
 package uk.dsxt.bb.scenario.proccessing.model;
 
 import lombok.Data;
-import uk.dsxt.bb.properties.proccessing.model.BlockchainType;
-
-import java.util.*;
 
 @Data
-public class BlockchainInfo {
+public class ResourceInfo {
 
-    private Map<Long, BlockInfo> blocks;
-    private Map<String, TransactionInfo> transactions;
-    private Map<Long, TimeSegmentInfo> timeSegments;
-    private List<ResourceInfo> resources;
-    private ScenarioInfo scenarioInfo;
-    private int numberOfNodes;
-    private BlockchainType blockchainType;
+    private long time;
+    private String nodeId;
+    private double cpuPercent;
+    private double memPercent;
+    private int memByte;
+    private int downloaded;
+    private int uploaded;
 
-    public BlockchainInfo(BlockchainType blockchainType) {
-        this.blockchainType = blockchainType;
-        this.blocks = new HashMap<>();
-        this.transactions = new HashMap<>();
-        this.resources = new ArrayList<>();
-    }
-
-    public void addTransactions(Map<String, TransactionInfo> transactions) {
-        transactions.forEach(this.transactions::putIfAbsent);
-    }
-
-    public void addResources(List<ResourceInfo> resources) {
-        this.resources.addAll(resources);
+    public ResourceInfo(long time, String nodeId, double cpuPercent,
+                        double memPercent, int memByte, int downloaded, int uploaded) {
+        this.time = time;
+        this.nodeId = nodeId;
+        this.cpuPercent = cpuPercent;
+        this.memPercent = memPercent;
+        this.memByte = memByte;
+        this.downloaded = downloaded;
+        this.uploaded = uploaded;
     }
 }

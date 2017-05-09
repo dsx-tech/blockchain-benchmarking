@@ -24,10 +24,7 @@ package uk.dsxt.bb.scenario.proccessing;
 import au.com.bytecode.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.general.DirOrganizer;
-import uk.dsxt.bb.scenario.proccessing.model.BlockInfo;
-import uk.dsxt.bb.scenario.proccessing.model.BlockchainInfo;
-import uk.dsxt.bb.scenario.proccessing.model.TimeSegmentInfo;
-import uk.dsxt.bb.scenario.proccessing.model.TransactionInfo;
+import uk.dsxt.bb.scenario.proccessing.model.*;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,6 +39,7 @@ public class CSVComposer {
     private static final String TRANSACTIONS_FILE = "transactions.csv";
     private static final String BLOCKS_FILE = "blocks.csv";
     private static final String TIME_FILE = "time.csv";
+    private static final String RESOURCES_FILE = "resources.csv";
 
     //header lines
     private static final String[] TIME_HEADER = {"time", "throughput",
@@ -49,6 +47,9 @@ public class CSVComposer {
     private static final String[] TRANSACTIONS_HEADER = {"transactionId", "blockId",
             "transactionSize", "transactionCreationTime", "nodeId"};
     private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "latency"};
+    private static final String[] RESOURCES_HEADER = {"time", "nodeId",
+            "cpu", "usedMemory", "usedMemory%"
+            , "downloaded", "uploaded"};
 
     private BlockchainInfo blockchainInfo;
 
@@ -77,6 +78,11 @@ public class CSVComposer {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+        try (CSVWriter writer = new CSVWriter(new FileWriter(resultPath + RESOURCES_FILE), ',', '\u0000')) {
+            fillResourcesCSV(writer);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
     }
 
     private String createResultDir(String dirName) {
@@ -96,6 +102,23 @@ public class CSVComposer {
         }
         resDir.mkdirs();
         return resPath;
+    }
+
+
+    private void fillResourcesCSV(CSVWriter writer) throws IOException {
+        writer.writeNext(RESOURCES_HEADER);
+        for (ResourceInfo resourceInfo : blockchainInfo.getResources()) {
+            String[] entry = {
+                    String.valueOf(resourceInfo.getTime()),
+                    String.valueOf(resourceInfo.getNodeId()),
+                    String.valueOf(resourceInfo.getCpuPercent()),
+                    String.valueOf(resourceInfo.getMemByte()),
+                    String.valueOf(resourceInfo.getMemPercent()),
+                    String.valueOf(resourceInfo.getDownloaded()),
+                    String.valueOf(resourceInfo.getUploaded())};
+            writer.writeNext(entry);
+            writer.flush();
+        }
     }
 
     private void fillTimeCSV(CSVWriter writer) throws IOException {

@@ -32,6 +32,8 @@ public class DirOrganizer {
             MAIN_LOG_PATH + "size/";
     public static final String SCALABILITY_LOGS_PATH =
             MAIN_LOG_PATH + "scalability/";
+    public static final String OTHERS_LOGS_PATH =
+            MAIN_LOG_PATH + "others/";
 
     public static final String ETHEREUM_RESULTS_PATH =
             "post-processing/src/main/resources/results/ethereum/";
@@ -39,12 +41,15 @@ public class DirOrganizer {
             "post-processing/src/main/resources/results/fabric/";
     public static final String GENERAL_RESULTS_PATH =
             "post-processing/src/main/resources/results/general/csv/";
+    public static final String GENERAL_RESOURCES_PATH =
+            "post-processing/src/main/resources/results/general/resources/csv/";
 
 
     public static boolean createDirStructure() {
         return createDir(ETHEREUM_RESULTS_PATH)
                 && createDir(FABRIC_RESULTS_PATH)
-                && createDir(GENERAL_RESULTS_PATH);
+                && createDir(GENERAL_RESULTS_PATH)
+                && createDir(GENERAL_RESOURCES_PATH);
     }
 
     private static boolean createDir(String path) {

@@ -42,12 +42,13 @@ public class App {
         if (!DirOrganizer.createDirStructure()) {
             return;
         }
-        if (!GeneralCSVComposer.createGeneralResultFiles()) {
+        if (!GeneralCSVComposer.createResultFiles()) {
             return;
         }
         process(ResultType.INTENSITY);
         process(ResultType.SIZE);
         process(ResultType.SCALABILITY);
+        process(ResultType.OTHERS);
     }
 
     private static void process(ResultType type) {
@@ -56,8 +57,8 @@ public class App {
         if (properties != null) {
             for (PropertiesFileInfo property : properties) {
                 ScenarioInfo scenarioInfo = ScenarioParser.parseScenario(property);
-                if (scenarioInfo != null) {
-                    GeneralCSVComposer.addToIntensity(scenarioInfo, type);
+                if (scenarioInfo != null && type != ResultType.OTHERS) {
+                    GeneralCSVComposer.addScenarioInfo(scenarioInfo, type);
                 }
             }
         }

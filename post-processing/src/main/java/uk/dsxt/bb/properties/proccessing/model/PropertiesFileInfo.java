@@ -63,7 +63,7 @@ public class PropertiesFileInfo {
                 && file.getNumOfNodes() == numOfNodes;
     }
 
-    public boolean equals(PropertiesFileInfo file) {
+    public boolean equalsFully(PropertiesFileInfo file) {
         return file.getLoadGeneratorsAmount() == loadGeneratorsAmount
                 && file.getMaxMessageLength() == maxMessageLength
                 && file.getMinMessageLength() == minMessageLength

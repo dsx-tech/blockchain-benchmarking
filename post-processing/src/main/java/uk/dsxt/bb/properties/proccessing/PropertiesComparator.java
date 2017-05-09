@@ -46,10 +46,16 @@ public class PropertiesComparator {
             case SCALABILITY:
                 path = SCALABILITY_LOGS_PATH;
                 break;
+            case OTHERS:
+                path = OTHERS_LOGS_PATH;
+                break;
         }
         List<PropertiesFileInfo> props = getAllProps(path);
         if (props == null || props.size() == 0) {
             return null;
+        }
+        if(type == ResultType.OTHERS) {
+            return props;
         }
         PropertiesFileInfo modelProp = props.get(0);
         for (PropertiesFileInfo property : props) {
@@ -62,7 +68,7 @@ public class PropertiesComparator {
                     equals = modelProp.equalsExceptSize(property);
                     break;
                 case SCALABILITY:
-                    equals = modelProp.equals(property);
+                    equals = modelProp.equalsFully(property);
                     break;
             }
             if (!equals) {

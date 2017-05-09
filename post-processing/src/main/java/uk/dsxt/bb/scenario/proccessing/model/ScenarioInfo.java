@@ -31,30 +31,39 @@ import java.util.List;
 public class ScenarioInfo {
 
     private int numberOfNodes;
+
     private double maxThroughput;
     private double per95Throughput;
     private double averageThroughput;
+
     private double intensity;
-    private int minTransactionSize;
-    private int maxTransactionSize;
+    private double averageTransactionSize;
+
     private double maxLatency;
     private double per95Latency;
     private double averageLatency;
-    private double averageQueueInc;
-    private BlockchainType blockchainType;
 
+    private double averageQueueInc;
+
+    private double averageCPU;
+    private double averageMem;
+    private double averageMemPercent;
+    private double averageIn;
+    private double averageOut;
+
+    private BlockchainType blockchainType;
 
     public ScenarioInfo(BlockchainInfo blockchainInfo, PropertiesFileInfo propertiesFileInfo) {
         calculateInfo(blockchainInfo, propertiesFileInfo);
+        calculateResources(blockchainInfo);
     }
 
     private void calculateInfo(BlockchainInfo blockchainInfo, PropertiesFileInfo properties) {
         blockchainType = properties.getBlockchainType();
         intensity = properties.getNumOfThreads() * properties.getNumOfNodes() *
                 (1000.0 / properties.getTransactionDelay());
-        minTransactionSize = properties.getMinMessageLength();
-        maxTransactionSize = properties.getMaxMessageLength();
 
+        List<Double> trSizes = new ArrayList<>();
         List<Double> throughputs = new ArrayList<>();
         List<Double> latencies = new ArrayList<>();
         List<Double> queues = new ArrayList<>();
@@ -64,6 +73,7 @@ public class ScenarioInfo {
         for (TimeSegmentInfo timeSegmentInfo : blockchainInfo.getTimeSegments().values()) {
             throughputs.add(timeSegmentInfo.getThroughput());
             latencies.add(timeSegmentInfo.getLatency());
+            trSizes.add(timeSegmentInfo.getTransactionSize());
             prevQueue = queue;
             queue = timeSegmentInfo.getTransactionQueueLength();
             queues.add((double) (queue - prevQueue));
@@ -76,9 +86,32 @@ public class ScenarioInfo {
         averageThroughput = calculateAverage(throughputs);
         averageLatency = calculateAverage(latencies);
         averageQueueInc = calculateAverage(queues);
+        averageTransactionSize = calculateAverage(trSizes);
 
         per95Throughput = calculate95Percentile(throughputs);
         per95Latency = calculate95Percentile(latencies);
+    }
+
+    private void calculateResources(BlockchainInfo blockchainInfo) {
+        List<Double> cpus = new ArrayList<>();
+        List<Double> mem = new ArrayList<>();
+        List<Double> memPr = new ArrayList<>();
+        List<Double> in = new ArrayList<>();
+        List<Double> out = new ArrayList<>();
+
+        for (ResourceInfo resource : blockchainInfo.getResources()) {
+            cpus.add(resource.getCpuPercent());
+            mem.add((double) resource.getMemByte());
+            memPr.add(resource.getMemPercent());
+            in.add((double) resource.getDownloaded());
+            out.add((double) resource.getUploaded());
+        }
+
+        averageCPU = calculateAverage(cpus);
+        averageMem = calculateAverage(mem);
+        averageMemPercent = calculateAverage(memPr);
+        averageIn = calculateAverage(in);
+        averageOut = calculateAverage(out);
     }
 
     private double calculateAverage(List<Double> list) {

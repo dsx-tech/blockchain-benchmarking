@@ -27,7 +27,8 @@ import uk.dsxt.bb.scenario.proccessing.model.ScenarioInfo;
 public class ScenarioParser {
 
     public static ScenarioInfo parseScenario(PropertiesFileInfo props) {
-        BlockchainInfo blockchainInfo = CSVParser.parseCSVs(props);
+        CSVParser parser = new CSVParser(props.getPathToScenarioDir());
+        BlockchainInfo blockchainInfo = parser.parseCSVs(props.getBlockchainType());
         if (blockchainInfo == null) {
             return null;
         }

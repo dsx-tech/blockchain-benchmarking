@@ -30,15 +30,15 @@ public class TransactionInfo {
     private String transactionId;
     private double transactionSize;
     private String nodeId;
-    private int responseCode;
+    //private int responseCode;
     private long blockId;
 
     public TransactionInfo(long time, String transactionId, int transactionSize,
-                           String nodeId, int responseCode) {
+                           String nodeId) {
         this.time = time;
         this.transactionId = transactionId;
         this.transactionSize = transactionSize;
         this.nodeId = nodeId;
-        this.responseCode = responseCode;
+       // this.responseCode = responseCode;
     }
 }

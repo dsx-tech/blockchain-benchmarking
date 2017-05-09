@@ -26,6 +26,7 @@ import uk.dsxt.bb.properties.proccessing.model.PropertiesFileInfo;
 import uk.dsxt.bb.scenario.proccessing.model.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Log4j2
 public class ResultsAnalyzer {
@@ -50,12 +51,19 @@ public class ResultsAnalyzer {
         updateBlockInfos();
         blockchainInfo.setTimeSegments(calculateTimeSegments());
         blockchainInfo.setScenarioInfo(new ScenarioInfo(blockchainInfo, properties));
+        blockchainInfo.setResources(cutTestTimeSegement());
         return blockchainInfo;
     }
 
     private double calcMedium
             (int numberOfElements, double prevMediumValue, double newValue) {
         return ((prevMediumValue * numberOfElements) + newValue) / (numberOfElements + 1);
+    }
+
+    private List<ResourceInfo> cutTestTimeSegement() {
+        return blockchainInfo.getResources().stream()
+                        .filter(resourceInfo -> resourceInfo.getTime() >= 0)
+                        .collect(Collectors.toList());
     }
 
     /**
@@ -70,6 +78,9 @@ public class ResultsAnalyzer {
             for (BlockInfo.DistributionTime time : block.getDistributionTimes()) {
                 time.setTime(time.getTime() - startTime);
             }
+        }
+        for (ResourceInfo resource : blockchainInfo.getResources()) {
+            resource.setTime(resource.getTime() - startTime);
         }
     }
 
@@ -125,7 +136,7 @@ public class ResultsAnalyzer {
     private void fillQueue(Map<Long, TimeSegmentInfo> timeSegments) {
         int numberGenerated = 0;
         int numberIntegrated = 0;
-        for(TimeSegmentInfo time : timeSegments.values()) {
+        for (TimeSegmentInfo time : timeSegments.values()) {
             numberGenerated += time.getNumberOfTransactionsGenerated();
             numberIntegrated += time.getNumberOfTransactionsIntegrated();
             time.setTransactionQueueLength(numberGenerated - numberIntegrated);

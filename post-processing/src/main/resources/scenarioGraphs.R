@@ -4,12 +4,13 @@ stop("At least one argument must be supplied (path to results directory)", call.
 }
 path <- args[1]
  # path <-
- # "C://Users//Olga//Desktop//git//blockchain-benchmarking//post-processing//src//main//resources//results//csv"
+ # "C://Users//Olga//Desktop//git//blockchain-benchmarking//post-processing//src//main//resources//results//ethereum//olga_3//csv"
 setwd(path)
 
 options(scipen=5)
 
 times <- read.csv(file = "time.csv", sep = ",", head = TRUE)
+resources <- read.csv(file = "resources.csv", sep = ",", head = TRUE)
 
 dir.create(file.path(path, "..\\graphs"))
 dir.create(file.path(path, "..\\graphs\\overTime"))
@@ -54,6 +55,39 @@ number <- data.frame(times["time"], times["numberTransactionsInBlock"])
 bmp(filename = "numberTransactionsInBlock.bmp")
 plot(number, type = "l")
 dev.off()
+
+#resources graphs
+dir.create(file.path(path, "..\\graphs\\resources"))
+setwd("..\\resources")
+
+printNode <- function(resources, nodeId) {
+  dir.create(file.path(path, paste("..\\graphs\\resources\\", nodeId)))
+  setwd(paste("..\\resources\\",nodeId))
+  
+  data<-resources
+  correctElements <-  as.numeric(data[, 2]) %in% c(as.numeric(nodeId))
+  data <- data[correctElements, ]
+  printMonitor(data, "cpu")
+  printMonitor(data, "usedMemory")
+  printMonitor(data, "usedMemory.")
+  printMonitor(data, "downloaded")
+  printMonitor(data, "uploaded")
+
+  setwd("..")
+}
+
+printMonitor <- function(data, name) {
+  data <- data.frame(resources["time"], resources[name])
+  bmp(filename = paste(name,".bmp"))
+  plot(data, type = "l")
+  dev.off()
+}
+
+nodes<-resources$nodeId
+nodes<-unique(nodes)
+for(node in nodes) {
+  printNode(resources, node)
+}
 
 #throughput graphs
 dir.create(file.path(path, "..\\graphs\\throughput"))

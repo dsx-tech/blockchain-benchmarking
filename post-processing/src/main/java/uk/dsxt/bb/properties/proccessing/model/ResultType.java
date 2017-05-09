@@ -23,5 +23,6 @@ package uk.dsxt.bb.properties.proccessing.model;
 public enum ResultType {
     INTENSITY,
     SIZE,
-    SCALABILITY
+    SCALABILITY,
+    OTHERS
 }
