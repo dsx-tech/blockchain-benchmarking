@@ -40,6 +40,8 @@ public class BlockInfo {
     private double latency;
     private double size;
     private double creationTime;
+    // percentage of nodes on which transaction should be distributed to calculate latency
+    private static final double percentageOfNodes = 0.9;
 
 
     public BlockInfo(long blockId, List<DistributionTime> distributionTimes) {
@@ -71,7 +73,7 @@ public class BlockInfo {
             return;
         }
         times.sort(Double::compareTo);
-        latency = times.get((int)(times.size()* 0.9 - 1)) - creationTime;
+        latency = times.get((int)(times.size()* percentageOfNodes - 1)) - creationTime;
     }
 
     public void addTransaction(TransactionInfo transaction) {

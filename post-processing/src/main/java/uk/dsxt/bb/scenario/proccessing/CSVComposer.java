@@ -112,7 +112,7 @@ public class CSVComposer {
                     String.valueOf(resourceInfo.getTime()),
                     String.valueOf(resourceInfo.getNodeId()),
                     String.valueOf(resourceInfo.getCpuPercent()),
-                    String.valueOf(resourceInfo.getMemByte()),
+                    String.valueOf(resourceInfo.getMem()),
                     String.valueOf(resourceInfo.getMemPercent()),
                     String.valueOf(resourceInfo.getDownloaded()),
                     String.valueOf(resourceInfo.getUploaded())};

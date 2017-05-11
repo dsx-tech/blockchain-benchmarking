@@ -26,7 +26,6 @@ import uk.dsxt.bb.properties.proccessing.model.PropertiesFileInfo;
 import uk.dsxt.bb.scenario.proccessing.model.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Log4j2
 public class ResultsAnalyzer {
@@ -61,9 +60,22 @@ public class ResultsAnalyzer {
     }
 
     private List<ResourceInfo> cutTestTimeSegement() {
-        return blockchainInfo.getResources().stream()
-                        .filter(resourceInfo -> resourceInfo.getTime() >= 0)
-                        .collect(Collectors.toList());
+        final long endTime = getEndTime();
+        List<ResourceInfo> list = new ArrayList<>();
+        for (ResourceInfo resourceInfo : blockchainInfo.getResources()) {
+            if ((resourceInfo.getTime() >= 0
+                    && resourceInfo.getTime() <= endTime)) {
+                resourceInfo.setMem(convertBytesToMb(resourceInfo.getMem()));
+                resourceInfo.setDownloaded(convertBytesToMb(resourceInfo.getDownloaded()));
+                resourceInfo.setUploaded(convertBytesToMb(resourceInfo.getUploaded()));
+                list.add(resourceInfo);
+            }
+        }
+        return list;
+    }
+
+    private double convertBytesToMb(double bytes) {
+        return bytes / (1024 * 1024);
     }
 
     /**
@@ -109,6 +121,10 @@ public class ResultsAnalyzer {
         for (TimeSegmentInfo time : timeSegments.values()) {
             time.setIntensity((1000 * time.getNumberOfTransactionsGenerated()) / timeInterval);
             time.setThroughput((1000 * time.getNumberOfTransactionsIntegrated()) / timeInterval);
+            if (time.getNumberOfTransactionsIntegrated() == 0) {
+                time.setTransactionSize(0f);
+                continue;
+            }
             time.setTransactionSize(time.getTransactionSize() / time.getNumberOfTransactionsIntegrated());
         }
         fillQueue(timeSegments);

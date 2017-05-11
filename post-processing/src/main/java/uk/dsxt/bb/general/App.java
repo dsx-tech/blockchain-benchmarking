@@ -21,6 +21,7 @@
 
 package uk.dsxt.bb.general;
 
+import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.properties.proccessing.model.PropertiesFileInfo;
 import uk.dsxt.bb.properties.proccessing.model.ResultType;
 import uk.dsxt.bb.scenario.proccessing.model.ScenarioInfo;
@@ -31,13 +32,13 @@ import uk.dsxt.bb.properties.proccessing.PropertiesComparator;
 import javax.script.ScriptException;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
+@Log4j2
 public class App {
 
-    public static void main(String[] args) throws ScriptException,
-            InterruptedException, FileNotFoundException {
-
+    public static void main(String[] args) {
         //create all dirs if they don't exist
         if (!DirOrganizer.createDirStructure()) {
             return;
@@ -49,6 +50,11 @@ public class App {
         process(ResultType.SIZE);
         process(ResultType.SCALABILITY);
         process(ResultType.OTHERS);
+
+        if(args.length == 0) {
+            log.error("Missing path to R directory");
+        }
+        RScriptRunner.run(args[0]);
     }
 
     private static void process(ResultType type) {

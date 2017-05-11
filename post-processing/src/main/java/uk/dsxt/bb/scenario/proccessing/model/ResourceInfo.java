@@ -29,17 +29,17 @@ public class ResourceInfo {
     private String nodeId;
     private double cpuPercent;
     private double memPercent;
-    private int memByte;
-    private int downloaded;
-    private int uploaded;
+    private double mem;
+    private double downloaded;
+    private double uploaded;
 
     public ResourceInfo(long time, String nodeId, double cpuPercent,
-                        double memPercent, int memByte, int downloaded, int uploaded) {
+                        double memPercent, double memByte, double downloaded, double uploaded) {
         this.time = time;
         this.nodeId = nodeId;
         this.cpuPercent = cpuPercent;
         this.memPercent = memPercent;
-        this.memByte = memByte;
+        this.mem = memByte;
         this.downloaded = downloaded;
         this.uploaded = uploaded;
     }

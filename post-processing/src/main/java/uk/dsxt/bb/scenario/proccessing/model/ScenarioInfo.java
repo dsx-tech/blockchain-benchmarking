@@ -60,20 +60,24 @@ public class ScenarioInfo {
 
     private void calculateInfo(BlockchainInfo blockchainInfo, PropertiesFileInfo properties) {
         blockchainType = properties.getBlockchainType();
-        intensity = properties.getNumOfThreads() * properties.getNumOfNodes() *
-                (1000.0 / properties.getTransactionDelay());
+//        intensity = properties.getNumOfThreads() * properties.getNumOfNodes() *
+//                (1000.0 / properties.getTransactionDelay());
 
         List<Double> trSizes = new ArrayList<>();
         List<Double> throughputs = new ArrayList<>();
         List<Double> latencies = new ArrayList<>();
         List<Double> queues = new ArrayList<>();
+        List<Double> intensities = new ArrayList<>();
 
         int prevQueue;
         int queue = 0;
         for (TimeSegmentInfo timeSegmentInfo : blockchainInfo.getTimeSegments().values()) {
             throughputs.add(timeSegmentInfo.getThroughput());
             latencies.add(timeSegmentInfo.getLatency());
-            trSizes.add(timeSegmentInfo.getTransactionSize());
+            intensities.add(timeSegmentInfo.getIntensity());
+            if(timeSegmentInfo.getTransactionSize() != 0) {
+                trSizes.add(timeSegmentInfo.getTransactionSize());
+            }
             prevQueue = queue;
             queue = timeSegmentInfo.getTransactionQueueLength();
             queues.add((double) (queue - prevQueue));
@@ -87,6 +91,7 @@ public class ScenarioInfo {
         averageLatency = calculateAverage(latencies);
         averageQueueInc = calculateAverage(queues);
         averageTransactionSize = calculateAverage(trSizes);
+        intensity = calculateAverage(intensities);
 
         per95Throughput = calculate95Percentile(throughputs);
         per95Latency = calculate95Percentile(latencies);
@@ -101,7 +106,7 @@ public class ScenarioInfo {
 
         for (ResourceInfo resource : blockchainInfo.getResources()) {
             cpus.add(resource.getCpuPercent());
-            mem.add((double) resource.getMemByte());
+            mem.add((double) resource.getMem());
             memPr.add(resource.getMemPercent());
             in.add((double) resource.getDownloaded());
             out.add((double) resource.getUploaded());
