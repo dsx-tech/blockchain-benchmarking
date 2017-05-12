@@ -23,6 +23,10 @@ package uk.dsxt.bb.scenario.proccessing.model;
 
 import lombok.Data;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Data
 public class TransactionInfo {
 
@@ -32,6 +36,8 @@ public class TransactionInfo {
     private String nodeId;
     //private int responseCode;
     private long blockId;
+    private double latency;
+    private Map<Integer, Double> latencyQuartils;
 
     public TransactionInfo(long time, String transactionId, int transactionSize,
                            String nodeId) {
@@ -39,6 +45,21 @@ public class TransactionInfo {
         this.transactionId = transactionId;
         this.transactionSize = transactionSize;
         this.nodeId = nodeId;
-       // this.responseCode = responseCode;
+        latencyQuartils = new HashMap<>();
+
+        // this.responseCode = responseCode;
+    }
+
+    public void calculateLatency(BlockchainInfo blockchainInfo) {
+        BlockInfo block = blockchainInfo.getBlocks().get(blockId);
+        if (block == null || block.getLatency() == -1) {
+            latency = Double.POSITIVE_INFINITY;
+            return;
+        }
+        for (int i = 2; i <= block.getLatencyQuartils().size()+1; i++) {
+            latencyQuartils.put(i,
+                    block.getCreationTime() + block.getLatencyQuartils().get(i) - time);
+        }
+        latency = block.getCreationTime() + block.getLatency() - time;
     }
 }

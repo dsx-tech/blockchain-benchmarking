@@ -54,7 +54,7 @@ public class App {
         if(args.length == 0) {
             log.error("Missing path to R directory");
         }
-        RScriptRunner.run(args[0]);
+       RScriptRunner.run(args[0]);
     }
 
     private static void process(ResultType type) {

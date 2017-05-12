@@ -35,6 +35,7 @@ public class TimeSegmentInfo {
     private int numberOfTransactionsGenerated = 0;
     private double blockSize = 0;
     private int numberOfBlocks = 0;
+    private double blockGenerationFrequency = 0f;
     private int numberTransactionsInBlock = 0;
     private int transactionQueueLength = 0;
 

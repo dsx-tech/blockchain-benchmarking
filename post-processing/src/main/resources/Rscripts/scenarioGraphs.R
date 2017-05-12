@@ -15,7 +15,7 @@ resources <- read.csv(file = "resources.csv", sep = ",", head = TRUE)
 overTimePlot <- function(data, name) {
   data <- data.frame(data["time"], data[name])
   bmp(filename = paste(name,".bmp"))
-  plot(data, type = "l")
+  plot(data, type = "o" )
   dev.off()
 }
 

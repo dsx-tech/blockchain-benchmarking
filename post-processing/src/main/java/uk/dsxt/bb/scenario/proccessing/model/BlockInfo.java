@@ -25,7 +25,9 @@ import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
@@ -40,14 +42,22 @@ public class BlockInfo {
     private double latency;
     private double size;
     private double creationTime;
+    private Map<Integer, Double> latencyQuartils;
     // percentage of nodes on which transaction should be distributed to calculate latency
-    private static final double percentageOfNodes = 0.9;
+    private static final double percentageOfNodes = 1;
+
 
 
     public BlockInfo(long blockId, List<DistributionTime> distributionTimes) {
         this.blockId = blockId;
         this.distributionTimes = distributionTimes;
         this.transactions = new ArrayList<>();
+    }
+
+    public BlockInfo(long blockId) {
+        this.blockId = blockId;
+        this.transactions = new ArrayList<>();
+        distributionTimes = new ArrayList<>();
     }
 
     public void calculateCreationTime() {
@@ -73,6 +83,11 @@ public class BlockInfo {
             return;
         }
         times.sort(Double::compareTo);
+        latencyQuartils = new HashMap<>();
+        for(int i = 1 ; i< times.size(); i++) {
+            latencyQuartils.put(i+1, times.get(i) - creationTime);
+            //double nextLatency = times.get((int)(times.size()* (i - 1)) - creationTime;
+        }
         latency = times.get((int)(times.size()* percentageOfNodes - 1)) - creationTime;
     }
 

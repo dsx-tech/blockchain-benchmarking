@@ -63,10 +63,11 @@ public class CSVParser {
         // String scenarioDir = properties.getPathToScenarioDir() ;
         blockchainInfo = new BlockchainInfo(type);
 
-        if (parseDir(BLOCKS_DIR, DirType.BLOCKS) &&
+        if (
                 parseDir(TRANSACTIONS_DIR, DirType.TRANSACTIONS) &&
                 parseDir(RESOURCES_DIR, DirType.RESOURCES) &&
-                parseDir(TRANSACTIONS_PER_BLOCK_DIR, DirType.TRANSACTIONS_PER_BLOCK)) {
+                parseDir(TRANSACTIONS_PER_BLOCK_DIR, DirType.TRANSACTIONS_PER_BLOCK) &&
+                        parseDir(BLOCKS_DIR, DirType.BLOCKS)) {
             return blockchainInfo;
         }
         return null;
@@ -157,8 +158,7 @@ public class CSVParser {
                 String nodeId = FilenameUtils.removeExtension(file.getName());
                 switch (type) {
                     case BLOCKS:
-                        blockchainInfo.setBlocks
-                                (parseBlockCSV(reader, nodeId, blockchainInfo.getBlocks()));
+                        parseBlockCSV(reader, nodeId, blockchainInfo.getBlocks());
                         break;
                     case TRANSACTIONS:
                         nodeId = nodeId.substring(0, nodeId.length() - 5);
@@ -172,8 +172,8 @@ public class CSVParser {
                         blockchainInfo.addResources(parseResourcesCSV(reader, nodeId));
                         break;
                     case TRANSACTIONS_PER_BLOCK:
-                        parseTransactionsPerBlockCSV(reader,
-                                blockchainInfo.getBlocks(), blockchainInfo.getTransactions());
+                        blockchainInfo.setBlocks(parseTransactionsPerBlockCSV(reader,
+                                 blockchainInfo.getTransactions()));
                         break;
                 }
             } catch (IOException e) {
@@ -201,7 +201,7 @@ public class CSVParser {
                 int size = Integer.parseInt(nextLine[2]);
                 String status = nextLine[3];
                 if (status.equals("FAIL")) {
-                    log.error("Failed transaction of size " + size);
+                    log.info("Failed transaction of size " + size);
                     continue;
                 }
                 TransactionInfo transactionInfo = new TransactionInfo(creationTime,
@@ -247,7 +247,7 @@ public class CSVParser {
     }
 
 
-    private static Map<Long, BlockInfo> parseBlockCSV(CSVReader reader, String nodeId,
+    private static void parseBlockCSV(CSVReader reader, String nodeId,
                                                       Map<Long, BlockInfo> blocks) throws IOException {
         String[] nextLine;
         //skip header
@@ -262,27 +262,23 @@ public class CSVParser {
             try {
                 long blockId = Long.parseLong(nextLine[0]);
                 long time = Long.parseLong(nextLine[1]); // * 1000;
-                if (blocks.containsKey(blockId)) {
+                if (!blocks.containsKey(blockId)) {
+                   // log.info("Block with no transactions");
+                    continue;
+                }
                     BlockInfo block = blocks.get(blockId);
                     block.addDistributionTime(new BlockInfo.DistributionTime(nodeId, time));
-                } else {
-                    BlockInfo block = new BlockInfo(blockId,
-                            new ArrayList<BlockInfo.DistributionTime>() {{
-                                add(new BlockInfo.DistributionTime(nodeId, time));
-                            }});
-                    blocks.put(blockId, block);
-                }
             } catch (NumberFormatException e) {
                 //ignore all unparseable lines
                 log.error(e.getMessage());
             }
         }
-        return blocks;
     }
 
-    private static void parseTransactionsPerBlockCSV(CSVReader reader,
-                                                     Map<Long, BlockInfo> blocks,
+    private static Map<Long, BlockInfo> parseTransactionsPerBlockCSV(CSVReader reader,
+                                                  //   Map<Long, BlockInfo> blocks,
                                                      Map<String, TransactionInfo> transactions) throws IOException {
+        Map<Long, BlockInfo> blocks = new HashMap<>();
         String[] nextLine;
         //skip header
         reader.readNext();
@@ -297,15 +293,22 @@ public class CSVParser {
                 long blockId = Integer.parseInt(nextLine[0]);
                 String transactionId = nextLine[1];
 
-                if (!blocks.containsKey(blockId)) {
-                    log.error("Unknown block found : " + blockId);
-                    continue;
-                }
+//                if (!blocks.containsKey(blockId)) {
+//                    log.info("Unknown block found : " + blockId);
+//                    continue;
+//                }
                 if (!transactions.containsKey(transactionId)) {
-                    log.error("Unknown transaction found : " + transactionId);
+                    log.info("Unknown transaction found : " + transactionId);
                     continue;
                 }
-                BlockInfo block = blocks.get(blockId);
+                BlockInfo block;
+                if(!blocks.containsKey(blockId)) {
+                    block = new BlockInfo(blockId);
+                    blocks.put(blockId, block);
+                }
+
+                block = blocks.get(blockId);
+                       // blocks.get(blockId);
                 TransactionInfo transaction = transactions.get(transactionId);
                 block.addTransaction(transaction);
                 transaction.setBlockId(blockId);
@@ -317,5 +320,6 @@ public class CSVParser {
                 //ignore all unparseable lines
             }
         }
+        return blocks;
     }
 }
