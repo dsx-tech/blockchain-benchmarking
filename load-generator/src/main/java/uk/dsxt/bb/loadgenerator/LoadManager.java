@@ -106,6 +106,7 @@ class LoadManager {
                 executorService.submit(() -> {
                     List<String> logs = new ArrayList<>(BATCH_SIZE);
                     Random random = new Random();
+                    int failed = 0;
                     for (int j = 0; j < amountOfTransactions; ++j) {
                         try {
                             Thread.sleep(delay);
@@ -121,12 +122,22 @@ class LoadManager {
                             stringJoiner.add(Long.toString(startTime));
                             stringJoiner.add(Integer.toString(message.getBytes().length));
                             stringJoiner.add(id != null && !id.isEmpty() ? "OK" : "FAIL");
-
                             logs.add(stringJoiner.toString());
                             if (j == amountOfTransactions - 1 || j % BATCH_SIZE == 0) {
                                 logger.addLogs(logs);
                                 logs = new ArrayList<>(BATCH_SIZE);
                             }
+
+                            if (id == null || id.isEmpty()) {
+                                ++failed;
+                            } else {
+                                failed = 0;
+                            }
+                            if (failed > 5) {
+                                manager.authorize(credentialFrom.getAccount(), credentialFrom.getPassword());
+                                failed = 0;
+                            }
+
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
