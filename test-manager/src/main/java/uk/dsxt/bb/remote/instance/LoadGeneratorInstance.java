@@ -31,7 +31,7 @@ import java.util.List;
  * @author phd
  */
 @Getter
-public class LoadGeneratorInstance extends RemoteInstance {
+public class LoadGeneratorInstance extends BlockchainInteractingInstance {
 
     private List<String> loadTargets;
     private int amountOfTransactions;
@@ -40,10 +40,9 @@ public class LoadGeneratorInstance extends RemoteInstance {
     private int maxLength;
     private int delay;
 
-    public LoadGeneratorInstance(String userName, String host,
-                                 int port, String keyPath, Path logPath,
+    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String blockchainPort,
                                  int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength, int delay) {
-        super(userName, host, port, keyPath, logPath);
+        super(userName, host, port, keyPath, logPath, blockchainType, target, blockchainPort);
         this.amountOfTransactions = amountOfTransactions;
         this.amountOfThreadsPerTarget = amountOfThreadsPerTarget;
         this.minLength = minLength;

@@ -63,8 +63,13 @@ class LoadManager {
     private int amountOfThreadsPerTarget;
     private ExecutorService executorService;
     private List<Logger> loggers;
+    private String blockchainType;
+    private String blockchainPort;
 
-    LoadManager(List<String> targets, List<Credential> credentials, int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength, int delay) {
+    LoadManager(List<String> targets, List<Credential> credentials,
+                int amountOfTransactions, int amountOfThreadsPerTarget,
+                int minLength, int maxLength,
+                int delay, String blockchainType, String blockchainPort) {
         this.targets = targets;
         this.credentials = credentials;
         this.amountOfTransactions = amountOfTransactions;
@@ -73,6 +78,8 @@ class LoadManager {
         this.maxLength = maxLength;
         this.delay = delay;
         this.loggers = new ArrayList<>();
+        this.blockchainType = blockchainType;
+        this.blockchainPort = blockchainPort;
         executorService = Executors.newFixedThreadPool(amountOfThreadsPerTarget * targets.size());
     }
 
@@ -98,11 +105,19 @@ class LoadManager {
             String t = targets.get(targetIndex);
             Logger logger = new Logger(Paths.get("load_logs", t + "_load.log"));
             loggers.add(logger);
-            BlockchainManager manager = new BlockchainManager("ethereum", "http://" + t + ":8101");
-            int credentialFromIndex = targetIndex % credentials.size();
-            Credential credentialFrom = credentials.get(credentialFromIndex);
-            manager.authorize(credentialFrom.getAccount(), credentialFrom.getPassword());
+            BlockchainManager manager = new BlockchainManager(blockchainType, "http://" + t + ":" + blockchainPort);
+            int credentialFromIndex = -1;
+            Credential credentialFrom = null;
+
+            if (credentials.size() > 0) {
+                credentialFromIndex = targetIndex % credentials.size();
+                credentialFrom = credentials.get(credentialFromIndex);
+                manager.authorize(credentialFrom.getAccount(), credentialFrom.getPassword());
+            }
+
             for (int i = 0; i < amountOfThreadsPerTarget; ++i) {
+                int finalCredentialFromIndex = credentialFromIndex;
+                Credential finalCredentialFrom = credentialFrom;
                 executorService.submit(() -> {
                     List<String> logs = new ArrayList<>(BATCH_SIZE);
                     Random random = new Random();
@@ -113,9 +128,14 @@ class LoadManager {
                             String message = generateMessage(random, minLength, maxLength);
                             long startTime = System.currentTimeMillis();
 
-                            int credentialToIndex = getRandomIntExcept(random, credentials.size(), credentialFromIndex);
-                            Credential credentialTo = credentials.get(credentialToIndex);
-                            String id = manager.sendMessage(credentialFrom.getAccount(), credentialTo.getAccount(), message);
+                            String id = null;
+                            if (finalCredentialFrom != null) {
+                                int credentialToIndex = getRandomIntExcept(random, credentials.size(), finalCredentialFromIndex);
+                                Credential credentialTo = credentials.get(credentialToIndex);
+                                id = manager.sendMessage(finalCredentialFrom.getAccount(), credentialTo.getAccount(), message);
+                            } else {
+                                id = manager.sendMessage(message.getBytes());
+                            }
 
                             StringJoiner stringJoiner = new StringJoiner(",");
                             stringJoiner.add(id);
@@ -134,7 +154,7 @@ class LoadManager {
                                 failed = 0;
                             }
                             if (failed > 5) {
-                                manager.authorize(credentialFrom.getAccount(), credentialFrom.getPassword());
+                                manager.authorize(finalCredentialFrom.getAccount(), finalCredentialFrom.getPassword());
                                 failed = 0;
                             }
 

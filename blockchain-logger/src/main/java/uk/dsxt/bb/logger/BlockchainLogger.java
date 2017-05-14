@@ -129,7 +129,6 @@ public class BlockchainLogger {
                         long startLoopTime = System.currentTimeMillis();
                         currentBlockId = blockchainManager.getChain().getLastBlockNumber();
                         long currentBlockTime = System.currentTimeMillis();
-                        BlockchainBlock currentBlock = blockchainManager.getBlock(currentBlockId);
 
 
                         if (currentBlockId > previousBlockId) {
@@ -145,12 +144,16 @@ public class BlockchainLogger {
                             break;
                         }
 
-                        if (currentBlock.getTransactions().length != 0) {
-                            lastNonEmptyBlockId = currentBlockId;
-                            lastNonEmptyBlockTime = currentBlockTime;
+                        if (currentBlockId > previousBlockId) {
+                            BlockchainBlock currentBlock = blockchainManager.getBlock(currentBlockId);
+                            if (currentBlock.getTransactions().length != 0) {
+                                lastNonEmptyBlockId = currentBlockId;
+                                lastNonEmptyBlockTime = currentBlockTime;
+                            }
+
+                            previousBlockId = currentBlockId;
                         }
 
-                        previousBlockId = currentBlockId;
 
                         long endLoopTime = System.currentTimeMillis();
                         long loopTime = endLoopTime - startLoopTime;
