@@ -215,7 +215,7 @@ public class TestManager {
             );
             sleep(properties.getAfterBlockchainInitTimeout());
             blockchainInstancesManager.executeCommandsForRoot(singletonList("bash root_init_files/on_init_finished.sh"));
-            Thread.sleep(30 * 1000);
+            Thread.sleep(5 * 1000);
             log.info("Blockchain instances started");
             return blockchainInstancesManager;
         } catch (Exception e) {

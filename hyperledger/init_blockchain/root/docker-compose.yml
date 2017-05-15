@@ -13,8 +13,9 @@ vp:
     - CORE_PEER_ID=vp0
     - CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN=pbft  # noops, pbft
     - CORE_PBFT_GENERAL_MODE=batch  # batch. classic and sieve will be not supported again.
+    - CORE_PBFT_GENERAL_BATCHSIZE=1000
     - CORE_PBFT_GENERAL_N=4
-    - CORE_PBFT_GENERAL_TIMEOUT_REQUEST=2s
+    - CORE_PBFT_GENERAL_TIMEOUT_REQUEST=3s
   ports:
     - "7050:7050"
     - "7051:7051"
