@@ -23,8 +23,8 @@ package uk.dsxt.bb.scenario.proccessing;
 import au.com.bytecode.opencsv.CSVReader;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FilenameUtils;
+import uk.dsxt.bb.general.DirOrganizer;
 import uk.dsxt.bb.properties.proccessing.model.BlockchainType;
-import uk.dsxt.bb.properties.proccessing.model.PropertiesFileInfo;
 import uk.dsxt.bb.scenario.proccessing.model.BlockchainInfo;
 import uk.dsxt.bb.scenario.proccessing.model.BlockInfo;
 import uk.dsxt.bb.scenario.proccessing.model.ResourceInfo;
@@ -34,6 +34,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+
+import static uk.dsxt.bb.scenario.proccessing.CSVComposer.CSV_DIR;
 
 @Log4j2
 public class CSVParser {
@@ -56,21 +58,26 @@ public class CSVParser {
     private BlockchainInfo blockchainInfo;
 
     public CSVParser(String scenarioDir) {
-        this.scenarioDir = scenarioDir + LOGS_DIR;
+        this.scenarioDir = scenarioDir;
     }
 
     public BlockchainInfo parseCSVs(BlockchainType type) {
         // String scenarioDir = properties.getPathToScenarioDir() ;
         blockchainInfo = new BlockchainInfo(type);
-
+        if (resultDirExists()) {
+            return null;
+        }
+        scenarioDir = scenarioDir + LOGS_DIR;
+        log.info("Begin parse scenario " + scenarioDir);
         if (
                 parseDir(TRANSACTIONS_DIR, DirType.TRANSACTIONS) &&
-                parseDir(RESOURCES_DIR, DirType.RESOURCES) &&
-                parseDir(TRANSACTIONS_PER_BLOCK_DIR, DirType.TRANSACTIONS_PER_BLOCK) &&
+                        parseDir(RESOURCES_DIR, DirType.RESOURCES) &&
+                        parseDir(TRANSACTIONS_PER_BLOCK_DIR, DirType.TRANSACTIONS_PER_BLOCK) &&
                         parseDir(BLOCKS_DIR, DirType.BLOCKS)) {
             return blockchainInfo;
         }
         return null;
+    }
 //        //blocks
 //        File blocksDir = new File(scenarioDir + BLOCKS_DIR);
 //        if (!blocksDir.isDirectory() || blocksDir.listFiles() == null) {
@@ -140,8 +147,24 @@ public class CSVParser {
 //            }
 //        }
 //        return blockchainInfo;
-    }
 
+    private boolean resultDirExists() {
+        String resPath = null;
+        File scenarioDirFile = new File(scenarioDir);
+        switch (blockchainInfo.getBlockchainType()) {
+            case ETHEREUM:
+                resPath = DirOrganizer.ETHEREUM_RESULTS_PATH + scenarioDirFile.getName();
+                break;
+            case FABRIC:
+                resPath = DirOrganizer.FABRIC_RESULTS_PATH + scenarioDirFile.getName();
+                break;
+        }
+        File resDir = new File(resPath);
+        if (resDir.exists()) {
+            return true;
+        }
+        return false;
+    }
 
     private boolean parseDir(String path, DirType type) {
         File dir = new File(scenarioDir + path);
@@ -173,11 +196,11 @@ public class CSVParser {
                         break;
                     case TRANSACTIONS_PER_BLOCK:
                         blockchainInfo.setBlocks(parseTransactionsPerBlockCSV(reader,
-                                 blockchainInfo.getTransactions()));
+                                blockchainInfo.getTransactions()));
                         break;
                 }
             } catch (IOException e) {
-                log.error(e.getMessage());
+                log.error("IOException " + e.getMessage());
                 return false;
             }
         }
@@ -208,7 +231,7 @@ public class CSVParser {
                         transactionId, size, nodeId);
                 transactions.put(transactionId, transactionInfo);
             } catch (NumberFormatException e) {
-                log.error(e.getMessage());
+                log.error("Number format exception in load.csv " + e.getMessage());
                 //ignore all unparseable lines
             }
         }
@@ -231,16 +254,16 @@ public class CSVParser {
             try {
                 long time = Long.parseLong(nextLine[0]);
                 double cpu = Double.parseDouble(nextLine[1]);
-                int mem = Integer.parseInt(nextLine[2]);
+                long mem = Long.parseLong(nextLine[2]);
                 double memPercent = Double.parseDouble(nextLine[3]);
-                int downloaded = Integer.parseInt(nextLine[4]);
-                int uploaded = Integer.parseInt(nextLine[5]);
+                long downloaded = Long.parseLong(nextLine[4]);
+                long uploaded = Long.parseLong(nextLine[5]);
                 ResourceInfo resourceInfo = new ResourceInfo(time, nodeId, cpu,
                         memPercent, mem, downloaded, uploaded);
                 resources.add(resourceInfo);
             } catch (NumberFormatException e) {
                 //ignore all unparseable lines
-                log.error(e.getMessage());
+                log.error("Number format exception in resources.csv " + e.getMessage());
             }
         }
         return resources;
@@ -248,7 +271,7 @@ public class CSVParser {
 
 
     private static void parseBlockCSV(CSVReader reader, String nodeId,
-                                                      Map<Long, BlockInfo> blocks) throws IOException {
+                                      Map<Long, BlockInfo> blocks) throws IOException {
         String[] nextLine;
         //skip header
         reader.readNext();
@@ -263,21 +286,21 @@ public class CSVParser {
                 long blockId = Long.parseLong(nextLine[0]);
                 long time = Long.parseLong(nextLine[1]); // * 1000;
                 if (!blocks.containsKey(blockId)) {
-                   // log.info("Block with no transactions");
+                    // log.info("Block with no transactions");
                     continue;
                 }
-                    BlockInfo block = blocks.get(blockId);
-                    block.addDistributionTime(new BlockInfo.DistributionTime(nodeId, time));
+                BlockInfo block = blocks.get(blockId);
+                block.addDistributionTime(new BlockInfo.DistributionTime(nodeId, time));
             } catch (NumberFormatException e) {
                 //ignore all unparseable lines
-                log.error(e.getMessage());
+                log.error("Number format exception in block.csv " + e.getMessage());
             }
         }
     }
 
     private static Map<Long, BlockInfo> parseTransactionsPerBlockCSV(CSVReader reader,
-                                                  //   Map<Long, BlockInfo> blocks,
-                                                     Map<String, TransactionInfo> transactions) throws IOException {
+                                                                     //   Map<Long, BlockInfo> blocks,
+                                                                     Map<String, TransactionInfo> transactions) throws IOException {
         Map<Long, BlockInfo> blocks = new HashMap<>();
         String[] nextLine;
         //skip header
@@ -302,13 +325,13 @@ public class CSVParser {
                     continue;
                 }
                 BlockInfo block;
-                if(!blocks.containsKey(blockId)) {
+                if (!blocks.containsKey(blockId)) {
                     block = new BlockInfo(blockId);
                     blocks.put(blockId, block);
                 }
 
                 block = blocks.get(blockId);
-                       // blocks.get(blockId);
+                // blocks.get(blockId);
                 TransactionInfo transaction = transactions.get(transactionId);
                 block.addTransaction(transaction);
                 transaction.setBlockId(blockId);
@@ -316,7 +339,7 @@ public class CSVParser {
                     block.setParentBlockId(blockId - 1);
                 }
             } catch (NumberFormatException e) {
-                log.error(e.getMessage());
+                log.error("Number format exception in transactionPerBlock.csv " + e.getMessage());
                 //ignore all unparseable lines
             }
         }

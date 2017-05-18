@@ -52,7 +52,6 @@ public class PropertiesFileInfo {
         return file.getLoadGeneratorsAmount() == loadGeneratorsAmount
                 && file.getMaxMessageLength() == maxMessageLength
                 && file.getMinMessageLength() == minMessageLength
-                && file.getNumOfThreads() == numOfThreads
                 && file.getNumOfNodes() == numOfNodes;
     }
 

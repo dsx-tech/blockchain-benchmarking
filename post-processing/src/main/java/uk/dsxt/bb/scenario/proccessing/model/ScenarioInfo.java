@@ -73,7 +73,7 @@ public class ScenarioInfo {
         int queue = 0;
         for (TimeSegmentInfo timeSegmentInfo : blockchainInfo.getTimeSegments().values()) {
             throughputs.add(timeSegmentInfo.getThroughput());
-            latencies.add(timeSegmentInfo.getLatency());
+            latencies.add(timeSegmentInfo.getBlockLatency());
             intensities.add(timeSegmentInfo.getIntensity());
             if(timeSegmentInfo.getTransactionSize() != 0) {
                 trSizes.add(timeSegmentInfo.getTransactionSize());

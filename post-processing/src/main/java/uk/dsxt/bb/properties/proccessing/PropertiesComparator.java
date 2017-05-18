@@ -32,7 +32,7 @@ import java.util.*;
 @Log4j2
 public class PropertiesComparator {
 
-    private static final String propFileName = "test-manager.properties";
+    public static final String PROP_FILE_NAME = "test-manager.properties";
 
     public List<PropertiesFileInfo> compare(ResultType type) {
         String path = null;
@@ -123,7 +123,7 @@ public class PropertiesComparator {
             return null;
         }
         for (File file : dir.listFiles()) {
-            if (file.getName().equals(propFileName) && file.isFile()) {
+            if (file.getName().equals(PROP_FILE_NAME) && file.isFile()) {
                 return file;
             }
         }

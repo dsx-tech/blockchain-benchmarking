@@ -23,6 +23,7 @@ package uk.dsxt.bb.scenario.proccessing;
 
 import au.com.bytecode.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
 import uk.dsxt.bb.general.DirOrganizer;
 import uk.dsxt.bb.scenario.proccessing.model.*;
 
@@ -30,10 +31,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import static uk.dsxt.bb.properties.proccessing.PropertiesComparator.PROP_FILE_NAME;
+
 @Log4j2
 public class CSVComposer {
 
-    private static final String CSV_DIR = "/csv/";
+    public static final String CSV_DIR = "/csv/";
 
     //output file names
     private static final String TRANSACTIONS_FILE = "transactions.csv";
@@ -45,11 +48,11 @@ public class CSVComposer {
     private static final String LATENCY_QUARTILS = "latencyQuartils.csv";
 
     //header lines
-    private static final String[] TIME_HEADER = {"time","blockGeneration", "throughput",
+    private static final String[] TIME_HEADER = {"time", "blockGeneration", "throughput",
             "latency", "intensity", "transactionSize", "blockSize", "numberTransactionsInBlock", "transactionQueue"};
     private static final String[] TRANSACTIONS_HEADER = {"transactionId", "blockId",
-            "transactionSize", "transactionCreationTime", "nodeId"};
-    private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "latency"};
+            "transactionSize", "transactionCreationTime", "nodeId", "blockLatency"};
+    private static final String[] BLOCKS_HEADER = {"blockId", "creationTime", "blockLatency"};
     private static final String[] RESOURCES_HEADER = {"time", "nodeId",
             "cpu", "usedMemory", "usedMemory%"
             , "downloaded", "uploaded"};
@@ -64,10 +67,20 @@ public class CSVComposer {
     }
 
     public void composeCSVs(String resultDirName) {
+
         File dir = new File(resultDirName);
         String resultPath = createResultDir(dir.getName());
         if (resultPath == null) {
             return;
+        }
+        File resultDir = new File(resultPath);
+        try {
+            FileUtils.copyFile(
+                    new File(dir.getCanonicalPath() + "/" + PROP_FILE_NAME),
+                    new File(resultDir.getParentFile().getCanonicalPath()
+                            + "/" + PROP_FILE_NAME));
+        } catch (IOException e) {
+            log.error(e.getMessage());
         }
         try (CSVWriter writer = new CSVWriter(new FileWriter(resultPath + TIME_FILE), ',', '\u0000')) {
             fillTimeCSV(writer);
@@ -106,14 +119,14 @@ public class CSVComposer {
         }
     }
 
-    private void fillLatencyQuartils(CSVWriter writer)throws IOException {
+    private void fillLatencyQuartils(CSVWriter writer) throws IOException {
         for (TransactionInfo tr : blockchainInfo.getTransactions().values()) {
-            if(tr.getLatencyQuartils().size() <=1 ) {
+            if (tr.getLatencyQuartils().size() <= 1) {
                 continue;
             }
             String[] entry = new String[tr.getLatencyQuartils().size()];
-            for(int i = 0; i < tr.getLatencyQuartils().size(); i++) {
-                entry[i] = String.valueOf(tr.getLatencyQuartils().get(i+2));
+            for (int i = 0; i < tr.getLatencyQuartils().size(); i++) {
+                entry[i] = String.valueOf(tr.getLatencyQuartils().get(i + 2));
             }
             writer.writeNext(entry);
             writer.flush();
@@ -133,7 +146,7 @@ public class CSVComposer {
     private void fillLatencies(CSVWriter writer) throws IOException {
         writer.writeNext(TRANSACTION_LATENCIES_HEADER);
         for (TransactionInfo tr : blockchainInfo.getTransactions().values()) {
-            if(tr.getLatency() == Double.POSITIVE_INFINITY) {
+            if (tr.getLatency() == Double.POSITIVE_INFINITY) {
                 continue;
             }
             String[] entry = {String.valueOf(tr.getLatency())};
@@ -200,7 +213,7 @@ public class CSVComposer {
                     String.valueOf(timeSegmentInfo.getTransactionQueueLength())};
             writer.writeNext(entry);
             writer.flush();
-           // i++;
+            // i++;
         }
     }
 
@@ -211,7 +224,8 @@ public class CSVComposer {
                     String.valueOf(transactionInfo.getBlockId()),
                     String.valueOf(transactionInfo.getTransactionSize()),
                     String.valueOf(transactionInfo.getTime()),
-                    String.valueOf(transactionInfo.getNodeId())};
+                    String.valueOf(transactionInfo.getNodeId()),
+            String.valueOf(transactionInfo.getLatency())};
             writer.writeNext(entry);
             writer.flush();
         }

@@ -43,7 +43,7 @@ public class App {
         if (!DirOrganizer.createDirStructure()) {
             return;
         }
-        if (!GeneralCSVComposer.createResultFiles()) {
+        if (!GeneralCSVComposer.createScenarioListFiles()) {
             return;
         }
         process(ResultType.INTENSITY);
@@ -64,7 +64,7 @@ public class App {
             for (PropertiesFileInfo property : properties) {
                 ScenarioInfo scenarioInfo = ScenarioParser.parseScenario(property);
                 if (scenarioInfo != null && type != ResultType.OTHERS) {
-                    GeneralCSVComposer.addScenarioInfo(scenarioInfo, type);
+                    GeneralCSVComposer.addScenarioDirsInfo(property, type);
                 }
             }
         }

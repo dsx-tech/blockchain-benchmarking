@@ -32,7 +32,7 @@ public class ResultsAnalyzer {
 
     //note: time is counted from the start of the test in milliseconds
     private long timeInterval;
-    private static final long FIXED_TIME_INTERVAL = 60000; // 1 minute
+    private static final long FIXED_TIME_INTERVAL = 360000; // 6 minutes
     private static final int NUMBER_OF_TIME_SEGMENTS = 25;
     private BlockchainInfo blockchainInfo;
     private PropertiesFileInfo properties;
@@ -43,6 +43,10 @@ public class ResultsAnalyzer {
     }
 
     public BlockchainInfo analyze() {
+        if (blockchainInfo.getTransactions().isEmpty() || blockchainInfo.getBlocks().isEmpty()
+                || blockchainInfo.getResources().isEmpty()) {
+            return null;
+        }
         // change time to counting from zero
         updateTimeFormat();
         //calculate timeInterval
@@ -50,10 +54,10 @@ public class ResultsAnalyzer {
 //                (getEndTime() - getStartTime()) / NUMBER_OF_TIME_SEGMENTS;
         // calculate creation time and times of distribution
         updateBlockInfos();
+        calculateTransactionLatencies();
         blockchainInfo.setTimeSegments(calculateTimeSegments());
         blockchainInfo.setScenarioInfo(new ScenarioInfo(blockchainInfo, properties));
-        blockchainInfo.setResources(cutTestTimeSegement());
-        calculateTransactionLatencies();
+        blockchainInfo.setResources(cutTestTimeSegment());
         convertAllTimesToSeconds();
         return blockchainInfo;
     }
@@ -61,11 +65,11 @@ public class ResultsAnalyzer {
     private void convertAllTimesToSeconds() {
         for (TimeSegmentInfo time :
                 blockchainInfo.getTimeSegments().values()) {
-            //time.setLatency(convertTimeToSeconds((long) time.getLatency()));
+            time.setLatency(convertTimeToSeconds((long) time.getLatency()));
             time.setTime((long) convertTimeToSeconds(time.getTime()));
         }
         for (TransactionInfo transactionInfo : blockchainInfo.getTransactions().values()) {
-            if(transactionInfo.getLatency() == Double.POSITIVE_INFINITY) {
+            if (transactionInfo.getLatency() == Double.POSITIVE_INFINITY) {
                 continue;
             }
             transactionInfo.setLatency(convertTimeToSeconds((long) transactionInfo.getLatency()));
@@ -83,12 +87,12 @@ public class ResultsAnalyzer {
     }
 
     private void calculateTransactionLatencies() {
-        for(TransactionInfo transaction: blockchainInfo.getTransactions().values()) {
+        for (TransactionInfo transaction : blockchainInfo.getTransactions().values()) {
             transaction.calculateLatency(blockchainInfo);
         }
     }
 
-    private List<ResourceInfo> cutTestTimeSegement() {
+    private List<ResourceInfo> cutTestTimeSegment() {
         final long endTime = getEndTime();
         List<ResourceInfo> list = new ArrayList<>();
         for (ResourceInfo resourceInfo : blockchainInfo.getResources()) {
@@ -97,6 +101,7 @@ public class ResultsAnalyzer {
                 resourceInfo.setMem(convertBytesToMb(resourceInfo.getMem()));
                 resourceInfo.setDownloaded(convertBytesToMb(resourceInfo.getDownloaded()));
                 resourceInfo.setUploaded(convertBytesToMb(resourceInfo.getUploaded()));
+                resourceInfo.setTime((long) convertTimeToSeconds(resourceInfo.getTime()));
                 list.add(resourceInfo);
             }
         }
@@ -135,10 +140,10 @@ public class ResultsAnalyzer {
             timeSegments.put(i, new TimeSegmentInfo(i));
         }
         calculateIntensity(timeSegments);
-        //fillTimeSegmentInfo latency, throughput, numberOfTransactionsInBlock and blockSize fields from blockInfo general
+        //fillTimeSegmentInfo blockLatency, throughput, numberOfTransactionsInBlock and blockSize fields from blockInfo general
         for (BlockInfo block : blockchainInfo.getBlocks().values()) {
             double time = block.getCreationTime() + block.getLatency();
-            if ((long)time < startTime) {
+            if ((long) time < startTime) {
                 log.error("Time out of range: " + time + " in block " + block.getBlockId());
                 continue;
             }
@@ -153,9 +158,11 @@ public class ResultsAnalyzer {
             time.setBlockGenerationFrequency((60 * 1000 * time.getNumberOfBlocks()) / timeInterval);
             if (time.getNumberOfTransactionsIntegrated() == 0) {
                 time.setTransactionSize(0f);
+                time.setLatency(-1);
                 continue;
             }
             time.setTransactionSize(time.getTransactionSize() / time.getNumberOfTransactionsIntegrated());
+            time.setLatency(time.getLatency() / time.getNumberOfTransactionsIntegrated());
         }
         fillQueue(timeSegments);
         return timeSegments;
@@ -163,8 +170,8 @@ public class ResultsAnalyzer {
 
     private void fillTimeSegmentInfo(TimeSegmentInfo time, BlockInfo block) {
         int numberOfBlocks = time.getNumberOfBlocks();
-        //recalculate medium latency
-        time.setLatency(calcMedium(numberOfBlocks, time.getLatency(), block.getLatency()));
+        //recalculate medium blockLatency
+        time.setBlockLatency(calcMedium(numberOfBlocks, time.getBlockLatency(), block.getLatency()));
         //recalculate medium number of transactions in block
         time.setNumberTransactionsInBlock(
                 (int) calcMedium(numberOfBlocks,
@@ -176,7 +183,19 @@ public class ResultsAnalyzer {
                 + block.getTransactions().size());
         //recalculate medium transaction size
         time.setTransactionSize(time.getTransactionSize() + block.getSize());
+        time.setLatency(time.getLatency() + calculateSumOfLatencies(block));
         time.setNumberOfBlocks(numberOfBlocks + 1);
+    }
+
+    private double calculateSumOfLatencies(BlockInfo block) {
+        double sum = 0.0;
+        for (TransactionInfo transactionInfo : block.getTransactions()) {
+            double latency = transactionInfo.getLatency();
+            if (latency > 0) {
+                sum += latency;
+            }
+        }
+        return sum;
     }
 
     private void fillQueue(Map<Long, TimeSegmentInfo> timeSegments) {
@@ -211,7 +230,7 @@ public class ResultsAnalyzer {
     }
 
     /**
-     * calculate block creation time and latency
+     * calculate block creation time and blockLatency
      * currently calculating blockSize as sum of transaction sizes in it
      */
     private void updateBlockInfos() {

@@ -43,7 +43,7 @@ public class BlockInfo {
     private double size;
     private double creationTime;
     private Map<Integer, Double> latencyQuartils;
-    // percentage of nodes on which transaction should be distributed to calculate latency
+    // percentage of nodes on which transaction should be distributed to calculate blockLatency
     private static final double percentageOfNodes = 1;
 
 

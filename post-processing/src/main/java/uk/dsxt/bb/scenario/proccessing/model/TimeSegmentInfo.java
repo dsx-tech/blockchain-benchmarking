@@ -27,13 +27,14 @@ public class TimeSegmentInfo {
 
     private long time = 0;
     // number of transactions in all blocks created at this time period
-    private double throughput = 0;
-    private double latency = 0;
-    private double intensity = 0;
-    private double transactionSize = 0;
+    private double throughput = 0f;
+    private double blockLatency = 0f;
+    private double latency = 0f;
+    private double intensity = 0f;
+    private double transactionSize = 0f;
     private int numberOfTransactionsIntegrated = 0;
     private int numberOfTransactionsGenerated = 0;
-    private double blockSize = 0;
+    private double blockSize = 0f;
     private int numberOfBlocks = 0;
     private double blockGenerationFrequency = 0f;
     private int numberTransactionsInBlock = 0;

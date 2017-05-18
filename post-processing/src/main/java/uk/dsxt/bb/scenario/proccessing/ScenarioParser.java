@@ -34,6 +34,9 @@ public class ScenarioParser {
         }
         ResultsAnalyzer resultsAnalyzer = new ResultsAnalyzer(blockchainInfo, props);
         blockchainInfo = resultsAnalyzer.analyze();
+        if(blockchainInfo == null) {
+            return null;
+        }
         CSVComposer composer = new CSVComposer(blockchainInfo);
         composer.composeCSVs(props.getPathToScenarioDir());
         return blockchainInfo.getScenarioInfo();

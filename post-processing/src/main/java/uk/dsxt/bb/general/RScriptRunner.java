@@ -47,13 +47,13 @@ public class RScriptRunner {
             log.error(e.getMessage());
         }
 
-        dirWithCSV = new File(DirOrganizer.GENERAL_RESOURCES_PATH);
-        try {
-            path = dirWithCSV.getCanonicalPath();
-            runRScript(pathToRDir, path, ScriptType.RESOURCES);
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
+//        dirWithCSV = new File(DirOrganizer.GENERAL_RESOURCES_PATH);
+//        try {
+//            path = dirWithCSV.getCanonicalPath();
+//            runRScript(pathToRDir, path, ScriptType.RESOURCES);
+//        } catch (IOException e) {
+//            log.error(e.getMessage());
+//        }
 
         dirWithCSV = new File(DirOrganizer.ETHEREUM_RESULTS_PATH);
         runForAllScenariosInDir(pathToRDir, dirWithCSV);
@@ -69,6 +69,11 @@ public class RScriptRunner {
     private static void runForAllScenariosInDir(String pathToRDir, File dirWithCSV) {
         for (File file : dirWithCSV.listFiles()) {
             try {
+//                String graphsPath = file.getCanonicalPath() + "/graphs";
+//                File graphsDir = new File(graphsPath);
+//                if (graphsDir.exists()) {
+//                    continue;
+//                }
                 String path = file.getCanonicalPath() + CSV_DIR;
                 runRScript(pathToRDir, path, ScriptType.SCENARIO);
             } catch (IOException e) {

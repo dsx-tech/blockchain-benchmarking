@@ -40,16 +40,16 @@ public class DirOrganizer {
     public static final String FABRIC_RESULTS_PATH =
             "post-processing/src/main/resources/results/fabric/";
     public static final String GENERAL_RESULTS_PATH =
-            "post-processing/src/main/resources/results/general/csv/";
-    public static final String GENERAL_RESOURCES_PATH =
-            "post-processing/src/main/resources/results/general/resources/csv/";
+            "post-processing/src/main/resources/results/";
+//    public static final String GENERAL_RESOURCES_PATH =
+//            "post-processing/src/main/resources/results/general/resources/csv/";
 
 
     public static boolean createDirStructure() {
         return createDir(ETHEREUM_RESULTS_PATH)
                 && createDir(FABRIC_RESULTS_PATH)
-                && createDir(GENERAL_RESULTS_PATH)
-                && createDir(GENERAL_RESOURCES_PATH);
+                && createDir(GENERAL_RESULTS_PATH);
+               // && createDir(GENERAL_RESOURCES_PATH);
     }
 
     private static boolean createDir(String path) {
