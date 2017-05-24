@@ -26,7 +26,6 @@ package uk.dsxt.bb.utils;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
-import javax.ws.rs.core.Response;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -60,8 +59,8 @@ public class HttpHelper {
         }
 
         int code = connection.getResponseCode();
-        if (code != Response.Status.OK.getStatusCode() && code != Response.Status.NO_CONTENT.getStatusCode())
-            throw new InternalLogicException(String.format("request failed. code %s for url %s", code, urlString));
+//        if (code != Response.Status.OK.getStatusCode() && code != Response.Status.NO_CONTENT.getStatusCode())
+//            throw new InternalLogicException(String.format("request failed. code %s for url %s", code, urlString));
 
         BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         String inputLine;

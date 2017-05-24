@@ -110,7 +110,8 @@ public class TestManager {
             blockchainInstancesManager.getAllInstances().forEach(i -> loggerInstances.add(new LoggerInstance(
                     properties.getUserNameOnRemoteInstances(), i.getHost(), 22, properties.getPemKeyPath(),
                     Paths.get(properties.getResultLogsPath()), properties.getBlockchainType(),
-                    i.getHost(), properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
+                    i.getHost(), Integer.toString(properties.getBlockchainPort()),
+                    properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
             loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
             resourceMonitorsInstancesManager = runResourceMonitors();
             loggerInstancesManager = runLoggers(loggerInstances);
@@ -121,6 +122,8 @@ public class TestManager {
                 loadGeneratorInstances.add(new LoadGeneratorInstance(properties.getUserNameOnRemoteInstances(),
                         allHosts.get(i + properties.getBlockchainInstancesAmount()), 22,
                         properties.getPemKeyPath(), Paths.get(properties.getResultLogsPath()),
+                        properties.getBlockchainType(), "",
+                        Integer.toString(properties.getBlockchainPort()),
                         properties.getAmountOfTransactionsPerTarget(), properties.getAmountOfThreadsPerTarget(),
                         properties.getMinMessageLength(), properties.getMaxMessageLength(), properties.getDelayBeetweenRequests()));
             }
@@ -167,14 +170,12 @@ public class TestManager {
         monitorsInstancesManager.uploadFolderForRoot(properties.getTestManagerModulesPath().resolve("lib"), "lib");
         monitorsInstancesManager.uploadFolderForCommon(properties.getTestManagerModulesPath().resolve("lib"), "lib");
 
-//        monitorsInstancesManager.executeCommandsForAll(Arrays.asList(
-//                "sudo apt-get update;",
-//                "sudo apt-get -y install default-jre;",
-//                "nohup java -jar resource-monitor.jar >/dev/null 2>resource-monitor-stdout.log &"
-//                )
-//        );
-        Arrays.asList("sudo apt-get update;", "sudo apt-get -y install default-jre;", "nohup java -jar resource-monitor.jar >/dev/null 2>resource-monitor-stdout.log &")
-                .forEach(c -> monitorsInstancesManager.executeCommandsForAll(singletonList(c)));
+        monitorsInstancesManager.uploadFilesForAll(Arrays.asList(Paths.get(properties.getModulesInitResourcesPath(), "install_java.sh"),
+                Paths.get(properties.getModulesInitResourcesPath(), "startResourceMonitor.sh")));
+        monitorsInstancesManager.executeCommandsForAll(singletonList("bash install_java.sh"));
+        monitorsInstancesManager.executeCommandsForAll(singletonList("bash startResourceMonitor.sh"));
+//        Arrays.asList("sudo apt-get update;", "sudo apt-get -y install default-jre;", "nohup java -jar resource-monitor.jar >/dev/null 2>resource-monitor-stdout.log &")
+//                .forEach(c -> monitorsInstancesManager.executeCommandsForAll(singletonList(c)));
 
         log.info("resource monitors started");
         return monitorsInstancesManager;
@@ -212,8 +213,9 @@ public class TestManager {
             blockchainInstancesManager.executeCommandsForCommon(Collections.singletonList(
                     "bash common_init_files/startCommon.sh && touch startCommon.complete")
             );
-
-            sleep(5 * 60 * 1000);
+            sleep(properties.getAfterBlockchainInitTimeout());
+            blockchainInstancesManager.executeCommandsForRoot(singletonList("bash root_init_files/on_init_finished.sh"));
+            Thread.sleep(5 * 1000);
             log.info("Blockchain instances started");
             return blockchainInstancesManager;
         } catch (Exception e) {
@@ -230,10 +232,10 @@ public class TestManager {
         loggerInstancesManager.setRootInstance(loggers.get(0));
         loggerInstancesManager.addCommonInstances(loggers.subList(1, loggers.size()));
         loggerInstancesManager.uploadFilesForAll(singletonList(properties.getTestManagerModulesPath().resolve("blockchain-logger.jar")));
+
+        loggerInstancesManager.uploadFilesForAll(singletonList(Paths.get(properties.getModulesInitResourcesPath(), "startLogger.sh")));
         loggerInstancesManager.executeCommandsForAll(Arrays.asList(
-//                "pkill -f 'java -jar';",
-//                "sudo apt-get -y install default-jre;",
-                "nohup java -jar blockchain-logger.jar ${LOG_PARAMS} >/dev/null 2>blockchain-logger-stdout.log &"
+                "bash startLogger.sh"
         ));
 
         log.debug("runLoggers stop");
@@ -266,18 +268,14 @@ public class TestManager {
         loadGeneratorsManager.setRootInstance(loadGeneratorInstances.get(0));
         loadGeneratorsManager.addCommonInstances(loadGeneratorInstances.subList(1, loadGeneratorInstances.size()));
 
-//        loadGeneratorsManager.executeCommandsForAll(Arrays.asList(
-//                "pkill -f 'java -jar';",
-//                "sudo apt-get update;",
-//                "sudo apt-get -y install default-jre;")
-//        );
         loadGeneratorsManager.uploadFilesForAll(Arrays.asList(
                 properties.getTestManagerModulesPath().resolve("load-generator.jar"),
-                Paths.get("tmp", "root_init_result", "credentials")
+                Paths.get("tmp", "root_init_result", "credentials"),
+                Paths.get(properties.getModulesInitResourcesPath(), "startLoadGenerator.sh")
         ));
 
         loadGeneratorsManager.executeCommandsForAll(singletonList(
-                "nohup java -jar load-generator.jar ${LOAD_PARAMS} >/dev/null 2>load-generator-stdout.log &"));
+                "bash startLoadGenerator.sh"));
 
         log.debug("runLoadGenerators end");
         return loadGeneratorsManager;
@@ -418,9 +416,9 @@ public class TestManager {
                         .resolve("transactionsPerBlock").toFile())) {
             fw.write("blockID, transactionID\n");
             BlockchainManager blockchainManager = new BlockchainManager(properties.getBlockchainType(),
-                    "http://" +blockchainInstancesManager.getRootInstance().getHost() + ":8101");
+                    "http://" +blockchainInstancesManager.getRootInstance().getHost() + ":" + properties.getBlockchainPort());
             long lastBlock = blockchainManager.getChain().getLastBlockNumber();
-            for (int i = 0; i < lastBlock; ++i) {
+            for (int i = 0; i <= lastBlock; ++i) {
                 for (BlockchainTransaction blockchainTransaction: blockchainManager.getBlock(i).getTransactions()) {
                     fw.write(i + "," + blockchainTransaction.getTxId() + '\n');
                 }

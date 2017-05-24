@@ -30,20 +30,15 @@ import java.nio.file.Path;
  * @author phd
  */
 @Getter
-public class LoggerInstance extends RemoteInstance {
-    private String blockchainType;
-    private String target;
+public class LoggerInstance extends BlockchainInteractingInstance {
     private String logFile;
     private int requestPeriod;
 
     @Setter
     private boolean isRunning;
 
-    public LoggerInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String logFile, int requestPeriod) {
-        super(userName, host, port, keyPath, logPath);
-        this.isRunning = true;
-        this.blockchainType = blockchainType;
-        this.target = target;
+    public LoggerInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String blockchainPort, String logFile, int requestPeriod) {
+        super(userName, host, port, keyPath, logPath, blockchainType, target, blockchainPort);
         this.logFile = logFile;
         this.requestPeriod = requestPeriod;
     }

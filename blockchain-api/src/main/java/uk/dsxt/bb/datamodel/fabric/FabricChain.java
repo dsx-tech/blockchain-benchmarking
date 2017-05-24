@@ -34,6 +34,6 @@ public class FabricChain implements BlockchainChainInfo {
 
     @Override
     public long getLastBlockNumber() {
-        return height;
+        return height - 1;
     }
 }

@@ -1,0 +1,26 @@
+membersrvc:
+  image: hyperledger/fabric-membersrvc
+  command: membersrvc
+  ports:
+    - "7054:7054"
+vp:
+  image: hyperledger/fabric-peer
+  environment:
+    - CORE_PEER_ADDRESSAUTODETECT=false
+    - CORE_PEER_ADDRESS=${HOST_IP}:7051
+    - CORE_VM_ENDPOINT=http://172.17.0.1:2375
+    - CORE_LOGGING_LEVEL=DEBUG
+    - CORE_PEER_ID=vp0
+    - CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN=pbft  # noops, pbft
+    - CORE_PBFT_GENERAL_MODE=batch  # batch. classic and sieve will be not supported again.
+    - CORE_PBFT_GENERAL_BATCHSIZE=1000
+    - CORE_PBFT_GENERAL_N=4
+    - CORE_PBFT_GENERAL_TIMEOUT_REQUEST=3s
+  ports:
+    - "7050:7050"
+    - "7051:7051"
+    - "7052:7052"
+    - "7053:7053"
+  links:
+    - membersrvc
+  command: sh -c "sleep 5; peer node start --peer-chaincodedev"

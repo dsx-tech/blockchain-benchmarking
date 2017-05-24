@@ -55,6 +55,9 @@ public class TestManagerProperties {
     final private String masterIpAddress;
     final private int masterPort;
     final private int testTimeout;
+    final private String modulesInitResourcesPath;
+    final private int afterBlockchainInitTimeout;
+    final private int blockchainPort;
 
     public static TestManagerProperties fromProperties(Properties properties) {
         return TestManagerProperties.builder()
@@ -77,6 +80,9 @@ public class TestManagerProperties {
                 .masterIpAddress(properties.getProperty("test_manager.ip"))
                 .masterPort(convertToInt(properties.getProperty("test_manager.port")))
                 .testTimeout(convertToInt(properties.getProperty("test_manager.test_timeout")))
+                .modulesInitResourcesPath(properties.getProperty("modules.init.resources"))
+                .afterBlockchainInitTimeout(convertToInt(properties.getProperty("test_manager.after_blockchain_init.timeout")))
+                .blockchainPort(convertToInt(properties.getProperty("blockchain.port")))
                 .build();
     }
 

@@ -47,7 +47,7 @@ public class LoadGeneratorMain {
     public static void main(String[] args) throws IOException {
         try {
             if (args.length < 8) {
-                log.error("Incorrect arguments count in LoadGeneratorMain.main(). Need min 8. Actual args: {}", Arrays.toString(args));
+                log.error("Incorrect arguments count in LoadGeneratorMain.main(). Need min 10. Actual args: {}", Arrays.toString(args));
                 return;
             }
             int amountOfTransactions = Integer.parseInt(args[0]);
@@ -58,21 +58,25 @@ public class LoadGeneratorMain {
             String ip = args[5];
             String masterHost = args[6];
             String credentialsPath = args[7];
+            String blockchainType = args[8];
+            String blockchainPort = args[9];
             List<String> targets = new ArrayList<>();
-            targets.addAll(Arrays.asList(args).subList(8, args.length));
+            targets.addAll(Arrays.asList(args).subList(10, args.length));
 
             List<Credential> accounts = new ArrayList<>();
-            Files.readAllLines(Paths.get(credentialsPath)).forEach(line -> {
-                    String[] credential = line.split(" ");
-                    if (credential.length != 2) {
-                        log.error("Invalid credential: " + line);
-                        return;
-                    }
-                    accounts.add(new Credential(credential[0], credential[1]));
-                }
-            );
+            if (Paths.get(credentialsPath).toFile().exists()) {
+                Files.readAllLines(Paths.get(credentialsPath)).forEach(line -> {
+                            String[] credential = line.split(" ");
+                            if (credential.length != 2) {
+                                log.error("Invalid credential: " + line);
+                                return;
+                            }
+                            accounts.add(new Credential(credential[0], credential[1]));
+                        }
+                );
+            }
 
-            LoadManager loadManager = new LoadManager(targets, accounts, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay);
+            LoadManager loadManager = new LoadManager(targets, accounts, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay, blockchainType, blockchainPort);
 
             loadManager.start();
             loadManager.waitCompletion();

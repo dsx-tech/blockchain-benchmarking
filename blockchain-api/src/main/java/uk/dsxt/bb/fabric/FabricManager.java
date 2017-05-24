@@ -23,6 +23,8 @@
 
 package uk.dsxt.bb.fabric;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import org.apache.http.client.fluent.Request;
@@ -238,7 +240,7 @@ public class FabricManager implements Manager {
         return null;
     }
 
-    private String sendMessageWithHttp(String url, String chaincodeID, String message, long timestamp) {
+    private String sendMessageWithHttp(String url, String chaincodeID, String message) {
         try {
             String params = String.format("{\"jsonrpc\":\"2.0\",\n" +
                     "\"method\": \"invoke\", \n" +
@@ -247,12 +249,15 @@ public class FabricManager implements Manager {
                     "          \"name\":\"%s\"\n" +
                     "      },\n" +
                     "      \"ctorMsg\": {\n" +
-                    "         \"args\":[\"write\", \"%s\", \"%s\"]\n" +
+                    "         \"args\":[\"write\", \"%s\"]\n" +
                     "      }\n" +
                     "  },\n" +
                     "  \"id\":%s \n" +
-                    "}", chaincodeID, message, timestamp, id);
-            return httpHelper.request(url, params, RequestType.POST);
+                    "}", chaincodeID, message, id);
+            String response = httpHelper.request(url + "/chaincode", params, RequestType.POST);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode responseJson = mapper.readTree(response);
+            return responseJson.get("result").get("message").textValue();
         } catch (Exception e) {
             log.error("Cannot run post method for sending transactions to fabric", e);
         }
@@ -292,6 +297,10 @@ public class FabricManager implements Manager {
 
     @Override
     public String sendMessage(byte[] body) {
+        return sendMessageWithHttp(peer, "mycc", new String(body));
+    }
+    //todo refactor, complete migration to raw HTTP requests
+    public String sendMessageViaAPI(byte[] body) {
 
         InvokeRequest request = new InvokeRequest();
 
