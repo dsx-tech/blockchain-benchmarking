@@ -33,7 +33,6 @@ public class LoggerInstancesManager extends RemoteInstancesManager<LoggerInstanc
     protected String getEnvVariables(LoggerInstance remoteInstance) {
         String params = String.format("%s %s %s %d %s %s",
                 remoteInstance.getBlockchainType(),
-//                "http://" + remoteInstance.getTarget() + ":8101",
                 "http://" + remoteInstance.getTarget() + ":" + remoteInstance.getBlockchainPort(),
                 remoteInstance.getLogFile(),
                 remoteInstance.getRequestPeriod(),
