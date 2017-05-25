@@ -51,18 +51,21 @@ public class MultichainManager implements Manager {
 
     private String url;
 
+    private final String ADDRESS = "1NZY6WSXC3PrxJUgazcL3QkQnx29NF8jUQpgb";
+
     private enum MultichainMethods {
         GETBLOCK,
         GETINFO,
         GETNEWADDRESS,
         GETPEERINFO,
-        SEND
+        SEND,
+        SENDWITHDATA,
     }
 
-    private String sendMessage(String address, byte[] body) throws IOException {
+    public String sendMessage(String address, long amount) throws IOException {
         try {
             return JSONRPCHelper.post(url, MultichainMethods.SEND.name().toLowerCase(),
-                    address, MultichainManager.toBigDecimal(body));
+                    address, new BigDecimal(amount));
         } catch (InternalLogicException e) {
             log.error("Cannot send transaction", e);
         }
@@ -70,14 +73,9 @@ public class MultichainManager implements Manager {
     }
 
     @Override
-    public String sendMessage(String from, String to, String message) {
-        return null;
-    }
-
-    @Override
-    public String sendTransaction(String to, String from, String amount) {
+    public String sendTransaction(String to, String from, long amount) {
         try {
-            return sendMessage(to, amount.getBytes());
+            return sendMessage(to, amount);
         } catch (IOException e) {
             log.error("Sending transaction failed", e);
         }
@@ -86,7 +84,24 @@ public class MultichainManager implements Manager {
 
     @Override
     public String sendMessage(byte[] body) {
-        throw new NotImplementedException();
+        try {
+            return JSONRPCHelper.post(url, MultichainMethods.SENDWITHDATA.toString().toLowerCase(),
+                    ADDRESS, 0, bytesToHex(body));
+        } catch (InternalLogicException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public String sendMessage(String from, String to, String message) {
+        try {
+            return JSONRPCHelper.post(url, MultichainMethods.SENDWITHDATA.toString().toLowerCase(),
+                    to, 0, bytesToHex(message.getBytes()));
+        } catch (InternalLogicException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -133,7 +148,20 @@ public class MultichainManager implements Manager {
     }
 
     private static BigDecimal toBigDecimal(byte[] bytes) {
-        return new BigDecimal(ByteBuffer.wrap(bytes).toString());
+        try {
+            System.out.println(new String(bytes));
+            return new BigDecimal(ByteBuffer.wrap(bytes).toString());
+        } catch (NumberFormatException e) {
+            e.getMessage();
+        }
+        return null;
     }
 
+    public static String bytesToHex(byte[] in) {
+        final StringBuilder builder = new StringBuilder();
+        for(byte b : in) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
+    }
 }
