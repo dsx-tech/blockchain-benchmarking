@@ -62,9 +62,9 @@ public class BitcoinManager implements Manager {
     private static final String BITCOIN_WALLET_ADDRESS = "mpkMbdQsiCCQ6x5YfufPsm5ByeJ73ccQ1V";
 
     @Override
-    public String sendTransaction(String to, String from, String amount) {
+    public String sendTransaction(String to, String from, long amount) {
         try {
-            return sendMessage(to, amount.getBytes());
+            return sendMessage(to, Long.toString(amount).getBytes());
         } catch (IOException e) {
             log.error("Sending transaction failed", e);
         }

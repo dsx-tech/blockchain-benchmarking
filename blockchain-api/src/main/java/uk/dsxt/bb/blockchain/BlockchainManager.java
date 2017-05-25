@@ -67,7 +67,7 @@ public class BlockchainManager implements Manager {
     }
 
     @Override
-    public String sendTransaction(String to, String from, String amount) {
+    public String sendTransaction(String to, String from, long amount) {
         if (manager != null) {
             return manager.sendTransaction(to, from, amount);
         }

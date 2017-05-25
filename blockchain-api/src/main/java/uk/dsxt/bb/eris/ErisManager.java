@@ -56,7 +56,7 @@ public class ErisManager implements Manager {
     }
 
     @Override
-    public String sendTransaction(String to, String from, String amount) {
+    public String sendTransaction(String to, String from, long amount) {
         return null;
     }
 
