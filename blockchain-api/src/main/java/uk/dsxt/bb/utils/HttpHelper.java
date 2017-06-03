@@ -39,7 +39,7 @@ public class HttpHelper {
     int readTimeout;
 
     public String request(String urlString, RequestType type) throws IOException, InternalLogicException {
-        return request(urlString, (String)null, type);
+        return request(urlString, (String) null, type);
     }
 
     public String request(String urlString, String content, RequestType type) throws IOException, InternalLogicException {

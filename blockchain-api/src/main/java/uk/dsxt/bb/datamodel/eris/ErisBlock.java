@@ -24,16 +24,12 @@
 package uk.dsxt.bb.datamodel.eris;
 
 import lombok.Value;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
+import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
+import java.util.List;
 
 @Value
-public class ErisChainInfo implements BlockchainChainInfo {
-    String chain_id;
-    String genesis_hash;
-    long latest_block_height;
-
-    @Override
-    public long getLastBlockNumber() {
-        return latest_block_height;
-    }
+public class ErisBlock implements BlockchainBlock {
+    int min_height;
+    int max_height;
+    private List<ErisBlockMeta> block_metas = null;
 }

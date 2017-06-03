@@ -23,17 +23,8 @@
 
 package uk.dsxt.bb.datamodel.eris;
 
-import lombok.Value;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
-
-@Value
-public class ErisChainInfo implements BlockchainChainInfo {
-    String chain_id;
-    String genesis_hash;
-    long latest_block_height;
-
-    @Override
-    public long getLastBlockNumber() {
-        return latest_block_height;
-    }
+public class ErisBlockMeta {
+    private String hash;
+    private ErisHeader header;
+    private ErisPartsHeader parts_header;
 }
