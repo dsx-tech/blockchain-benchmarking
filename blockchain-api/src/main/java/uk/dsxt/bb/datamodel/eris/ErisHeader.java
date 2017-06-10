@@ -1,4 +1,4 @@
-/*
+package uk.dsxt.bb.datamodel.eris;/*
  * *****************************************************************************
  *  * Blockchain benchmarking framework                                          *
  *  * Copyright (C) 2016 DSX Technologies Limited.                               *
@@ -21,19 +21,18 @@
  *  *****************************************************************************
  */
 
-package uk.dsxt.bb.datamodel.eris;
-
 import lombok.Value;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
 
 @Value
-public class ErisChainInfo implements BlockchainChainInfo {
-    String chain_id;
-    String genesis_hash;
-    long latest_block_height;
-
-    @Override
-    public long getLastBlockNumber() {
-        return latest_block_height;
-    }
+public class ErisHeader {
+    private String chain_id;
+    private int height;
+    private String time;
+    private int num_txs;
+    private String last_block_hash;
+    private ErisLastBlockParts last_block_parts;
+    private String last_commit_hash;
+    private String data_hash;
+    private String validators_hash;
+    private String app_hash;
 }
