@@ -48,15 +48,15 @@ public class HttpHelper {
         connection.setRequestMethod(type.toString());
         connection.setConnectTimeout(connectionTimeout);
         connection.setReadTimeout(readTimeout);
-
+        connection.setRequestProperty("Content-type", "application/json");
         if (content != null && type == RequestType.POST) {
-            connection.setRequestProperty("Content-type", "application/json");
             connection.setDoOutput(true);
             DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
             wr.writeBytes(content);
             wr.flush();
             wr.close();
         }
+
 
         int code = connection.getResponseCode();
 //        if (code != Response.Status.OK.getStatusCode() && code != Response.Status.NO_CONTENT.getStatusCode())
