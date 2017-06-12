@@ -23,15 +23,24 @@
 
 package uk.dsxt.bb.nem;
 
-import org.json.JSONObject;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.google.gson.Gson;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.entity.ContentType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainPeer;
+import uk.dsxt.bb.datamodel.nem.NemBlock;
+import uk.dsxt.bb.datamodel.nem.NemChainInfo;
+import uk.dsxt.bb.datamodel.nem.NemPeers;
 import uk.dsxt.bb.utils.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,11 +49,20 @@ import java.util.List;
 
 public class NemManager implements Manager {
 
+    private static final Logger log = LogManager.getLogger(NemManager.class.getName());
+
+    private static final String CHAIN_REQUEST = "/chain/height";
+    private static final String BLOCK_REQUEST = "/block/at/public";
+    private static final String GET_PEERS_REQUEST = "/node/peer-list/all";
+
+    private static final String URL = "http://127.0.0.1:7890";
     public static HttpHelper httpHelper = new HttpHelper(120000, 120000);
 
     public static void main(String[] args) throws IOException {
         Manager manager = new NemManager();
-        manager.getBlock(1L);
+        //System.out.println(manager.getBlock(132611L).getHash());
+        //        manager.getBlock(1L);
+        Arrays.stream(manager.getPeers()).forEach(System.out::println);
     }
 
     @Override
@@ -69,34 +87,50 @@ public class NemManager implements Manager {
 
     @Override
     public BlockchainBlock getBlock(long id) throws IOException {
-//            String ans = httpHelper.request("http://127.0.0.1:7890/chain/height", RequestType.GET);
-//            System.out.println(ans);
-            //JSONRPCHelper.post("http://127.0.0.1:7890/block/at/public", null, )
-//        JSONObject block = null;
-//        JSONObject urlParam = new JSONObject();
-//        urlParam.put("height", height);
-//        String blockString = HttpUtil.httpPostWithJSON("/block/at/public", urlParam.toString());
-//        if(blockString==null || "".equals(blockString.trim())){
-//            System.out.println("fail to get the Nemesis block data!");
-//            return null;
-//        }
-//        block = JSONObject.fromObject(blockString);
-//        if(block==null){
-//            System.out.println("fail to get the Nemesis block data!");
-//            return null;
-//        }
-//        return block;
-        return null;
+        String request = String.join("", URL, BLOCK_REQUEST);
+        try {
+            String block = Request.Post(request)
+                    .bodyString(String.format("{\"height\":%d}", id), ContentType.APPLICATION_JSON)
+                    .execute().returnContent().asString();
+            return new Gson().fromJson(block, NemBlock.class);
+        } catch (JsonParseException e) {
+            log.error("Json parse error", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Exception while calling url", e);
+            throw e;
+        }
     }
 
     @Override
     public BlockchainPeer[] getPeers() throws IOException {
-        return new BlockchainPeer[0];
+        String request = String.join("", URL, GET_PEERS_REQUEST);
+        try {
+            String peers = Request.Get(request).execute().returnContent().asString();
+            return new Gson().fromJson(peers, NemPeers.class).getActive();
+        } catch (JsonParseException e) {
+            log.error("Json parse error", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Exception while calling url", e);
+            throw e;
+        }
     }
 
     @Override
     public BlockchainChainInfo getChain() throws IOException {
-        return null;
+        try {
+            String request = String.join("", URL, CHAIN_REQUEST);
+            String height = Request.Get(request).execute().returnContent().asString();
+
+            return new Gson().fromJson(height, NemChainInfo.class);
+        } catch (JsonParseException e) {
+            log.error("Json parse error", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Exception while calling url", e);
+            throw e;
+        }
     }
 
     @Override

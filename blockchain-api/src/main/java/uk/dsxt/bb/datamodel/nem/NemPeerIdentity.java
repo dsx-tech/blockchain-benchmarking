@@ -1,3 +1,9 @@
+package uk.dsxt.bb.datamodel.nem;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
+import lombok.Value;
+
 /*
  * *****************************************************************************
  *  * Blockchain benchmarking framework                                          *
@@ -20,46 +26,10 @@
  *  * *
  *  *****************************************************************************
  */
-
-package uk.dsxt.bb.datamodel.multichain;
-
-import lombok.Value;
-import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
-
-import java.math.BigDecimal;
-
 @Value
-public class MultichainInfo implements BlockchainChainInfo {
-    String version;
-    long nodeversion;
-    long protocolversion;
-    String chainname;
-    String description;
-    String protocol;
-    long port;
-    long setupblocks;
-    String nodeaddress;
-    String burnaddress;
-    boolean incomingpaused;
-    boolean miningpaused;
-    long walletversion;
-    BigDecimal balance;
-    int walletdbversion;
-    boolean reindex;
-    long blocks;
-    long timeoffset;
-    long connections;
-    String proxy;
-    BigDecimal difficulty;
-    boolean testnet;
-    long keypoololdest;
-    long keypoolsize;
-    BigDecimal paytxfee;
-    BigDecimal relayfee;
-    String errors;
+public class NemPeerIdentity {
+    String name;
 
-    @Override
-    public long getLastBlockNumber() {
-        return blocks;
-    }
+    @SerializedName("public-key")
+    String publicKey;
 }
