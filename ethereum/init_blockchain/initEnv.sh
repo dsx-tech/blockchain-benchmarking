@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 sudo apt-get update;
-sudo apt-get -y upgrade;
+#sudo apt-get -y upgrade;
 sudo apt-get -y install default-jre
 wget https://storage.googleapis.com/golang/go1.7.4.linux-amd64.tar.gz;
 sudo tar -xvf go1.7.4.linux-amd64.tar.gz;
