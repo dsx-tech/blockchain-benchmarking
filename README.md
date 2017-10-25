@@ -29,10 +29,11 @@ through the use of automatic network deployment.
 #### Run benchmark for Ethereum blockchain
 All you need right now is Intellij IDEA, Java 1.8+, Gradle (>= 1.8), and remote Ubuntu instances, for example on Amazon EC2.
 1. Open and this project in Intellij IDEA from build.gradle. 
-2. Set up test-manager.properties in ethereum folder (choose needed properties for your testnet set up).
-3. Create file with name **instances** in **ethereum** folder (file, which contains IP addresses to connect).
-4. Run TestManagerMain class with program arguments **ethereum/test-manager.properties**.
-5. You will get .csv files in **ethereum/logs** folder. That data can be analyzed.
+2. Build all .jar files with command **gradle -q** in terminal. You can check that all .jar was builded in **benchmark-bundle** folder
+3. Set up test-manager.properties in ethereum folder (choose needed properties for your testnet set up).
+4. Create file with name **instances** in **ethereum** folder (file, which contains IP addresses to connect).
+5. Run TestManagerMain class with program arguments **ethereum/test-manager.properties**.
+6. You will get .csv files in **ethereum/logs** folder. That data can be analyzed.
 
 ## The tasks to be solved
 1. **Standardization** of various blockchain's implementations - single generalized API with connectors to various implementations development.
