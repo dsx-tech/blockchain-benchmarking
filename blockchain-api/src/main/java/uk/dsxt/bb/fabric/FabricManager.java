@@ -56,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import static uk.dsxt.bb.utils.JSONRPCHelper.httpHelper;
 import static uk.dsxt.bb.utils.JSONRPCHelper.id;
 
+@Deprecated
 public class FabricManager implements Manager {
 
     private static final Logger log = LogManager.getLogger(FabricManager.class.getName());
