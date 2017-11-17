@@ -110,8 +110,13 @@ public class MultichainManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlock(long blockId) throws IOException {
+    public BlockchainBlock getBlockById(long blockId) throws IOException {
         return JSONRPCHelper.post(url, MultichainMethods.GETBLOCK.name().toLowerCase(), MultichainBlock.class, blockId);
+    }
+
+    @Override
+    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+        return null;
     }
 
     @Override

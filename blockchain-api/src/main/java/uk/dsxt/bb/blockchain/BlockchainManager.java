@@ -68,59 +68,51 @@ public class BlockchainManager implements Manager {
 
     @Override
     public String sendTransaction(String to, String from, long amount) {
-        if (manager != null) {
-            return manager.sendTransaction(to, from, amount);
-        }
 
-        return null;
+        return manager != null ? manager.sendTransaction(to, from, amount) : null;
     }
+
     @Override
     public String sendMessage(String from, String to, String message) {
-        if (manager != null) {
-            return manager.sendMessage(from, to, message);
-        }
-        return null;
+
+        return manager != null ? manager.sendMessage(from, to, message) : null;
     }
 
 
     @Override
     public String sendMessage(byte[] body) {
-        if (manager != null)
-            return manager.sendMessage(body);
 
-        return null;
+        return manager != null ? manager.sendMessage(body) : null;
     }
 
     @Override
     public List<Message> getNewMessages() {
-        if (manager != null)
-            return manager.getNewMessages();
 
-        return null;
+        return manager != null ? manager.getNewMessages() : null;
     }
 
     @Override
-    public BlockchainBlock getBlock(long id) throws IOException {
-        if (manager != null)
-            return manager.getBlock(id);
+    public BlockchainBlock getBlockById(long id) throws IOException {
 
-        return null;
+        return manager != null ? manager.getBlockById(id) : null;
+    }
+
+    @Override
+    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+
+        return manager != null ? manager.getBlockByHash(hash) : null;
     }
 
     @Override
     public BlockchainPeer[] getPeers() throws IOException {
-        if (manager != null)
-            return manager.getPeers();
 
-        return null;
+        return manager != null ? manager.getPeers() : null;
     }
 
     @Override
     public BlockchainChainInfo getChain() throws IOException {
-        if (manager != null)
-            return manager.getChain();
 
-        return null;
+        return manager != null ? manager.getChain() : null;
     }
 
     @Override
@@ -132,6 +124,6 @@ public class BlockchainManager implements Manager {
     public static void main(String[] args) throws IOException {
         BlockchainManager manager = new BlockchainManager("bitcoin", "http://127.0.0.1:6290");
         manager.authorize("multichainrpc", "3NPieLHgUEfEsdJeQpQstPDmHX1yasatPAw3SYGtY2Jr");
-        System.out.println(manager.getBlock(0));
+        System.out.println(manager.getBlockById(0));
     }
 }

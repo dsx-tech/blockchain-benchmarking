@@ -152,7 +152,7 @@ public class ErisManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlock(long id) throws IOException {
+    public BlockchainBlock getBlockById(long id) throws IOException {
         try {
             String block = Request.Get(url+String.format("/blockchain/blocks?q=height:%d", id)).execute().returnContent().asString();
             System.out.println(block);
@@ -161,6 +161,11 @@ public class ErisManager implements Manager {
         } catch (Exception e) {
             log.error("Exc", e);
         }
+        return null;
+    }
+
+    @Override
+    public BlockchainBlock getBlockByHash(String hash) throws IOException {
         return null;
     }
 

@@ -39,7 +39,9 @@ public interface Manager {
 
     List<Message> getNewMessages();
 
-    BlockchainBlock getBlock(long id) throws IOException;
+    BlockchainBlock getBlockById(long id) throws IOException;
+
+    BlockchainBlock getBlockByHash(String hash) throws IOException;
 
     BlockchainPeer[] getPeers() throws IOException;
 
