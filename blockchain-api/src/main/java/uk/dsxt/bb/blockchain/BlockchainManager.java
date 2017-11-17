@@ -120,10 +120,4 @@ public class BlockchainManager implements Manager {
         if (manager != null)
             manager.authorize(user, password);
     }
-
-    public static void main(String[] args) throws IOException {
-        BlockchainManager manager = new BlockchainManager("bitcoin", "http://127.0.0.1:6290");
-        manager.authorize("multichainrpc", "3NPieLHgUEfEsdJeQpQstPDmHX1yasatPAw3SYGtY2Jr");
-        System.out.println(manager.getBlockById(0));
-    }
 }

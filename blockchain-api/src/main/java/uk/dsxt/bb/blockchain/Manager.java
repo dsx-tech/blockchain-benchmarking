@@ -35,6 +35,7 @@ public interface Manager {
     String sendTransaction(String to, String from, long amount);
 
     String sendMessage(byte[] body);
+
     String sendMessage(String from, String to, String message);
 
     List<Message> getNewMessages();

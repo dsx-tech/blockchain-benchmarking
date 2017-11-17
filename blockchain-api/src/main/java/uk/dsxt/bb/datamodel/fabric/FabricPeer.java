@@ -25,10 +25,12 @@ package uk.dsxt.bb.datamodel.fabric;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import org.hyperledger.fabric.sdk.Peer;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainPeer;
 
 @Getter
+@ToString
 @AllArgsConstructor
 public class FabricPeer implements BlockchainPeer {
     String id;

@@ -44,7 +44,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class FabricManager implements Manager {
 
@@ -57,12 +58,12 @@ public class FabricManager implements Manager {
     private Peer peer;
 
     public FabricManager(String peer) {
-        Properties properties = PropertiesHelper.loadProperties(String.format("blockchain-%s", peer));
+        Properties properties = PropertiesHelper.loadProperties(String.format("fabric-%s", peer.replaceAll("[/:]", "")));
         this.chaincodeName = properties.getProperty(FabricProperties.CHAINCODE_NAME);
         try {
             initJavaSDK(peer, properties);
         } catch (BaseException e) {
-            log.error("Failed to init fabric-java-sdk {}", e);
+            log.error("Failed to init fabric-java-sdk {}", e.getMessage());
         }
     }
 
@@ -87,12 +88,12 @@ public class FabricManager implements Manager {
 
             log.info("Setting channel to client...");
             String channelName = properties.getProperty(FabricProperties.CHANNEL_NAME);
-            channel = client.newChannel(properties.getProperty(channelName));
+            channel = client.newChannel(channelName);
             log.info("Set channel to client");
 
             log.info("Adding peer with address {} to channel {}...", peer, channelName);
             this.peer = client.newPeer("peer", peer);
-            channel.addPeer(client.newPeer("peer", peer));
+            channel.addPeer(this.peer);
             log.info("Added peer with address {} to channel {}", peer, channelName);
 
             String orderer = properties.getProperty(FabricProperties.ORDERER);
@@ -132,8 +133,10 @@ public class FabricManager implements Manager {
         Collection<ProposalResponse> resps;
         try {
             resps = channel.sendTransactionProposal(req);
-            return channel.sendTransaction(resps).get().toString();
-        } catch (ProposalException | InvalidArgumentException | InterruptedException | ExecutionException e) {
+            channel.sendTransaction(resps);
+
+            return resps.stream().findFirst().get().getTransactionID();
+        } catch (ProposalException | InvalidArgumentException e) {
             log.error("Failed to send transaction to blockchain {}", e);
         }
 
@@ -178,27 +181,20 @@ public class FabricManager implements Manager {
     public FabricBlock getBlockById(long id) throws IOException {
         try {
             BlockInfo returnedBlock = channel.queryBlockByNumber(peer, id);
-            return getBlock(returnedBlock);
+            FabricBlock fabricBlock = getBlock(returnedBlock);
+            log.info("Fabric block got by id {}, block {}", id, fabricBlock);
+
+            return fabricBlock;
         } catch (InvalidArgumentException | ProposalException e) {
-            log.error("Failed to get block with {}, {}", id, e);
+            log.error("Failed to get block with id {}, {}", id, e);
         }
         return null;
     }
 
     private FabricBlock getBlock(BlockInfo block) throws IOException, InvalidArgumentException {
-        List<FabricTransaction> transactions = new ArrayList<>();
 
-        // getting transactions from block
-        for (BlockInfo.EnvelopeInfo envelopeInfo : block.getEnvelopeInfos()) {
-            transactions.add(new FabricTransaction(
-                    envelopeInfo.getTransactionID(),
-                    envelopeInfo.getChannelId(),
-                    envelopeInfo.getTimestamp(),
-                    envelopeInfo.isValid(),
-                    envelopeInfo.getEpoch(),
-                    envelopeInfo.getValidationCode(),
-                    envelopeInfo.getType()));
-        }
+        List<FabricTransaction> transactions = StreamSupport.stream(block.getEnvelopeInfos().spliterator(), false).map(FabricTransaction::new).collect(Collectors.toList());
+
         final long blockNumber = block.getBlockNumber();
         return new FabricBlock(transactions,
                 Hex.encodeHexString(SDKUtils.calculateBlockHash(
@@ -212,7 +208,11 @@ public class FabricManager implements Manager {
     public FabricBlock getBlockByHash(String hash) throws IOException {
         try {
             BlockInfo returnedBlock = channel.queryBlockByHash(peer, Hex.decodeHex(hash.toCharArray()));
-            return getBlock(returnedBlock);
+
+            FabricBlock fabricBlock = getBlock(returnedBlock);
+            log.info("Fabric block got by hash {}, block {}", hash, fabricBlock);
+
+            return fabricBlock;
         } catch (InvalidArgumentException | ProposalException | DecoderException e) {
             log.error("Failed to get block with {}, {}", hash, e);
         }
@@ -230,11 +230,13 @@ public class FabricManager implements Manager {
         try {
             BlockchainInfo channelInfo = channel.queryBlockchainInfo(peer);
 
-            return new FabricChain(
-                    channelInfo.getHeight() -1,
+            FabricChain fabricChain = new FabricChain(
+                    channelInfo.getHeight(),
                     Hex.encodeHexString(channelInfo.getCurrentBlockHash()),
                     Hex.encodeHexString(channelInfo.getPreviousBlockHash()));
+            log.info("Got fabric chain info: {}", fabricChain);
 
+            return fabricChain;
         } catch (ProposalException | InvalidArgumentException e) {
             log.error("Cannot get chain info from peer {}, error {}", peer, e);
         }

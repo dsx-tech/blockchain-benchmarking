@@ -25,12 +25,14 @@ package uk.dsxt.bb.datamodel.fabric;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import org.hyperledger.fabric.sdk.BlockInfo;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
 
 import java.util.Date;
 
 @Getter
+@ToString
 @AllArgsConstructor
 public class FabricTransaction implements BlockchainTransaction {
     String transactionId;
@@ -44,5 +46,15 @@ public class FabricTransaction implements BlockchainTransaction {
     @Override
     public String getTxId() {
         return transactionId;
+    }
+
+    public FabricTransaction(BlockInfo.EnvelopeInfo envelopeInfo) {
+        this.transactionId = envelopeInfo.getTransactionID();
+        this.channelId = envelopeInfo.getChannelId();
+        this.timestamp = envelopeInfo.getTimestamp();
+        this.isValid = envelopeInfo.isValid();
+        this.epoch = envelopeInfo.getEpoch();
+        this.validationCode = envelopeInfo.getValidationCode();
+        this.type = envelopeInfo.getType();
     }
 }

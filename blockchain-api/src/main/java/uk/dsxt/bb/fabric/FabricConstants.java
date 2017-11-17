@@ -78,5 +78,5 @@ class FabricConstants {
     static final String READ_METHOD = "read";
 
     static final long TIMESTAMP_TO_GET_MESSAGES = -600000;
-    static final String MESSAGE_SEPARATOR = ";";
+    static final String MESSAGE_SEPARATOR = "`0";
 }

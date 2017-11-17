@@ -24,10 +24,12 @@
 package uk.dsxt.bb.datamodel.fabric;
 
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 
 import java.util.List;
 
+@ToString
 @AllArgsConstructor
 public class FabricBlock implements BlockchainBlock {
     private List<FabricTransaction> transactions;

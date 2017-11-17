@@ -25,9 +25,11 @@ package uk.dsxt.bb.datamodel.fabric;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
 
 @Getter
+@ToString
 @AllArgsConstructor
 public class FabricChain implements BlockchainChainInfo {
     long height;
