@@ -32,11 +32,6 @@ class FabricConstants {
     static final String HOME_PATH = System.getProperty("user.home");
     private static final String FILE_SEPARATOR = File.separator;
 
-    static final String CHAINCODE_PATH = "github.com/hyperledger/fabric/examples/chaincode/go/evoting";
-    static final String CHAINCODE_NAME = "mycc";
-    static final String AFFILIATION = "bank_a";
-    static final String KEY_VALUE_STORE = FILE_SEPARATOR + "test.properties";
-
     private static final String FIRST_PEER_ADDRESS = "172.17.0.3:7051";
 
     private static final String DOCKER_VOLUME_SOCK = "-v /var/run/docker.sock:/var/run/docker.sock";
@@ -78,4 +73,10 @@ class FabricConstants {
     static final String CHAIN_REQUEST = "chain";
     static final String BLOCK_REQUEST = "chain/blocks/";
     static final String PEERS_REQUEST = "network/peers";
+
+    static final String WRITE_METHOD = "write";
+    static final String READ_METHOD = "read";
+
+    static final long TIMESTAMP_TO_GET_MESSAGES = -600000;
+    static final String MESSAGE_SEPARATOR = "`0";
 }

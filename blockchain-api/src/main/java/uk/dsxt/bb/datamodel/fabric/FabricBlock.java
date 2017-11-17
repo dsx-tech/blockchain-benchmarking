@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
  * Blockchain benchmarking framework                                          *
- * Copyright (C) 2016 DSX Technologies Limited.                               *
+ * Copyright (C) 2017 DSX Technologies Limited.                               *
  *                                                                            *
  * This program is free software: you can redistribute it and/or modify       *
  * it under the terms of the GNU General Public License as published by       *
@@ -23,18 +23,18 @@
 
 package uk.dsxt.bb.datamodel.fabric;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 
 import java.util.List;
 
-@Getter
+@ToString
+@AllArgsConstructor
 public class FabricBlock implements BlockchainBlock {
-    List<FabricTransaction> transactions;
-    String stateHash;
-    String previousBlockHash;
-    String consensusMetadata;
-    FabricNonHashData nonHashData;
+    private List<FabricTransaction> transactions;
+    private String stateHash;
+    private String previousBlockHash;
 
     @Override
     public String getHash() {
@@ -51,8 +51,5 @@ public class FabricBlock implements BlockchainBlock {
         return transactions == null ? new FabricTransaction[0] : transactions.toArray(new FabricTransaction[transactions.size()]);
     }
 
-    @Override
-    public long getTime() {
-        return nonHashData.getLocalLedgerCommitTimestamp().getSeconds();
-    }
+
 }

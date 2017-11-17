@@ -29,6 +29,7 @@ import org.apache.logging.log4j.util.Strings;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
 import uk.dsxt.bb.datamodel.bitcoin.*;
+import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.bb.utils.InternalLogicException;
 import uk.dsxt.bb.utils.JSONRPCHelper;
 
@@ -103,7 +104,7 @@ public class BitcoinManager implements Manager {
             List<BitcoinTransactionInList> transactionsInList = Arrays.stream(getLastTransactions())
                     .collect(Collectors.toList());
             if (transactionsInList != null) {
-                transactionsInList.forEach(transactions::add);
+                transactions.addAll(transactionsInList);
             }
         } catch (IOException e) {
             log.error("Error while getting new transactions", e);
@@ -125,7 +126,7 @@ public class BitcoinManager implements Manager {
         List<BitcoinTransactionInList> transactionsInList = Arrays.stream(getTransactions(account, count, from))
                 .collect(Collectors.toList());
         if (transactionsInList != null) {
-            transactionsInList.forEach(transactions::add);
+            transactions.addAll(transactionsInList);
         }
 
         return transactionsToResult(transactions);
@@ -136,7 +137,7 @@ public class BitcoinManager implements Manager {
         List<BitcoinUnspentTransaction> transactionList = Arrays.stream(getUnspentTransactions())
                 .collect(Collectors.toList());
         if (transactionList != null) {
-            transactionList.forEach(transactions::add);
+            transactions.addAll(transactionList);
         }
         return transactionsToResult(transactions);
     }
@@ -159,7 +160,7 @@ public class BitcoinManager implements Manager {
     }
 
     @Override
-    public BitcoinBlock getBlock(long blockId) throws IOException {
+    public BitcoinBlock getBlockById(long blockId) throws IOException {
         String blockHash = null;
         try {
             blockHash = JSONRPCHelper.post(url, BitcoinMethods.GETBLOCKHASH.name().toLowerCase(), blockId);
@@ -170,6 +171,11 @@ public class BitcoinManager implements Manager {
             log.error("Cannot get block", e);
         }
         return JSONRPCHelper.post(url, BitcoinMethods.GETBLOCK.name().toLowerCase(), BitcoinBlock.class, blockHash);
+    }
+
+    @Override
+    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+        return null;
     }
 
     @Override

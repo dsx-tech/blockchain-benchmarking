@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
  * Blockchain benchmarking framework                                          *
- * Copyright (C) 2016 DSX Technologies Limited.                               *
+ * Copyright (C) 2017 DSX Technologies Limited.                               *
  *                                                                            *
  * This program is free software: you can redistribute it and/or modify       *
  * it under the terms of the GNU General Public License as published by       *
@@ -23,18 +23,27 @@
 
 package uk.dsxt.bb.datamodel.fabric;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
+import org.hyperledger.fabric.sdk.Peer;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainPeer;
 
 @Getter
+@ToString
+@AllArgsConstructor
 public class FabricPeer implements BlockchainPeer {
-    FabricPeerID ID;
+    String id;
     String address;
-    String type;
+
+    public FabricPeer(Peer p) {
+        this.id = p.getName();
+        this.address = p.getUrl();
+    }
 
     @Override
     public String getId() {
-        return ID.getName();
+        return id;
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
  * Blockchain benchmarking framework                                          *
- * Copyright (C) 2016 DSX Technologies Limited.                               *
+ * Copyright (C) 2017 DSX Technologies Limited.                               *
  *                                                                            *
  * This program is free software: you can redistribute it and/or modify       *
  * it under the terms of the GNU General Public License as published by       *
@@ -23,427 +23,230 @@
 
 package uk.dsxt.bb.fabric;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
-import org.apache.http.client.fluent.Request;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperledger.fabric.sdk.*;
-import org.hyperledger.fabric.sdk.exception.ChainCodeException;
-import org.hyperledger.fabric.sdk.exception.EnrollmentException;
-import org.hyperledger.fabric.sdk.exception.RegistrationException;
-import org.json.JSONObject;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import org.hyperledger.fabric.sdk.exception.*;
+import org.hyperledger.fabric.sdk.security.CryptoSuite;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
-import uk.dsxt.bb.datamodel.fabric.FabricBlock;
 import uk.dsxt.bb.datamodel.fabric.FabricChain;
+import uk.dsxt.bb.datamodel.fabric.FabricBlock;
 import uk.dsxt.bb.datamodel.fabric.FabricPeer;
-import uk.dsxt.bb.utils.PrintOutputToConsole;
+import uk.dsxt.bb.datamodel.fabric.FabricTransaction;
 import uk.dsxt.bb.utils.PropertiesHelper;
-import uk.dsxt.bb.utils.RequestType;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.security.cert.CertificateException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import static uk.dsxt.bb.utils.JSONRPCHelper.httpHelper;
-import static uk.dsxt.bb.utils.JSONRPCHelper.id;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class FabricManager implements Manager {
 
     private static final Logger log = LogManager.getLogger(FabricManager.class.getName());
-    private Properties properties = PropertiesHelper.loadProperties("fabric");
 
-    private String chainName;
-    private String affiliation;
-    private String keyValueStore;
-    private String chainCodeName;
-    private String chainCodePath;
-    private String admin;
-    private String passphrase;
-    private String peer;
-    private String memberServiceUrl;
-    private String peerToConnect;
-    private boolean isInit;
-    private int validatingPeerID;
+    private static HFClient client = null;
+    private static Channel channel = null;
 
-    private ChainCodeResponse deployResponse;
-    private Process fabricProcess;
-    private Process memberService;
-    private Chain chain;
+    private String chaincodeName;
+    private Peer peer;
 
-    // This consctructor for test purposes only
-    private FabricManager(String chainName, String keyValueStore, String chainCodeName, String admin, String chainCodePath,
-                          String passphrase, String memberServiceUrl, String peer, boolean isInit, int validatingPeerID,
-                          String peerToConnect) throws InterruptedException {
-        this.chainName = chainName;
-        this.keyValueStore = keyValueStore;
-        this.chainCodeName = chainCodeName;
-        this.chainCodePath =
-                this.admin = admin;
-        this.passphrase = passphrase;
-        this.memberServiceUrl = memberServiceUrl;
-        this.peer = peer;
-        this.isInit = isInit;
-        this.validatingPeerID = validatingPeerID;
-        this.peerToConnect = peerToConnect;
-        FabricManager.setEnv("GOPATH", Paths.get(FabricConstants.HOME_PATH, "go").toString());
-        start();
-        initChain(chainName, memberServiceUrl, keyValueStore, peer, admin, passphrase);
-    }
-
-    // All fields loaded from fabric.properties can be the same for all peers
-//    public FabricManager(String peer) {
-//        this.peer = peer;
-//        this.chainName = properties.getProperty("chainname");
-//        this.chainCodePath = properties.getProperty("chaincodepath");
-//        this.chainCodeName = properties.getProperty("chaincodename");
-//        this.keyValueStore = properties.getProperty("keyvaluestore");
-//        this.affiliation = properties.getProperty("affiliation");
-//        this.admin = properties.getProperty("admin");
-//        this.passphrase = properties.getProperty("passphrase");
-//        this.memberServiceUrl = properties.getProperty("memberServiceUrl");
-//        initChain(chainName, memberServiceUrl, keyValueStore, peer, admin, passphrase);
-//    }
     public FabricManager(String peer) {
-        this.peer = peer;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void setEnv(String key, String value) {
+        Properties properties = PropertiesHelper.loadProperties(String.format("fabric-%s", peer.replaceAll("[/:]", "")));
+        this.chaincodeName = properties.getProperty(FabricProperties.CHAINCODE_NAME);
         try {
-            Map<String, String> env = System.getenv();
-            Class<?> cl = env.getClass();
-            Field field = cl.getDeclaredField("m");
-            field.setAccessible(true);
-            Map<String, String> writableEnv = (Map<String, String>) field.get(env);
-            writableEnv.put(key, value);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to set environment variable", e);
+            initJavaSDK(peer, properties);
+        } catch (BaseException e) {
+            log.error("Failed to init fabric-java-sdk {}", e.getMessage());
         }
     }
 
-    private static void sleep(long seconds) {
+    private void initJavaSDK(String peer, Properties properties) throws BaseException {
+        client = HFClient.createNewInstance();
+        log.info("Created new instance for HFCClient...");
+
+        CryptoSuite cs = CryptoSuite.Factory.getCryptoSuite();
+        User user = new FabricUser(
+                properties.getProperty(FabricProperties.PATH_TO_PRIVATE_KEY),
+                properties.getProperty(FabricProperties.PATH_TO_CERT),
+                properties.getProperty(FabricProperties.ORGANISATION));
+
         try {
-            TimeUnit.SECONDS.sleep(seconds);
-        } catch (InterruptedException e) {
-            log.error("Exception in sleep method", e);
+            log.info("Setting crypto suite...");
+            client.setCryptoSuite(cs);
+            log.info("Set crypto suite");
+
+            log.info("Setting user {}...", user);
+            client.setUserContext(user);
+            log.info("Set user {}", user);
+
+            log.info("Setting channel to client...");
+            String channelName = properties.getProperty(FabricProperties.CHANNEL_NAME);
+            channel = client.newChannel(channelName);
+            log.info("Set channel to client");
+
+            log.info("Adding peer with address {} to channel {}...", peer, channelName);
+            this.peer = client.newPeer("peer", peer);
+            channel.addPeer(this.peer);
+            log.info("Added peer with address {} to channel {}", peer, channelName);
+
+            String orderer = properties.getProperty(FabricProperties.ORDERER);
+            log.info("Adding orderer with address {} to channel {}...", orderer, channelName);
+            channel.addOrderer(client.newOrderer("orderer", orderer));
+            log.info("Added new orderer with address {} to channel {}", orderer, channelName);
+
+            log.info("Initializing channel {}...", channelName);
+            channel.initialize();
+            log.info("Initialized channel {}", channelName);
+        } catch (InvalidArgumentException | TransactionException | CryptoException e) {
+            log.error("Failed to initialize FabricManager: {}", e.getMessage());
+            throw new BaseException("Failed to initialize FabricManager");
         }
     }
 
-    private void initChain(String chainName, String memberServiceUrl, String keyValueStore, String peer, String admin,
-                           String passphrase) {
-        try {
-            chain = new Chain(chainName);
-
-            chain.setMemberServicesUrl(memberServiceUrl, null);
-
-            chain.setKeyValStore(new FileKeyValStore(keyValueStore));
-            chain.addPeer(peer, null);
-
-            Member registrar = chain.getMember(admin);
-
-            if (!registrar.isEnrolled()) {
-                registrar = chain.enroll(admin, passphrase);
-            }
-
-            chain.setRegistrar(registrar);
-
-            deployResponse = initChaincode();
-        } catch (CertificateException | EnrollmentException e) {
-            log.error("Failed to init FabricManager instance", e);
-        }
-    }
-
-    private void start() {
-        try {
-            Runtime rt = Runtime.getRuntime();
-            if (!isInit) {
-                memberService = rt.exec(FabricConstants.DOCKER_START_MEMBERSERVICE);
-                fabricProcess = rt.exec(FabricConstants.START_FIRST_PEER);
-            } else {
-                int peerID = validatingPeerID + 3;
-                TimeUnit.SECONDS.sleep(validatingPeerID);
-                String stPeer = FabricConstants.START_PEER.replaceAll("CORE_PEER_ADDRESS=172.17.0.3:7051",
-                        String.format("CORE_PEER_ADDRESS=172.17.0.%d:7051", peerID))
-                        .replaceFirst("vp0", String.format("vp%d", validatingPeerID));
-                String startAnotherPeer = String.join(" ", stPeer,
-                        FabricConstants.DOCKER_PEER_DISCOVERY_ROOTNODE.concat(peerToConnect), FabricConstants.DOCKER_PEER_NODE_START);
-                fabricProcess = rt.exec(startAnotherPeer);
-            }
-
-        } catch (Exception e) {
-            log.error("Failed to start FabricManager instance", e);
-        }
-
-        PrintOutputToConsole errorReported = PrintOutputToConsole.getStreamWrapper(fabricProcess.getErrorStream(),
-                "ERROR");
-        PrintOutputToConsole outputMessage = PrintOutputToConsole.getStreamWrapper(fabricProcess.getInputStream(),
-                "OUTPUT");
-
-        errorReported.start();
-        outputMessage.start();
-    }
-
-    private void stop() {
-        try {
-            if (fabricProcess.isAlive())
-                fabricProcess.destroyForcibly();
-            if (memberService.isAlive())
-                memberService.destroyForcibly();
-        } catch (Exception e) {
-            log.error("stop method failed", e);
-        }
-    }
-
-    private ChainCodeResponse initChaincode() {
-        DeployRequest request = new DeployRequest();
-
-        request.setChaincodePath(chainCodePath);
-        request.setArgs(new ArrayList<>(Collections.singletonList(ChaincodeFunction.INIT.name().toLowerCase())));
-
-        Member member = getMember(admin, affiliation);
-        request.setChaincodeName(chainCodeName);
-
-        return member.deploy(request);
-    }
-
-    private String initChaincodeWithHttp(String url, String path) {
-        try {
-            String params = String.format("{\"jsonrpc\":\"2.0\", \n" +
-                    "\"method\":\"deploy\", \n" +
-                    "\"params\": {\n" +
-                        "\"type\":1, \n" +
-                        "\"chaincodeID\":{" +
-                        "\"path\":\"%s\",\n" +
-                        "\"name\":\"mycc\"" +
-                    "\n }," +
-                    "\"CtorMsg\": {\n" +
-                        "\"args\":[\"init\"]\n" +
-                        " }\n" +
-                        " },\n" +
-                    "\"id\":1\n" +
-                    "}", path);
-            log.info("chaincode deployed");
-            JSONObject chaincodeID = new JSONObject(httpHelper.request(url, params, RequestType.POST));
-            return chaincodeID.getJSONObject("result").getString("message");
-        } catch (Exception e) {
-            log.error("Cannot run post method for init fabric chaincode", e);
-        }
-        return null;
-    }
-
-    private String sendMessageWithHttp(String url, String chaincodeID, String message) {
-        try {
-            String params = String.format("{\"jsonrpc\":\"2.0\",\n" +
-                    "\"method\": \"invoke\", \n" +
-                    "\"params\": {\n" +
-                    "      \"chaincodeID\":{\n" +
-                    "          \"name\":\"%s\"\n" +
-                    "      },\n" +
-                    "      \"ctorMsg\": {\n" +
-                    "         \"args\":[\"write\", \"%s\"]\n" +
-                    "      }\n" +
-                    "  },\n" +
-                    "  \"id\":%s \n" +
-                    "}", chaincodeID, message, id);
-            String response = httpHelper.request(url + "/chaincode", params, RequestType.POST);
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode responseJson = mapper.readTree(response);
-            return responseJson.get("result").get("message").textValue();
-        } catch (Exception e) {
-            log.error("Cannot run post method for sending transactions to fabric", e);
-        }
-        return null;
-    }
-
-    private String getMessagesWithHttp(String url, String chaincodeID, long timestamp) {
-        try {
-            String params = String.format("{\n\"jsonrpc\":\"2.0\",\n" +
-                    "\"method\":\"query\", \n" +
-                    "\"params\": {" +
-                    "\"type\":1," +
-                    "\"chaincodeID\":{" +
-                    "\"name\":\"%s\"\n}," +
-                    "\"ctorMsg\": {\n" +
-                    "\"args\":[\"read\", \"%d\"]\n" +
-                    "}\n" +
-                    "},\n" +
-                    "\"id\":%s}", chaincodeID, timestamp, id);
-            return httpHelper.request(url, params, RequestType.POST);
-
-        } catch (Exception e) {
-            log.error("Cannot query chaincode", e);
-        }
-        return null;
+    private String timestampToKey(long timestamp) {
+        return String.format("%016d", timestamp);
     }
 
     @Override
     public String sendTransaction(String to, String from, long amount) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public String sendMessage(String from, String to, String message) {
-        return sendMessage(message.getBytes());
+        return null;
     }
 
     @Override
     public String sendMessage(byte[] body) {
-        return sendMessageWithHttp(peer, "mycc", new String(body));
-    }
-    //todo refactor, complete migration to raw HTTP requests
-    public String sendMessageViaAPI(byte[] body) {
+        String message = new String(body);
+        TransactionProposalRequest req = client.newTransactionProposalRequest();
+        ChaincodeID cid = ChaincodeID.newBuilder().setName(chaincodeName).build();
+        req.setChaincodeID(cid);
+        req.setFcn(FabricConstants.WRITE_METHOD);
 
-        InvokeRequest request = new InvokeRequest();
-
-        request.setArgs(new ArrayList<>(Arrays.asList(ChaincodeFunction.WRITE.name().toLowerCase(),
-                new String(body, StandardCharsets.UTF_8))));
-        request.setChaincodeID(deployResponse.getChainCodeID());
-        request.setChaincodeName(deployResponse.getChainCodeID());
-
-        Member member = getMember(admin, affiliation);
-        String transactionID = null;
+        String timestampToKey = timestampToKey(Instant.now().toEpochMilli());
+        req.setArgs(new String[] {message, timestampToKey});
+        log.info("Executing message {}, timestamp {}", message, timestampToKey);
+        Collection<ProposalResponse> resps;
         try {
-            transactionID = member.invoke(request).getMessage();
-        } catch (ChainCodeException e) {
-            log.error("Cannot send message", e);
-        }
+            resps = channel.sendTransactionProposal(req);
+            channel.sendTransaction(resps);
 
-        return transactionID;
-    }
-
-    @Override
-    public List<Message> getNewMessages() {
-
-        List<Message> result = new ArrayList<>();
-
-        String amountOfMessages = "0";
-
-        ChainCodeResponse chainCodeResponse = getNewMessage(amountOfMessages);
-
-        if (chainCodeResponse != null) {
-            amountOfMessages = chainCodeResponse.getMessage();
-        }
-
-        int amount = Integer.parseInt(amountOfMessages);
-
-        for (int i = 1; i <= amount; i++) {
-            chainCodeResponse = getNewMessage(Integer.toString(i));
-            if (chainCodeResponse != null) {
-                result.add(new Message(Integer.toString(i), chainCodeResponse.getMessage(), true));
-            }
-        }
-        result.forEach(message -> {
-            String str = message.getBody();
-            log.info(str.concat(" "));
-        });
-        return result;
-    }
-
-    private ChainCodeResponse getNewMessage(String id) {
-
-        QueryRequest request = new QueryRequest();
-
-        request.setArgs(new ArrayList<>(Arrays.asList(ChaincodeFunction.READ.name().toLowerCase(), id)));
-        request.setChaincodeID(deployResponse.getChainCodeID());
-        request.setChaincodeName(deployResponse.getChainCodeID());
-
-        Member member = getMember(admin, affiliation);
-
-        try {
-            return member.query(request);
-        } catch (ChainCodeException e) {
-            log.error("Cannot get new messages", e);
+            return resps.stream().findFirst().get().getTransactionID();
+        } catch (ProposalException | InvalidArgumentException e) {
+            log.error("Failed to send transaction to blockchain {}", e);
         }
 
         return null;
     }
 
-    private Member getMember(String enrollmentId, String affiliation) {
-        Member member = chain.getMember(enrollmentId);
-        if (!member.isRegistered()) {
-
-            RegistrationRequest registrationRequest = new RegistrationRequest();
-            registrationRequest.setEnrollmentID(enrollmentId);
-            registrationRequest.setAffiliation(affiliation);
-
-            try {
-                member = chain.registerAndEnroll(registrationRequest);
-            } catch (RegistrationException | EnrollmentException e) {
-                log.error("Cannot register or enroll member", e);
-            }
-        } else if (!member.isEnrolled()) {
-            try {
-                member = chain.enroll(enrollmentId, member.getEnrollmentSecret());
-            } catch (EnrollmentException e) {
-                log.error("Cannot enroll user", e);
-            }
-        }
-        return member;
-    }
-
-    private String convertGrpcToHttp(String grpc) {
-        return String.join("", grpc.replaceFirst("grpc", "http").replaceFirst(".$", "0"), "/");
+    @Override
+    public String sendMessage(String from, String to, String message) {
+        return null;
     }
 
     @Override
-    public FabricChain getChain() throws IOException {
-        String url = String.join("", convertGrpcToHttp(peer), FabricConstants.CHAIN_REQUEST);
+    public List<Message> getNewMessages() {
+        QueryByChaincodeRequest req = client.newQueryProposalRequest();
+        ChaincodeID cid = ChaincodeID.newBuilder().setName(chaincodeName).build();
+        req.setChaincodeID(cid);
+        req.setFcn(FabricConstants.READ_METHOD);
+
+        String timestampToKey = timestampToKey(FabricConstants.TIMESTAMP_TO_GET_MESSAGES);
+        req.setArgs(new String[]{timestampToKey});
+
+        log.info("Getting new messages for timestamp {}...", timestampToKey);
+        List<Message> result = new ArrayList<>();
         try {
-            String chain = Request.Get(url).execute().returnContent().asString();
-            return new Gson().fromJson(chain, FabricChain.class);
-        } catch (JsonParseException e) {
-            log.error("Json parse error", e);
-            throw e;
-        } catch (Exception e) {
-            log.error("Exception while calling url", e);
-            throw e;
+            Collection<ProposalResponse> resps = channel.queryByChaincode(req);
+
+            for (ProposalResponse resp : resps) {
+                String payload = new String(resp.getChaincodeActionResponsePayload());
+                log.info("Got messages: {}", payload);
+                String[] messages = payload.split(FabricConstants.MESSAGE_SEPARATOR);
+                int id = 0;
+                for (String message : messages) {
+                    result.add(new Message(Integer.toString(id), message, true));
+                    id++;
+                }
+            }
+        } catch (InvalidArgumentException | ProposalException e) {
+            log.error("Failed to get messages {}", e);
         }
+        return result;
     }
 
     @Override
-    public void authorize(String user, String password) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public FabricBlock getBlock(long id) throws IOException {
+    public FabricBlock getBlockById(long id) throws IOException {
         try {
-            String request = String.join("", convertGrpcToHttp(peer), FabricConstants.BLOCK_REQUEST, Long.toString(id));
-            String block = Request.Get(request).execute().returnContent().asString();
+            BlockInfo returnedBlock = channel.queryBlockByNumber(peer, id);
+            FabricBlock fabricBlock = getBlock(returnedBlock);
+            log.info("Fabric block got by id {}, block {}", id, fabricBlock);
 
-            return new Gson().fromJson(block, FabricBlock.class);
-        } catch (JsonParseException e) {
-            log.error("Json parse error", e);
-            throw e;
-        } catch (Exception e) {
-            log.error("Exception while calling url", e);
-            throw e;
+            return fabricBlock;
+        } catch (InvalidArgumentException | ProposalException e) {
+            log.error("Failed to get block with id {}, {}", id, e);
         }
+        return null;
+    }
+
+    private FabricBlock getBlock(BlockInfo block) throws IOException, InvalidArgumentException {
+
+        List<FabricTransaction> transactions = StreamSupport.stream(block.getEnvelopeInfos().spliterator(), false).map(FabricTransaction::new).collect(Collectors.toList());
+
+        final long blockNumber = block.getBlockNumber();
+        return new FabricBlock(transactions,
+                Hex.encodeHexString(SDKUtils.calculateBlockHash(
+                        blockNumber,
+                        block.getPreviousHash(),
+                        block.getDataHash())),
+                Hex.encodeHexString(block.getPreviousHash()));
+    }
+
+    @Override
+    public FabricBlock getBlockByHash(String hash) throws IOException {
+        try {
+            BlockInfo returnedBlock = channel.queryBlockByHash(peer, Hex.decodeHex(hash.toCharArray()));
+
+            FabricBlock fabricBlock = getBlock(returnedBlock);
+            log.info("Fabric block got by hash {}, block {}", hash, fabricBlock);
+
+            return fabricBlock;
+        } catch (InvalidArgumentException | ProposalException | DecoderException e) {
+            log.error("Failed to get block with {}, {}", hash, e);
+        }
+        return null;
     }
 
     @Override
     public FabricPeer[] getPeers() throws IOException {
-        try {
-            String peers = Request.Get(String.join("", convertGrpcToHttp(peer),
-                    FabricConstants.PEERS_REQUEST)).execute().returnContent().asString();
-            return new Gson().fromJson(peers, FabricPeer[].class);
-        } catch (JsonParseException e) {
-            log.error("Json parse error", e);
-            throw e;
-        } catch (Exception e) {
-            log.error("Exception while calling url", e);
-            throw e;
-        }
+
+        return channel.getPeers().stream().map(FabricPeer::new).toArray(FabricPeer[]::new);
     }
 
-    private enum ChaincodeFunction {INIT, READ, WRITE}
+    @Override
+    public FabricChain getChain() throws IOException {
+        try {
+            BlockchainInfo channelInfo = channel.queryBlockchainInfo(peer);
+
+            FabricChain fabricChain = new FabricChain(
+                    channelInfo.getHeight(),
+                    Hex.encodeHexString(channelInfo.getCurrentBlockHash()),
+                    Hex.encodeHexString(channelInfo.getPreviousBlockHash()));
+            log.info("Got fabric chain info: {}", fabricChain);
+
+            return fabricChain;
+        } catch (ProposalException | InvalidArgumentException e) {
+            log.error("Cannot get chain info from peer {}, error {}", peer, e);
+        }
+        return null;
+    }
+
+    @Override
+    public void authorize(String user, String password) {
+
+    }
 }

@@ -102,13 +102,14 @@ public class BlockchainLogger {
                 .parallel()
                 .anyMatch(i -> {
                     try {
-                        return blockchainManager.getBlock(i).getTransactions().length > 0;
+                        return blockchainManager.getBlockById(i).getTransactions().length > 0;
                     } catch (IOException e) {
                         log.error(e);
                         return false;
                     }
                 });
     }
+
     public void logInLoop() {
         try {
             if (blockchainManager != null) {
@@ -145,7 +146,7 @@ public class BlockchainLogger {
                         }
 
                         if (currentBlockId > previousBlockId) {
-                            BlockchainBlock currentBlock = blockchainManager.getBlock(currentBlockId);
+                            BlockchainBlock currentBlock = blockchainManager.getBlockById(currentBlockId);
                             if (currentBlock.getTransactions().length != 0) {
                                 lastNonEmptyBlockId = currentBlockId;
                                 lastNonEmptyBlockTime = currentBlockTime;

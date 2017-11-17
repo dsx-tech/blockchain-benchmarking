@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
  * Blockchain benchmarking framework                                          *
- * Copyright (C) 2016 DSX Technologies Limited.                               *
+ * Copyright (C) 2017 DSX Technologies Limited.                               *
  *                                                                            *
  * This program is free software: you can redistribute it and/or modify       *
  * it under the terms of the GNU General Public License as published by       *
@@ -23,19 +23,38 @@
 
 package uk.dsxt.bb.datamodel.fabric;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
+import org.hyperledger.fabric.sdk.BlockInfo;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
 
+import java.util.Date;
+
 @Getter
+@ToString
+@AllArgsConstructor
 public class FabricTransaction implements BlockchainTransaction {
-    Integer type;
-    String chaincodeID;
-    String payload;
-    String txid;
-    FabricTimestamp timestamp;
+    String transactionId;
+    String channelId;
+    Date timestamp;
+    boolean isValid;
+    long epoch;
+    byte validationCode;
+    BlockInfo.EnvelopeType type;
 
     @Override
     public String getTxId() {
-        return txid;
+        return transactionId;
+    }
+
+    public FabricTransaction(BlockInfo.EnvelopeInfo envelopeInfo) {
+        this.transactionId = envelopeInfo.getTransactionID();
+        this.channelId = envelopeInfo.getChannelId();
+        this.timestamp = envelopeInfo.getTimestamp();
+        this.isValid = envelopeInfo.isValid();
+        this.epoch = envelopeInfo.getEpoch();
+        this.validationCode = envelopeInfo.getValidationCode();
+        this.type = envelopeInfo.getType();
     }
 }

@@ -419,7 +419,7 @@ public class TestManager {
                     "http://" +blockchainInstancesManager.getRootInstance().getHost() + ":" + properties.getBlockchainPort());
             long lastBlock = blockchainManager.getChain().getLastBlockNumber();
             for (int i = 0; i <= lastBlock; ++i) {
-                for (BlockchainTransaction blockchainTransaction: blockchainManager.getBlock(i).getTransactions()) {
+                for (BlockchainTransaction blockchainTransaction: blockchainManager.getBlockById(i).getTransactions()) {
                     fw.write(i + "," + blockchainTransaction.getTxId() + '\n');
                 }
                 fw.flush();

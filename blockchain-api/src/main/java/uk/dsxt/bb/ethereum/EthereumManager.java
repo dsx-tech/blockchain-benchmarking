@@ -28,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Strings;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
+import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.bb.datamodel.ethereum.EthereumBlock;
 import uk.dsxt.bb.datamodel.ethereum.EthereumInfo;
 import uk.dsxt.bb.datamodel.ethereum.EthereumPeer;
@@ -125,13 +126,18 @@ public class EthereumManager implements Manager {
     }
 
     public EthereumTransaction[] getTransactionsFromBlock(long id) throws IOException {
-        return getBlock(id).getTransactions();
+        return getBlockById(id).getTransactions();
     }
 
     @Override
-    public EthereumBlock getBlock(long id) throws IOException {
+    public EthereumBlock getBlockById(long id) throws IOException {
         return JSONRPCHelper.post(url, EthereumMethods.GET_BLOCK_BY_NUMBER.getMethod(), EthereumBlock.class,
                 "0x" + Long.toHexString(id), true);
+    }
+
+    @Override
+    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+        return null;
     }
 
     @Override
