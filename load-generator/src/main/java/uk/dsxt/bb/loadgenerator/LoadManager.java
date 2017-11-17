@@ -23,10 +23,14 @@
 
 package uk.dsxt.bb.loadgenerator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.blockchain.BlockchainManager;
+import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.loadgenerator.data.Credential;
+import uk.dsxt.bb.loadgenerator.load_plan.LoadPlan;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -101,11 +105,15 @@ class LoadManager {
     }
 
     void start() throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
         for (int targetIndex = 0; targetIndex < targets.size(); ++targetIndex) {
-            String t = targets.get(targetIndex);
-            Logger logger = new Logger(Paths.get("load_logs", t + "_load.log"));
+            final String target = targets.get(targetIndex);
+            final int currentTargetIndex = targetIndex;
+            Logger logger = new Logger(Paths.get("load_logs", target + "_load.log"));
             loggers.add(logger);
-            BlockchainManager manager = new BlockchainManager(blockchainType, "http://" + t + ":" + blockchainPort);
+//            Manager manager = new SpyManager(new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort), String.valueOf(currentTargetIndex));
+//            Manager manager = new MockManager(String.valueOf(currentTargetIndex));
+            Manager manager = new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort);
             int credentialFromIndex = -1;
             Credential credentialFrom = null;
 
@@ -119,11 +127,19 @@ class LoadManager {
                 int finalCredentialFromIndex = credentialFromIndex;
                 Credential finalCredentialFrom = credentialFrom;
                 executorService.submit(() -> {
+                    LoadPlan loadPlan;
+                    try {
+                        loadPlan = objectMapper.readValue(new File("load-generator/src/main/resources/load_plan/same_load_plan_sample.json"), LoadPlan.class);
+                    } catch (IOException e) {
+                        log.error("Unable to load Load plan");
+                        return;
+                    }
                     List<String> logs = new ArrayList<>(BATCH_SIZE);
                     Random random = new Random();
                     int failed = 0;
-                    for (int j = 0; j < amountOfTransactions; ++j) {
+                    for (int transactionId = 0; transactionId < amountOfTransactions; ++transactionId) {
                         try {
+                            final int delay = loadPlan.nextDelay(currentTargetIndex);
                             Thread.sleep(delay);
                             String message = generateMessage(random, minLength, maxLength);
                             long startTime = System.currentTimeMillis();
@@ -143,7 +159,7 @@ class LoadManager {
                             stringJoiner.add(Integer.toString(message.getBytes().length));
                             stringJoiner.add(id != null && !id.isEmpty() ? "OK" : "FAIL");
                             logs.add(stringJoiner.toString());
-                            if (j == amountOfTransactions - 1 || j % BATCH_SIZE == 0) {
+                            if (transactionId == amountOfTransactions - 1 || transactionId % BATCH_SIZE == 0) {
                                 logger.addLogs(logs);
                                 logs = new ArrayList<>(BATCH_SIZE);
                             }

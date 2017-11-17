@@ -1,0 +1,53 @@
+{
+  "type": "LoadPlanPerNode",
+  "configuration": {
+    "0": [
+      {
+        "loadGenerator": {
+          "type": "ConstantLoadGenerator",
+          "intensity": 10
+        },
+        "durationMillis": 1000
+      },
+      {
+        "loadGenerator": {
+          "type": "LinearLoadGenerator",
+          "startIntensity": 1.0,
+          "targetIntensity": 10.0,
+          "intensityChangePerSecond": 0.1
+        },
+        "durationMillis": 0
+      }
+    ],
+    "1": [
+      {
+        "loadGenerator": {
+          "type": "ExponentialLoadGenerator",
+          "base": 2.0,
+          "maxIntensity": 12.56
+        },
+        "durationMillis": 0
+      }
+    ],
+    "2": [
+      {
+        "loadGenerator": {
+          "type": "LinearDecreaseLoadGenerator",
+          "startIntensity": 12.0,
+          "targetIntensity": 2.0,
+          "intensityChangePerSecond": -0.75
+        },
+        "durationMillis": 0
+      }
+    ]
+  },
+  "defaultConfiguration": [
+    {
+      "loadGenerator": {
+        "type": "ConstantLoadGenerator",
+        "intensity": 10
+      },
+      "durationMillis": 1000
+    }
+  ]
+}

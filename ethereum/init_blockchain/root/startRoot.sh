@@ -12,7 +12,7 @@ allocated_accounts=""
 > ~/root_init_result/credentials;
 NEWLINE=$"\n"
 
-for i in `seq 0 3`;
+for i in `seq 0 5`;
         do
                 acc=$(${GETH} --password ~/root_init_files/0000 account new)
                 acc=${acc:10:40}
@@ -38,7 +38,7 @@ genesis="{${NEWLINE}
         \"eip158Block\": 0${NEWLINE}
     },${NEWLINE}
     \"difficulty\": \"0x1000\",${NEWLINE}
-    \"gasLimit\": \"0x4c4b40\",${NEWLINE}
+    \"gasLimit\": \"0xFFFFFFFFFFFFFFFF\",${NEWLINE}
     \"alloc\": {${NEWLINE}
         ${allocated_accounts}
     }${NEWLINE}
