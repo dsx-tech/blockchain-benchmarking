@@ -53,8 +53,13 @@ public class SpyManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlock(long id) throws IOException {
-        return manager.getBlock(id);
+    public BlockchainBlock getBlockById(long id) throws IOException {
+        return manager.getBlockById(id);
+    }
+
+    @Override
+    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+        return null;
     }
 
     @Override

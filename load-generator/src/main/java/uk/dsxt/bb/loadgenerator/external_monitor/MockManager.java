@@ -48,7 +48,12 @@ public class MockManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlock(long id) throws IOException {
+    public BlockchainBlock getBlockById(long id) throws IOException {
+        return null;
+    }
+
+    @Override
+    public BlockchainBlock getBlockByHash(String hash) throws IOException {
         return null;
     }
 
