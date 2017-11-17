@@ -167,8 +167,10 @@ public class FabricManager implements Manager {
                 String payload = new String(resp.getChaincodeActionResponsePayload());
                 log.info("Got messages: {}", payload);
                 String[] messages = payload.split(FabricConstants.MESSAGE_SEPARATOR);
+                int id = 0;
                 for (String message : messages) {
-                    result.add(new Message("0", message, true));
+                    result.add(new Message(Integer.toString(id), message, true));
+                    id++;
                 }
             }
         } catch (InvalidArgumentException | ProposalException e) {
