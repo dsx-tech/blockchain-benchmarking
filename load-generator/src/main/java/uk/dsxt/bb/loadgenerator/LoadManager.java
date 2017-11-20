@@ -30,6 +30,7 @@ import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.loadgenerator.data.Credential;
 import uk.dsxt.bb.loadgenerator.external_monitor.SpyManager;
 import uk.dsxt.bb.loadgenerator.load_plan.LoadPlan;
+import uk.dsxt.bb.test_manager.TestManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -130,7 +131,7 @@ class LoadManager {
                 executorService.submit(() -> {
                     LoadPlan loadPlan;
                     try {
-                        loadPlan = objectMapper.readValue(new File("/home/ubuntu/load_config.json"), LoadPlan.class);
+                        loadPlan = objectMapper.readValue(new File(System.getProperty("user.home") + "/" + TestManager.LOAD_CONFIG_PATH), LoadPlan.class);
                     } catch (IOException e) {
                         log.error("Unable to load Load plan", e);
                         return;
@@ -140,8 +141,7 @@ class LoadManager {
                     int failed = 0;
                     for (int transactionId = 0; transactionId < amountOfTransactions; ++transactionId) {
                         try {
-                            final int delay = loadPlan.nextDelay(currentTargetIndex);
-                            Thread.sleep(delay);
+                            Thread.sleep(loadPlan.nextDelay(currentTargetIndex));
                             String message = generateMessage(random, minLength, maxLength);
                             long startTime = System.currentTimeMillis();
 

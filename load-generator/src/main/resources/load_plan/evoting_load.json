@@ -21,7 +21,7 @@
       {
         "load": {
           "type": "ConstantLoad",
-          "intensity": 8
+          "intensity": 4
         },
         "durationMillis": 0
       }
@@ -37,7 +37,7 @@
       {
         "load": {
           "type": "ConstantLoad",
-          "intensity": 10
+          "intensity": 5
         },
         "durationMillis": 0
       }
@@ -46,27 +46,27 @@
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.17,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0025,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       },
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.17,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0025,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       },
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.17,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0025,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       }
@@ -75,27 +75,27 @@
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.175,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0026,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       },
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.175,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0026,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       },
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.175,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0026,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       }
@@ -104,27 +104,27 @@
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.18,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0027,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       },
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.18,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0027,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       },
       {
         "load": {
           "type": "ExponentialLoad",
-          "base": 1.18,
-          "maxIntensity": 60,
-          "powerDivider": 50
+          "base": 1.0027,
+          "maxIntensity": 30,
+          "powerDivider": 1
         },
         "durationMillis": 1200000
       }
