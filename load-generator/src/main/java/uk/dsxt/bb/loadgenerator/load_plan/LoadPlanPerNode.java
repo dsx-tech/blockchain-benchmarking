@@ -2,11 +2,13 @@ package uk.dsxt.bb.loadgenerator.load_plan;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.loadgenerator.load_generator.LoadGenerator;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Log4j2
 public class LoadPlanPerNode extends LoadPlan {
     private final Map<Integer, LoadGeneratorWithDuration[]> configuration;
     private final LoadGeneratorWithDuration[] defaultConfiguration;
@@ -48,7 +50,8 @@ public class LoadPlanPerNode extends LoadPlan {
         int currentLoadGeneratorIndex = loadGeneratorIndexPerNode.get(nodeIndex);
         LoadGeneratorWithDuration[] currentConfiguration = configuration.getOrDefault(nodeIndex, defaultConfiguration);
         if (currentLoadGeneratorIndex >= currentConfiguration.length) {
-            throw new RuntimeException("Load generation plan is finished");
+            log.info(String.format("Load generation plan at node %d is finished", nodeIndex));
+            return Integer.MAX_VALUE;
         }
         LoadGenerator currentLoadGenerator = currentConfiguration[currentLoadGeneratorIndex].getLoadGenerator();
         long currentDuration = currentConfiguration[currentLoadGeneratorIndex].getDurationMillis();

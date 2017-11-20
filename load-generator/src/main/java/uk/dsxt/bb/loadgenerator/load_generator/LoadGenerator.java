@@ -8,10 +8,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = ConstantLoadGenerator.class, name = "ConstantLoadGenerator"),
-        @JsonSubTypes.Type(value = ExponentialLoadGenerator.class, name = "ExponentialLoadGenerator"),
-        @JsonSubTypes.Type(value = LinearLoadGenerator.class, name = "LinearLoadGenerator"),
-        @JsonSubTypes.Type(value = LinearDecreaseLoadGenerator.class, name = "LinearDecreaseLoadGenerator")
+        @JsonSubTypes.Type(value = ConstantLoadGenerator.class, name = "ConstantLoad"),
+        @JsonSubTypes.Type(value = ExponentialLoadGenerator.class, name = "ExponentialLoad"),
+        @JsonSubTypes.Type(value = LinearLoadGenerator.class, name = "LinearLoad"),
+        @JsonSubTypes.Type(value = LinearDecreaseLoadGenerator.class, name = "LinearDecreaseLoad")
 })
 public abstract class LoadGenerator {
     abstract public int nextDelay();

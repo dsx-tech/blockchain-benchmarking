@@ -59,7 +59,7 @@ public class SpyManager implements Manager {
 
     @Override
     public BlockchainBlock getBlockByHash(String hash) throws IOException {
-        return null;
+        return manager.getBlockByHash(hash);
     }
 
     @Override

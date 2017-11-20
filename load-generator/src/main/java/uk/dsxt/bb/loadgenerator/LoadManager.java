@@ -28,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.blockchain.BlockchainManager;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.loadgenerator.data.Credential;
+import uk.dsxt.bb.loadgenerator.external_monitor.SpyManager;
 import uk.dsxt.bb.loadgenerator.load_plan.LoadPlan;
 
 import java.io.File;
@@ -111,9 +112,9 @@ class LoadManager {
             final int currentTargetIndex = targetIndex;
             Logger logger = new Logger(Paths.get("load_logs", target + "_load.log"));
             loggers.add(logger);
-//            Manager manager = new SpyManager(new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort), String.valueOf(currentTargetIndex));
+            Manager manager = new SpyManager(new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort), String.valueOf(currentTargetIndex));
 //            Manager manager = new MockManager(String.valueOf(currentTargetIndex));
-            Manager manager = new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort);
+//            Manager manager = new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort);
             int credentialFromIndex = -1;
             Credential credentialFrom = null;
 
@@ -129,9 +130,9 @@ class LoadManager {
                 executorService.submit(() -> {
                     LoadPlan loadPlan;
                     try {
-                        loadPlan = objectMapper.readValue(new File("load-generator/src/main/resources/load_plan/same_load_plan_sample.json"), LoadPlan.class);
+                        loadPlan = objectMapper.readValue(new File("/home/ubuntu/load_config.json"), LoadPlan.class);
                     } catch (IOException e) {
-                        log.error("Unable to load Load plan");
+                        log.error("Unable to load Load plan", e);
                         return;
                     }
                     List<String> logs = new ArrayList<>(BATCH_SIZE);

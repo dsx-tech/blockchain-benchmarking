@@ -58,6 +58,7 @@ public class TestManagerProperties {
     final private String modulesInitResourcesPath;
     final private int afterBlockchainInitTimeout;
     final private int blockchainPort;
+    final private Path loadGeneratorConfigPath;
 
     public static TestManagerProperties fromProperties(Properties properties) {
         return TestManagerProperties.builder()
@@ -75,6 +76,7 @@ public class TestManagerProperties {
                 .requestBlocksPeriod(convertToInt(properties.getProperty("request.blocks.period")))
                 .blockchainInstancesAmount(convertToInt(properties.getProperty("blockchain.instances.amount")))
                 .loadGeneratorInstancesAmount(convertToInt(properties.getProperty("load_generator.instances.amount")))
+                .loadGeneratorConfigPath(Paths.get(properties.getProperty("load_generator.load_config")))
                 .delayBeetweenRequests(convertToInt(properties.getProperty("message.delay")))
                 .userNameOnRemoteInstances(properties.getProperty("remote.instance.user.name"))
                 .masterIpAddress(properties.getProperty("test_manager.ip"))

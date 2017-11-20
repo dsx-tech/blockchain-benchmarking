@@ -17,7 +17,7 @@ public class LoadGeneratorWithDuration {
      * @param durationMillis Duration of LoadGeneration in millis. Pass 0 for infinity
      */
     @JsonCreator
-    public LoadGeneratorWithDuration(@JsonProperty("loadGenerator") LoadGenerator loadGenerator,
+    public LoadGeneratorWithDuration(@JsonProperty("load") LoadGenerator loadGenerator,
                                      @JsonProperty("durationMillis") long durationMillis) {
         this.loadGenerator = loadGenerator;
         this.durationMillis = durationMillis;

@@ -1,16 +1,16 @@
 {
   "type": "SameLoadPlan",
-  "loadGeneratorWithDuration": [
+  "loadAndDuration": [
     {
-      "loadGenerator": {
-        "type": "ConstantLoadGenerator",
+      "load": {
+        "type": "ConstantLoad",
         "intensity": 10
       },
       "durationMillis": 1000
     },
     {
-      "loadGenerator": {
-        "type": "LinearLoadGenerator",
+      "load": {
+        "type": "LinearLoad",
         "startIntensity": 1.0,
         "targetIntensity": 10.0,
         "intensityChangePerSecond": 0.1

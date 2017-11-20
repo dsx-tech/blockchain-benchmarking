@@ -2,17 +2,19 @@ package uk.dsxt.bb.loadgenerator.load_plan;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.loadgenerator.load_generator.LoadGenerator;
 
 import java.util.Arrays;
 
+@Log4j2
 public class SameLoadPlan extends LoadPlan {
     private final LoadGeneratorWithDuration[] configuration;
     private long millisSinceStart;
     private int loadGeneratorIndex;
 
     @JsonCreator
-    public SameLoadPlan(@JsonProperty("loadGeneratorWithDuration") LoadGeneratorWithDuration... loadGeneratorWithDuration) {
+    public SameLoadPlan(@JsonProperty("loadAndDuration") LoadGeneratorWithDuration... loadGeneratorWithDuration) {
         if (loadGeneratorWithDuration == null || loadGeneratorWithDuration.length == 0) {
             throw new IllegalArgumentException("Can't construct SameLoadPlan with empty settings");
         }
@@ -24,7 +26,8 @@ public class SameLoadPlan extends LoadPlan {
         // Don't use nodeIndex in this implementation, load generation is the same for all nodes
 
         if (loadGeneratorIndex >= configuration.length) {
-            throw new RuntimeException("Load generation plan is finished");
+            log.info("Load generation plan is finished");
+            return Integer.MAX_VALUE;
         }
         LoadGenerator currentLoadGenerator = configuration[loadGeneratorIndex].getLoadGenerator();
         long currentDuration = configuration[loadGeneratorIndex].getDurationMillis();

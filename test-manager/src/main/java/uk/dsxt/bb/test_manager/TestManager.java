@@ -52,6 +52,7 @@ import static java.util.Collections.singletonList;
  */
 @Log4j2
 public class TestManager {
+    public static final String LOAD_CONFIG_PATH = "load_config.json";
 
     private List<String> allHosts;
     private ConcurrentHashMap<String, LoggerInstance> loggerInstances = new ConcurrentHashMap<>();
@@ -271,11 +272,13 @@ public class TestManager {
         loadGeneratorsManager.uploadFilesForAll(Arrays.asList(
                 properties.getTestManagerModulesPath().resolve("load-generator.jar"),
                 Paths.get("tmp", "root_init_result", "credentials"),
-                Paths.get(properties.getModulesInitResourcesPath(), "startLoadGenerator.sh")
+                Paths.get(properties.getModulesInitResourcesPath(), "startLoadGenerator.sh"),
+                properties.getLoadGeneratorConfigPath()
         ));
 
-        loadGeneratorsManager.executeCommandsForAll(singletonList(
-                "bash startLoadGenerator.sh"));
+        loadGeneratorsManager.executeCommandsForAll(singletonList(String.format("mv %s %s",
+                properties.getLoadGeneratorConfigPath().getFileName().toString(), TestManager.LOAD_CONFIG_PATH)));
+        loadGeneratorsManager.executeCommandsForAll(singletonList("bash startLoadGenerator.sh"));
 
         log.debug("runLoadGenerators end");
         return loadGeneratorsManager;

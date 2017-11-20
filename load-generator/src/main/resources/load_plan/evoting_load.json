@@ -1,0 +1,133 @@
+{
+  "type": "LoadPlanPerNode",
+  "configuration": {
+    "0": [
+      {
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 1.5
+        },
+        "durationMillis": 0
+      }
+    ],
+    "1": [
+      {
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 2
+        },
+        "durationMillis": 2400000
+      },
+      {
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 8
+        },
+        "durationMillis": 0
+      }
+    ],
+    "2": [
+      {
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 2.5
+        },
+        "durationMillis": 2400000
+      },
+      {
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 10
+        },
+        "durationMillis": 0
+      }
+    ],
+    "3": [
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.17,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      },
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.17,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      },
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.17,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      }
+    ],
+    "4": [
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.175,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      },
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.175,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      },
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.175,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      }
+    ],
+    "5": [
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.18,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      },
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.18,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      },
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.18,
+          "maxIntensity": 60,
+          "powerDivider": 50
+        },
+        "durationMillis": 1200000
+      }
+    ]
+  }
+}

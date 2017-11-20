@@ -3,39 +3,54 @@
   "configuration": {
     "0": [
       {
-        "loadGenerator": {
-          "type": "ConstantLoadGenerator",
-          "intensity": 10
-        },
-        "durationMillis": 1000
-      },
-      {
-        "loadGenerator": {
-          "type": "LinearLoadGenerator",
-          "startIntensity": 1.0,
-          "targetIntensity": 10.0,
-          "intensityChangePerSecond": 0.1
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 4
         },
         "durationMillis": 0
       }
     ],
     "1": [
       {
-        "loadGenerator": {
-          "type": "ExponentialLoadGenerator",
-          "base": 2.0,
-          "maxIntensity": 12.56
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 8
         },
         "durationMillis": 0
       }
     ],
     "2": [
       {
-        "loadGenerator": {
-          "type": "LinearDecreaseLoadGenerator",
-          "startIntensity": 12.0,
-          "targetIntensity": 2.0,
-          "intensityChangePerSecond": -0.75
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 12
+        },
+        "durationMillis": 0
+      }
+    ],
+    "3": [
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.03,
+          "maxIntensity": 14
+        },
+        "durationMillis": 0
+      }
+    ],
+    "4": [
+      {
+        "load": {
+          "type": "ConstantLoad",
+          "intensity": 1
+        },
+        "durationMillis": 120000
+      },
+      {
+        "load": {
+          "type": "ExponentialLoad",
+          "base": 1.05,
+          "maxIntensity": 16
         },
         "durationMillis": 0
       }
@@ -43,8 +58,8 @@
   },
   "defaultConfiguration": [
     {
-      "loadGenerator": {
-        "type": "ConstantLoadGenerator",
+      "load": {
+        "type": "ConstantLoad",
         "intensity": 10
       },
       "durationMillis": 1000

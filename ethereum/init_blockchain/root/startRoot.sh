@@ -20,7 +20,7 @@ for i in `seq 0 5`;
                 echo ${acc} >> ~/root_init_result/accounts
                 echo -e "0x${acc} 0000" >> ~/root_init_result/credentials;
                 acc="\"${acc}\": { \"balance\": \"10000000000000000000000\" }"
-                if [ "$i" -ne "3" ]
+                if [ "$i" -ne "5" ]
                 then
                 	acc="${acc},${NEWLINE}"
                 else
