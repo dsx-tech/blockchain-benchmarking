@@ -37,13 +37,13 @@ public class SpyManager implements Manager {
 
     @Override
     public String sendMessage(byte[] body) {
-        connector.count("epvoting.rf.generator." + target, 1L);
+        connector.count("epvoting.phd.fabric.generator." + target, 1L);
         return manager.sendMessage(body);
     }
 
     @Override
     public String sendMessage(String from, String to, String message) {
-        connector.count("epvoting.rf.generator." + target, 1L);
+        connector.count("epvoting.phd.fabric.generator." + target, 1L);
         return manager.sendMessage(from, to, message);
     }
 

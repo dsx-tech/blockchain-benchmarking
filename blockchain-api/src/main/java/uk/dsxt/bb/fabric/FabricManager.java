@@ -51,14 +51,14 @@ public class FabricManager implements Manager {
 
     private static final Logger log = LogManager.getLogger(FabricManager.class.getName());
 
-    private static HFClient client = null;
-    private static Channel channel = null;
+    private HFClient client = null;
+    private Channel channel = null;
 
     private String chaincodeName;
     private Peer peer;
 
-    public FabricManager(String peer) {
-        Properties properties = PropertiesHelper.loadProperties(String.format("fabric-%s", peer.replaceAll("[/:]", "")));
+    public FabricManager(String peer, String pathToProperties) {
+        Properties properties = PropertiesHelper.loadPropertiesFromPath(pathToProperties);
         this.chaincodeName = properties.getProperty(FabricProperties.CHAINCODE_NAME);
         try {
             initJavaSDK(peer, properties);

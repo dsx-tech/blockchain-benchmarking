@@ -43,12 +43,12 @@ public class BlockchainManager implements Manager {
 
     private Manager manager;
 
-    public BlockchainManager(String blockchainType, String url) {
+    public BlockchainManager(String blockchainType, String url, String pathToProperties) {
         this.blockchainType = blockchainType;
         this.url = url;
         switch (blockchainType) {
             case "fabric":
-                manager = new FabricManager(url);
+                manager = new FabricManager(url, pathToProperties);
                 break;
             case "bitcoin":
                 manager = new BitcoinManager(url);

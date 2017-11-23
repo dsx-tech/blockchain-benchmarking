@@ -63,20 +63,20 @@ public class LoadGeneratorMain {
             List<String> targets = new ArrayList<>();
             targets.addAll(Arrays.asList(args).subList(10, args.length));
 
-            List<Credential> accounts = new ArrayList<>();
-            if (Paths.get(credentialsPath).toFile().exists()) {
-                Files.readAllLines(Paths.get(credentialsPath)).forEach(line -> {
-                            String[] credential = line.split(" ");
-                            if (credential.length != 2) {
-                                log.error("Invalid credential: " + line);
-                                return;
-                            }
-                            accounts.add(new Credential(credential[0], credential[1]));
-                        }
-                );
-            }
+//            List<Credential> accounts = new ArrayList<>();
+//            if (Paths.get(credentialsPath).toFile().exists()) {
+//                Files.readAllLines(Paths.get(credentialsPath)).forEach(line -> {
+//                            String[] credential = line.split(" ");
+//                            if (credential.length != 2) {
+//                                log.error("Invalid credential: " + line);
+//                                return;
+//                            }
+//                            accounts.add(new Credential(credential[0], credential[1]));
+//                        }
+//                );
+//            }
 
-            LoadManager loadManager = new LoadManager(targets, accounts, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay, blockchainType, blockchainPort);
+            LoadManager loadManager = new LoadManager(targets, null, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay, blockchainType, blockchainPort);
 
             loadManager.start();
             loadManager.waitCompletion();

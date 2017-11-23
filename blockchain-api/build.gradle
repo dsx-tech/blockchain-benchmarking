@@ -20,7 +20,7 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     compile 'org.apache.commons:commons-compress:1.12'
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.55'
-    compile group: 'io.grpc', name: 'grpc-all', version: '1.0.1'
+    compile group: 'io.grpc', name: 'grpc-all', version: '1.7.0'
     compile "com.fasterxml.jackson.core:jackson-databind:2.5.3"
     compile "org.json:json:20090211"
     // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
@@ -34,6 +34,7 @@ dependencies {
     compile group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.0'
 
     compile "org.hyperledger.fabric-sdk-java:fabric-sdk-java:$fabricSDKVersion"
+    compile 'com.google.guava:guava:23.4-jre'
 
     compile 'org.bitcoinj:bitcoinj-core:0.14.3'
     compile files("././libs/nxt.jar")

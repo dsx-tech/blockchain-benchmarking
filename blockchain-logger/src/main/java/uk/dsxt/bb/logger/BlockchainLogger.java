@@ -48,9 +48,9 @@ public class BlockchainLogger {
     private String ip;
     private String masterHost;
 
-    public BlockchainLogger(String blockchainType, String url, String csv, int requestFrequency, String ip, String masterHost) throws IOException {
+    public BlockchainLogger(String blockchainType, String url, String csv, int requestFrequency, String ip, String masterHost, String pathToProperties) throws IOException {
         this.requestFrequency = requestFrequency;
-        this.blockchainManager = new BlockchainManager(blockchainType, url);
+        this.blockchainManager = new BlockchainManager(blockchainType, url, pathToProperties);
         Paths.get(csv).toAbsolutePath().getParent().toFile().mkdirs();
         this.fw = new FileWriter(csv, true);
         this.ip = ip;
@@ -67,12 +67,12 @@ public class BlockchainLogger {
 
                 log.info("No arguments found. Starting Blockchain Logger using default parameters.");
                 log.debug("Default arguments. Blockchain type: {}, URL: {}, CSV: {}, Frequency: {}", defaultBlockchainType, defaultURL, defaultCSV, requestFrequency);
-                BlockchainLogger logger = new BlockchainLogger(defaultBlockchainType, defaultURL, defaultCSV, requestFrequency, "", "");
+                BlockchainLogger logger = new BlockchainLogger(defaultBlockchainType, defaultURL, defaultCSV, requestFrequency, "", "", null);
                 logger.logInLoop();
             } else if (args.length == 6) {
                 String pattern = "-?\\d+";
                 if (args[3].matches(pattern)) {
-                    BlockchainLogger logger = new BlockchainLogger(args[0], args[1], args[2], Integer.parseInt(args[3]), args[4], args[5]);
+                    BlockchainLogger logger = new BlockchainLogger(args[0], args[1], args[2], Integer.parseInt(args[3]), args[4], args[5], "/home/ubuntu/credentials/1/1.properties");
                     log.info("Starting Blockchain Logger. Destination CSV: {}", args[2]);
                     logger.logInLoop();
                 } else {

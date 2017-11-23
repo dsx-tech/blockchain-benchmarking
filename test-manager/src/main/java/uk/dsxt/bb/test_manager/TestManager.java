@@ -59,7 +59,7 @@ public class TestManager {
     private ConcurrentHashMap<String, LoadGeneratorInstance> loadGeneratorInstances = new ConcurrentHashMap<>();
 
     private TestManagerProperties properties;
-    private RemoteInstancesManager<RemoteInstance> blockchainInstancesManager;
+    private List<String> blockchainHosts;
     private RemoteInstancesManager<RemoteInstance> resourceMonitorsInstancesManager;
     private LoggerInstancesManager loggerInstancesManager;
     private LoadGeneratorInstancesManager loadGeneratorInstancesManager;
@@ -103,18 +103,30 @@ public class TestManager {
             initLoggersListener();
             initLoadGeneratorsListener();
             Spark.awaitInitialization();
+            // TODO: 20.11.2017 property?
+//            blockchainInstancesManager = runBlockchain();
+//            Thread.sleep(10000);
 
-            blockchainInstancesManager = runBlockchain();
-            Thread.sleep(10000);
-
-            List<LoggerInstance> loggerInstances = new ArrayList<>();
-            blockchainInstancesManager.getAllInstances().forEach(i -> loggerInstances.add(new LoggerInstance(
-                    properties.getUserNameOnRemoteInstances(), i.getHost(), 22, properties.getPemKeyPath(),
-                    Paths.get(properties.getResultLogsPath()), properties.getBlockchainType(),
-                    i.getHost(), Integer.toString(properties.getBlockchainPort()),
-                    properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
-            loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
             resourceMonitorsInstancesManager = runResourceMonitors();
+
+            this.blockchainHosts = allHosts.subList(0, properties.getBlockchainInstancesAmount());
+            List<LoggerInstance> loggerInstances = blockchainHosts
+                    .stream()
+                    .map(h -> new LoggerInstance(
+                        properties.getUserNameOnRemoteInstances(),
+                        h,
+                        22,
+                        properties.getPemKeyPath(),
+                        Paths.get(properties.getResultLogsPath()),
+                        properties.getBlockchainType(),
+                        h,
+                        Integer.toString(properties.getBlockchainPort()),
+                        properties.getFileToLogBlocks(),
+                        properties.getRequestBlocksPeriod()
+            )).collect(Collectors.toList());
+
+            loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
+
             loggerInstancesManager = runLoggers(loggerInstances);
             Thread.sleep(10000);
 
@@ -129,7 +141,7 @@ public class TestManager {
                         properties.getMinMessageLength(), properties.getMaxMessageLength(), properties.getDelayBeetweenRequests()));
             }
             loadGeneratorInstances.forEach(instance -> this.loadGeneratorInstances.put(instance.getHost(), instance));
-            loadGeneratorInstancesManager = runLoadGenerators(loadGeneratorInstances, blockchainInstancesManager.getAllInstances());
+            loadGeneratorInstancesManager = runLoadGenerators(loadGeneratorInstances, blockchainHosts);
             initTimeoutForFinishTest();
         } catch (Exception e) {
             e.printStackTrace();
@@ -235,6 +247,7 @@ public class TestManager {
         loggerInstancesManager.uploadFilesForAll(singletonList(properties.getTestManagerModulesPath().resolve("blockchain-logger.jar")));
 
         loggerInstancesManager.uploadFilesForAll(singletonList(Paths.get(properties.getModulesInitResourcesPath(), "startLogger.sh")));
+        loggerInstancesManager.uploadFolderForAll(Paths.get(properties.getModulesInitResourcesPath(), "credentials"), "credentials");
         loggerInstancesManager.executeCommandsForAll(Arrays.asList(
                 "bash startLogger.sh"
         ));
@@ -244,17 +257,13 @@ public class TestManager {
     }
 
     private  LoadGeneratorInstancesManager runLoadGenerators(List<LoadGeneratorInstance> loadGeneratorInstances,
-                                                             List<RemoteInstance> blockchainInstances) throws Exception {
+                                                             List<String> blockchainInstances) throws Exception {
         log.debug("runLoadGenerators start");
         if (loadGeneratorInstances.isEmpty()) {
             log.error("loadGenerators is absent");
             throw new RuntimeException("loadGenerators is absent");
         }
-        List<String> blockchainHosts = blockchainInstances
-                .stream()
-                .map(RemoteInstance::getHost)
-                .collect(Collectors.toList());
-
+        List<String> blockchainHosts = new ArrayList<>(blockchainInstances);
         while (!blockchainHosts.isEmpty()) {
             for (LoadGeneratorInstance loadGeneratorInstance : loadGeneratorInstances) {
                 if (!blockchainHosts.isEmpty()) {
@@ -271,10 +280,12 @@ public class TestManager {
 
         loadGeneratorsManager.uploadFilesForAll(Arrays.asList(
                 properties.getTestManagerModulesPath().resolve("load-generator.jar"),
-                Paths.get("tmp", "root_init_result", "credentials"),
+//                Paths.get("tmp", "root_init_result", "credentials"),
                 Paths.get(properties.getModulesInitResourcesPath(), "startLoadGenerator.sh"),
                 properties.getLoadGeneratorConfigPath()
         ));
+
+        loadGeneratorsManager.uploadFolderForAll(Paths.get(properties.getModulesInitResourcesPath(), "credentials"), "credentials");
 
         loadGeneratorsManager.executeCommandsForAll(singletonList(String.format("mv %s %s",
                 properties.getLoadGeneratorConfigPath().getFileName().toString(), TestManager.LOAD_CONFIG_PATH)));
@@ -378,14 +389,14 @@ public class TestManager {
             getTransactionsForBlocks();
 
             List<Runnable> stopActions = Arrays.asList(
-                    () -> blockchainInstancesManager.stop(),
+//                    () -> blockchainInstancesManager.stop(),
                     () -> loggerInstancesManager.stop(),
                     () -> loadGeneratorInstancesManager.stop(),
                     () -> resourceMonitorsInstancesManager.stop(),
                     Spark::stop
             );
 
-            boolean success = stopActions.stream().map(this::safeExecute).allMatch(a -> a);
+            boolean success = stopActions.stream().allMatch(this::safeExecute);
             log.info(success ? "Test completed" : "You can stop test, but something went wrong");
         }
     }
@@ -419,7 +430,8 @@ public class TestManager {
                         .resolve("transactionsPerBlock").toFile())) {
             fw.write("blockID, transactionID\n");
             BlockchainManager blockchainManager = new BlockchainManager(properties.getBlockchainType(),
-                    "http://" +blockchainInstancesManager.getRootInstance().getHost() + ":" + properties.getBlockchainPort());
+                    "grpc://" +blockchainHosts.get(0) + ":" + properties.getBlockchainPort(),
+                    "D:/Projects/blockchain-benchmarking/hyperledger/init_modules/credentials/local/1.properties");
             long lastBlock = blockchainManager.getChain().getLastBlockNumber();
             for (int i = 0; i <= lastBlock; ++i) {
                 for (BlockchainTransaction blockchainTransaction: blockchainManager.getBlockById(i).getTransactions()) {

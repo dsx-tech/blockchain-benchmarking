@@ -113,13 +113,14 @@ class LoadManager {
             final int currentTargetIndex = targetIndex;
             Logger logger = new Logger(Paths.get("load_logs", target + "_load.log"));
             loggers.add(logger);
-            Manager manager = new SpyManager(new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort), String.valueOf(currentTargetIndex));
+            Manager manager = new SpyManager(new BlockchainManager(blockchainType, "grpc://" + target + ":" + blockchainPort, "/home/ubuntu/credentials/1/1.properties"), String.valueOf
+                    (currentTargetIndex));
 //            Manager manager = new MockManager(String.valueOf(currentTargetIndex));
 //            Manager manager = new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort);
             int credentialFromIndex = -1;
             Credential credentialFrom = null;
 
-            if (credentials.size() > 0) {
+            if (credentials != null && !credentials.isEmpty()) {
                 credentialFromIndex = targetIndex % credentials.size();
                 credentialFrom = credentials.get(credentialFromIndex);
                 manager.authorize(credentialFrom.getAccount(), credentialFrom.getPassword());
@@ -165,15 +166,15 @@ class LoadManager {
                                 logs = new ArrayList<>(BATCH_SIZE);
                             }
 
-                            if (id == null || id.isEmpty()) {
-                                ++failed;
-                            } else {
-                                failed = 0;
-                            }
-                            if (failed > 5) {
-                                manager.authorize(finalCredentialFrom.getAccount(), finalCredentialFrom.getPassword());
-                                failed = 0;
-                            }
+//                            if (id == null || id.isEmpty()) {
+//                                ++failed;
+//                            } else {
+//                                failed = 0;
+//                            }
+//                            if (failed > 5) {
+//                                manager.authorize(finalCredentialFrom.getAccount(), finalCredentialFrom.getPassword());
+//                                failed = 0;
+//                            }
 
                         } catch (InterruptedException e) {
                             e.printStackTrace();

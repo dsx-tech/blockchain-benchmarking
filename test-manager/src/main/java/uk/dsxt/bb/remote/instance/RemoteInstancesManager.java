@@ -44,7 +44,7 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
     @Getter private final String masterIp;
     @Getter private final int masterPort;
     private final ExecutorService executorService;
-    private final int THREADS_AMOUNT = 4;
+    private final int THREADS_AMOUNT = 20;
 
 
     public RemoteInstancesManager(String masterIp, int masterPort) {
@@ -93,6 +93,10 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
 
     public void uploadFolderForRoot(Path src, String dst) {
         uploadFolder(singletonList(rootInstance), src, dst);
+    }
+
+    public void uploadFolderForAll(Path src, String dst) {
+        uploadFolder(getAllInstances(), src, dst);
     }
 
     public void uploadFolderForCommon(Path src, String dst) {
