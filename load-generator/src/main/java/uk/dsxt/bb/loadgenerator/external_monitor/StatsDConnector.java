@@ -8,7 +8,7 @@ public class StatsDConnector {
     private NonBlockingStatsDClient nonBlockingStatsDClient;
 
     public StatsDConnector() {
-        nonBlockingStatsDClient = new NonBlockingStatsDClient("", "127.0.0.1", 8125, null,
+        nonBlockingStatsDClient = new NonBlockingStatsDClient("", "18.195.47.142", 8125, null,
                 exception -> log.error(String.format("StatsDConnector. Can't send metrics to StatsD, reason=%s", exception.getMessage()))
         );
     }

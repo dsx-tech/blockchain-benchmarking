@@ -6,4 +6,5 @@ include 'blockchain-api'
 include 'post-processing'
 include 'blockchain-logger'
 include 'resource-monitor'
+include 'network-manager'
 

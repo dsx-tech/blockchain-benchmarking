@@ -61,12 +61,13 @@ public class TestManager {
     private TestManagerProperties properties;
     private RemoteInstancesManager<RemoteInstance> blockchainInstancesManager;
     private RemoteInstancesManager<RemoteInstance> resourceMonitorsInstancesManager;
+    private RemoteInstancesManager<RemoteInstance> networkManagersInstancesManager;
     private LoggerInstancesManager loggerInstancesManager;
     private LoadGeneratorInstancesManager loadGeneratorInstancesManager;
     private Path blocksLog;
     private Path transactionsLog;
-    private Path resourceMonitorsLog;
 
+    private Path resourceMonitorsLog;
     private volatile AtomicBoolean isLoggersLogLoaded = new AtomicBoolean(false);
     private volatile AtomicBoolean isLoadGeneratorsLogsLoaded = new AtomicBoolean(false);
     private volatile AtomicBoolean isResourceMonitorsLogsLoaded = new AtomicBoolean(false);
@@ -115,6 +116,7 @@ public class TestManager {
                     properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
             loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
             resourceMonitorsInstancesManager = runResourceMonitors();
+            networkManagersInstancesManager = runNetworkManagers();
             loggerInstancesManager = runLoggers(loggerInstances);
             Thread.sleep(10000);
 
@@ -181,6 +183,31 @@ public class TestManager {
         log.info("resource monitors started");
         return monitorsInstancesManager;
     }
+
+    private RemoteInstancesManager<RemoteInstance> runNetworkManagers() {
+        List<RemoteInstance> monitorsInstances = allHosts
+                .stream()
+                .map(host -> new RemoteInstance(properties.getUserNameOnRemoteInstances(),
+                        host, 22, properties.getPemKeyPath(), resourceMonitorsLog))
+                .collect(Collectors.toList());
+
+        RemoteInstancesManager<RemoteInstance> monitorsInstancesManager = new RemoteInstancesManager<>(
+                properties.getMasterIpAddress(), properties.getMasterPort());
+        monitorsInstancesManager.setRootInstance(monitorsInstances.get(0));
+        monitorsInstancesManager.addCommonInstances(monitorsInstances.subList(1, monitorsInstances.size()));
+
+        monitorsInstancesManager.uploadFilesForAll(Collections.singletonList(
+                properties.getTestManagerModulesPath().resolve("network-manager.jar")
+        ));
+
+        monitorsInstancesManager.uploadFilesForAll(Collections.singletonList(
+                Paths.get(properties.getModulesInitResourcesPath(), "startNetworkManager.sh")));
+        monitorsInstancesManager.executeCommandsForAll(singletonList("bash startNetworkManager.sh"));
+
+        log.info("resource monitors started");
+        return monitorsInstancesManager;
+    }
+
 
     private RemoteInstancesManager<RemoteInstance> runBlockchain() {
         List<RemoteInstance> blockchainInstances = allHosts.subList(0, properties.getBlockchainInstancesAmount())
@@ -382,6 +409,7 @@ public class TestManager {
                     () -> loggerInstancesManager.stop(),
                     () -> loadGeneratorInstancesManager.stop(),
                     () -> resourceMonitorsInstancesManager.stop(),
+                    () -> networkManagersInstancesManager.stop(),
                     Spark::stop
             );
 
