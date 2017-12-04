@@ -7,7 +7,6 @@ public class ExponentialLoadGenerator extends LoadGenerator {
     private final double base;
     private final double powerDivider;
     private final int minDelay;
-    private long totalDelay;
 
     /**
      * Generates delays to simulate exponentially increasing load.
@@ -25,9 +24,7 @@ public class ExponentialLoadGenerator extends LoadGenerator {
     }
 
     @Override
-    public int nextDelay() {
-        final int delay = (int) Math.max(minDelay, 1000.0d / Math.pow(base, (totalDelay / (powerDivider * 1000))));
-        totalDelay += delay;
-        return delay;
+    public int internalNextDelay() {
+        return (int) Math.max(minDelay, 1000.0d / Math.pow(base, (getTimeFromStart() / (powerDivider * 1000))));
     }
 }

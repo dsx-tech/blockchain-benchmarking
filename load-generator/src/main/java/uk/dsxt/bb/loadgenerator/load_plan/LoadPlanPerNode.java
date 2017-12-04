@@ -63,7 +63,7 @@ public class LoadPlanPerNode extends LoadPlan {
             return nextDelay(nodeIndex);
         } else {
             int delay = currentLoadGenerator.nextDelay();
-            millisSinceStartPerNode.put(nodeIndex, millisSinceStart + delay);
+            millisSinceStartPerNode.put(nodeIndex, currentLoadGenerator.getTimeFromStart());
             return delay;
         }
     }

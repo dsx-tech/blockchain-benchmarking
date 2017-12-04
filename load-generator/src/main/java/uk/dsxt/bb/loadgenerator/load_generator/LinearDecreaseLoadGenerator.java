@@ -9,7 +9,6 @@ public class LinearDecreaseLoadGenerator extends LoadGenerator {
     private final double intensityChangePerSecond;
     private final double startIntensity;
     private final int targetDelay;
-    private long totalDelay;
     private boolean useTargetDelay;
 
     /**
@@ -33,18 +32,17 @@ public class LinearDecreaseLoadGenerator extends LoadGenerator {
     }
 
     @Override
-    public int nextDelay() {
+    public int internalNextDelay() {
         final int delay;
         if (useTargetDelay) {
             delay = targetDelay;
         } else {
-            final int functionDelay = (int) (1000.0d / (startIntensity + intensityChangePerSecond * (totalDelay / 1000)));
+            final int functionDelay = (int) (1000.0d / (startIntensity + intensityChangePerSecond * (getTimeFromStart() / 1000)));
             if (functionDelay >= targetDelay || functionDelay < 0) {
                 useTargetDelay = true;
             }
             delay = useTargetDelay ? targetDelay : functionDelay;
         }
-        totalDelay += delay;
         return delay;
     }
 }

@@ -17,7 +17,7 @@ public class ConstantLoadGenerator extends LoadGenerator {
     }
 
     @Override
-    public int nextDelay() {
+    public int internalNextDelay() {
         return delay;
     }
 }
