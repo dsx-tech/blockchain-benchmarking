@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -105,6 +106,29 @@ public class RemoteInstancesManager<T extends RemoteInstance> {
 
     public void uploadFilesForRoot(List<Path> files) {
         uploadFiles(singletonList(rootInstance), files);
+    }
+
+    /**
+     * Executes specific commands for each RemoteInstance
+     * @param commands map from RemoteInstance to list of commands, unknown instances will not be processed (just silently skipped)
+     */
+    public void executeCommandsPerInstance(Map<T, List<String>> commands) {
+        try {
+            List<Callable<Boolean>> tasks = allInstances.stream()
+                    .filter(instance -> commands.get(instance) != null)
+                    .map(instance -> (Callable<Boolean>) () -> instance.sendCommands(resolveCommands(instance, commands.get(instance))))
+                    .collect(Collectors.toList());
+            List<Future<Boolean>> futures = executorService.invokeAll(tasks);
+            boolean success = futures.stream().allMatch(f -> {
+                try {
+                    return f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    return false;
+                }
+            });
+        } catch (Exception e) {
+            logger.error(e);
+        }
     }
 
     private void executeCommands(List<T> remoteInstances, List<String> commands) {

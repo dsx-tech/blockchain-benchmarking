@@ -38,7 +38,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -53,6 +55,7 @@ import static java.util.Collections.singletonList;
 @Log4j2
 public class TestManager {
     public static final String LOAD_CONFIG_PATH = "load_config.json";
+    public static final String NETWORK_MANAGER_CONFIG_PATH = "network_manager_config.json";
 
     private List<String> allHosts;
     private ConcurrentHashMap<String, LoggerInstance> loggerInstances = new ConcurrentHashMap<>();
@@ -68,6 +71,7 @@ public class TestManager {
     private Path transactionsLog;
 
     private Path resourceMonitorsLog;
+    private Path networkManagersLog;
     private volatile AtomicBoolean isLoggersLogLoaded = new AtomicBoolean(false);
     private volatile AtomicBoolean isLoadGeneratorsLogsLoaded = new AtomicBoolean(false);
     private volatile AtomicBoolean isResourceMonitorsLogsLoaded = new AtomicBoolean(false);
@@ -81,6 +85,7 @@ public class TestManager {
         blocksLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "blocks"));
         transactionsLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "transactions"));
         resourceMonitorsLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "resource_monitors"));
+        networkManagersLog = getEmptyFolder(Paths.get(properties.getResultLogsPath(), "network_managers"));
     }
 
     private void validateProperties(TestManagerProperties properties) {
@@ -98,7 +103,6 @@ public class TestManager {
 
     public void start() {
         try {
-
             Spark.port(properties.getMasterPort());
             Spark.threadPool(10, 3, 20000);
             initLoggersListener();
@@ -185,29 +189,37 @@ public class TestManager {
     }
 
     private RemoteInstancesManager<RemoteInstance> runNetworkManagers() {
-        List<RemoteInstance> monitorsInstances = allHosts
+        List<RemoteInstance> networkInstances = allHosts
                 .stream()
                 .map(host -> new RemoteInstance(properties.getUserNameOnRemoteInstances(),
-                        host, 22, properties.getPemKeyPath(), resourceMonitorsLog))
+                        host, 22, properties.getPemKeyPath(), networkManagersLog))
                 .collect(Collectors.toList());
 
-        RemoteInstancesManager<RemoteInstance> monitorsInstancesManager = new RemoteInstancesManager<>(
+        RemoteInstancesManager<RemoteInstance> networkInstancesManager = new RemoteInstancesManager<>(
                 properties.getMasterIpAddress(), properties.getMasterPort());
-        monitorsInstancesManager.setRootInstance(monitorsInstances.get(0));
-        monitorsInstancesManager.addCommonInstances(monitorsInstances.subList(1, monitorsInstances.size()));
+        networkInstancesManager.setRootInstance(networkInstances.get(0));
+        networkInstancesManager.addCommonInstances(networkInstances.subList(1, networkInstances.size()));
 
-        monitorsInstancesManager.uploadFilesForAll(Collections.singletonList(
-                properties.getTestManagerModulesPath().resolve("network-manager.jar")
+        networkInstancesManager.uploadFilesForAll(Arrays.asList(
+                properties.getTestManagerModulesPath().resolve("network-manager.jar"),
+                properties.getNetworkManagerConfigPath(),
+                Paths.get(properties.getModulesInitResourcesPath(), "startNetworkManager.sh"),
+                Paths.get(properties.getInstancesPath())
         ));
 
-        monitorsInstancesManager.uploadFilesForAll(Collections.singletonList(
-                Paths.get(properties.getModulesInitResourcesPath(), "startNetworkManager.sh")));
-        monitorsInstancesManager.executeCommandsForAll(singletonList("bash startNetworkManager.sh"));
+        // Rename network manager config to predefined name
+        networkInstancesManager.executeCommandsForAll(singletonList(String.format("mv %s %s",
+                properties.getNetworkManagerConfigPath().getFileName().toString(), TestManager.NETWORK_MANAGER_CONFIG_PATH)));
 
-        log.info("resource monitors started");
-        return monitorsInstancesManager;
+        Map<RemoteInstance, List<String>> commands = new HashMap<>();
+        for (int i = 0; i < networkInstances.size(); i++) {
+            commands.put(networkInstances.get(i), singletonList("bash startNetworkManager.sh " + i));
+        }
+        networkInstancesManager.executeCommandsPerInstance(commands);
+
+        log.info("network managers started");
+        return networkInstancesManager;
     }
-
 
     private RemoteInstancesManager<RemoteInstance> runBlockchain() {
         List<RemoteInstance> blockchainInstances = allHosts.subList(0, properties.getBlockchainInstancesAmount())
@@ -271,7 +283,7 @@ public class TestManager {
     }
 
     private  LoadGeneratorInstancesManager runLoadGenerators(List<LoadGeneratorInstance> loadGeneratorInstances,
-                                                             List<RemoteInstance> blockchainInstances) throws Exception {
+                                                             List<RemoteInstance> blockchainInstances) {
         log.debug("runLoadGenerators start");
         if (loadGeneratorInstances.isEmpty()) {
             log.error("loadGenerators is absent");

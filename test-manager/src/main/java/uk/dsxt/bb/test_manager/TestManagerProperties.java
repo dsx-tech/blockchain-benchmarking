@@ -59,6 +59,7 @@ public class TestManagerProperties {
     final private int afterBlockchainInitTimeout;
     final private int blockchainPort;
     final private Path loadGeneratorConfigPath;
+    final private Path networkManagerConfigPath;
 
     public static TestManagerProperties fromProperties(Properties properties) {
         return TestManagerProperties.builder()
@@ -85,6 +86,7 @@ public class TestManagerProperties {
                 .modulesInitResourcesPath(properties.getProperty("modules.init.resources"))
                 .afterBlockchainInitTimeout(convertToInt(properties.getProperty("test_manager.after_blockchain_init.timeout")))
                 .blockchainPort(convertToInt(properties.getProperty("blockchain.port")))
+                .networkManagerConfigPath(Paths.get(properties.getProperty("network_manager_config")))
                 .build();
     }
 

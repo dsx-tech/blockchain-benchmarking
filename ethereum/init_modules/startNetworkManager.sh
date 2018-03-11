@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-nohup java -jar network-manager.jar >network-manager-stdout.log 2>network-manager-stderr.log &
+sudo nohup java -jar network-manager.jar $1 >network-manager-stdout.log 2>network-manager-stderr.log &
