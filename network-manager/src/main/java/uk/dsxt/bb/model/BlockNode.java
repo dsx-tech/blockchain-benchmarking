@@ -7,13 +7,19 @@ import lombok.Getter;
 @Getter
 public class BlockNode extends NetworkAction {
     private int nodeIndex;
-    private int startMillis;
-    private int finishMillis;
 
     @JsonCreator
     public BlockNode(@JsonProperty int nodeIndex, @JsonProperty int startMillis, @JsonProperty int finishMillis) {
+        super(startMillis, finishMillis);
         this.nodeIndex = nodeIndex;
-        this.startMillis = startMillis;
-        this.finishMillis = finishMillis;
+    }
+
+    @Override
+    public void performStart() {
+        // TODO: 13.03.2018 real implementation: print command
+    }
+
+    @Override
+    public void performFinish() {
     }
 }

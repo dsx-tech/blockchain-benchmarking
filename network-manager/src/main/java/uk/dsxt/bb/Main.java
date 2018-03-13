@@ -1,6 +1,7 @@
 package uk.dsxt.bb;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import uk.dsxt.bb.model.NetworkAction;
 import uk.dsxt.bb.model.NetworkActionsConfig;
 import uk.dsxt.bb.test_manager.TestManager;
 
@@ -8,36 +9,57 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
     public static void main(String[] args) {
-//        try {
-            System.out.println("Starting network-manager main");
-            System.out.println("Received arguments=" + Arrays.toString(args));
-            // Index of current node in list of all instances (file instances)
-            int nodeIndex;
-            try {
-                nodeIndex = Integer.valueOf(args[0]);
-            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
-                System.out.printf("Unable to find nodeIndex, caught exception=%s, exiting%n", e.getMessage());
-                return;
-            }
+        System.out.println("Starting network-manager main");
+        System.out.println("Received arguments=" + Arrays.toString(args));
+        final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-            // read instances file
-            // TODO: 11.03.2018 implement
+        List<String> allHosts;
+        NetworkActionsConfig networkActionsConfig;
+        // Index of current node in list of all instances (file instances)
+        int nodeIndex;
+        try {
+            nodeIndex = Integer.valueOf(args[0]);
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
+            System.out.printf("Unable to find nodeIndex, caught exception=%s, exiting%n", e.getMessage());
+            return;
+        }
 
-            // read network issues plan
-            final ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                objectMapper.readValue(new File(System.getProperty("user.home") + "/" + TestManager.NETWORK_MANAGER_CONFIG_PATH),
-                        NetworkActionsConfig.class);
-            } catch (IOException e) {
-                System.out.println("Unable to load network manager config");
-                return;
-            }
+        // read instances file
+        try {
+            allHosts = Files.readAllLines(Paths.get(
+                    System.getProperty("user.home") + "/" + TestManager.NETWORK_MANAGER_CONFIG_PATH));
+        } catch (IOException e) {
+            System.out.println("Unable to load instances file, exception=" + e.getMessage());
+            return;
+        }
 
+        // read network issues plan
+        final ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            networkActionsConfig = objectMapper.readValue(new File(
+                    System.getProperty("user.home") + "/" + TestManager.NETWORK_MANAGER_CONFIG_PATH),
+                    NetworkActionsConfig.class);
+        } catch (IOException e) {
+            System.out.println("Unable to load network manager config, exception=" + e.getMessage());
+            return;
+        }
+
+        NetworkAction[] currentNodeNetworkActions = networkActionsConfig.getConfiguration().get(nodeIndex);
+        for (NetworkAction networkAction : currentNodeNetworkActions) {
+            executorService.schedule(networkAction::performStart, networkAction.getStartMillis(), TimeUnit.MILLISECONDS);
+            executorService.schedule(networkAction::performFinish, networkAction.getFinishMillis(), TimeUnit.MILLISECONDS);
+        }
 
 //            exec("sudo iptables -I INPUT -s 1.2.3.4 -j DROP");
 //
@@ -47,9 +69,6 @@ public class Main {
 //
 //            System.out.println("removing ip");
 //            exec("sudo iptables -D INPUT 1");
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 
     private static String exec(String command) {

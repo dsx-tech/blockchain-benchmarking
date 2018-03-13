@@ -12,11 +12,20 @@ public class DropPackets extends NetworkAction {
     private int finishMillis;
 
     @JsonCreator
-    public DropPackets(@JsonProperty int percentage, @JsonProperty int node,
-                       @JsonProperty int startMillis, @JsonProperty int finishMillis) {
+    public DropPackets(@JsonProperty int startMillis, @JsonProperty int finishMillis,
+                       @JsonProperty int percentage, @JsonProperty int node) {
+        super(startMillis, finishMillis);
         this.percentage = percentage;
         this.nodeIndex = node;
-        this.startMillis = startMillis;
-        this.finishMillis = finishMillis;
+    }
+
+    @Override
+    public void performStart() {
+        // TODO: 13.03.2018 real implementation: print command
+    }
+
+    @Override
+    public void performFinish() {
+
     }
 }

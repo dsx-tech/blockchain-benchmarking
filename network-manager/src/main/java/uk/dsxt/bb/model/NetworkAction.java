@@ -3,7 +3,11 @@ package uk.dsxt.bb.model;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
+@AllArgsConstructor
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -12,5 +16,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = BlockNode.class, name = "BlockNode"),
         @JsonSubTypes.Type(value = DropPackets.class, name = "DropPackets")
 })
-abstract class NetworkAction {
+public abstract class NetworkAction {
+    private int startMillis;
+    private int finishMillis;
+
+    public abstract void performStart();
+    public abstract void performFinish();
 }
