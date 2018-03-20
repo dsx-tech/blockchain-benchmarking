@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
+import java.util.Collections;
 import java.util.Map;
 
 @Getter
@@ -20,7 +21,17 @@ public class NetworkActionsConfig {
     @JsonCreator
     public NetworkActionsConfig(@JsonProperty("configuration") Map<Integer, NetworkAction[]> configuration,
                                 @JsonProperty("defaultConfiguration") NetworkAction... defaultConfiguration) {
-        this.configuration = configuration;
+        this.configuration = configuration == null ? Collections.emptyMap() : configuration;
         this.defaultConfiguration = defaultConfiguration;
+    }
+
+    /**
+     * Returns configuration of NetworkActions for node
+     *
+     * @param nodeIndex index of node
+     * @return Array of {@link NetworkAction} for node
+     */
+    public NetworkAction[] getActions(int nodeIndex) {
+        return configuration.getOrDefault(nodeIndex, defaultConfiguration);
     }
 }

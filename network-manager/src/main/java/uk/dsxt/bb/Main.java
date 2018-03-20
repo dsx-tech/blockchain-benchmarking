@@ -55,10 +55,10 @@ public class Main {
             return;
         }
 
-        NetworkAction[] currentNodeNetworkActions = networkActionsConfig.getConfiguration().get(nodeIndex);
+        NetworkAction[] currentNodeNetworkActions = networkActionsConfig.getActions(nodeIndex);
         for (NetworkAction networkAction : currentNodeNetworkActions) {
-            executorService.schedule(networkAction::performStart, networkAction.getStartMillis(), TimeUnit.MILLISECONDS);
-            executorService.schedule(networkAction::performFinish, networkAction.getFinishMillis(), TimeUnit.MILLISECONDS);
+            executorService.schedule(() -> networkAction.performStart(allHosts), networkAction.getStartMillis(), TimeUnit.MILLISECONDS);
+            executorService.schedule(() -> networkAction.performFinish(allHosts), networkAction.getFinishMillis(), TimeUnit.MILLISECONDS);
         }
 
 //            exec("sudo iptables -I INPUT -s 1.2.3.4 -j DROP");

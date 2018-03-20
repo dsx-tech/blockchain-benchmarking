@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 @JsonTypeInfo(
@@ -19,7 +21,9 @@ import lombok.Getter;
 public abstract class NetworkAction {
     private int startMillis;
     private int finishMillis;
+    private int nodeIndex;
 
-    public abstract void performStart();
-    public abstract void performFinish();
+    public abstract void performStart(List<String> allHosts);
+
+    public abstract void performFinish(List<String> allHosts);
 }

@@ -28,7 +28,13 @@ import lombok.extern.log4j.Log4j2;
 import spark.Spark;
 import uk.dsxt.bb.blockchain.BlockchainManager;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
-import uk.dsxt.bb.remote.instance.*;
+import uk.dsxt.bb.remote.instance.LoadGeneratorInstance;
+import uk.dsxt.bb.remote.instance.LoadGeneratorInstancesManager;
+import uk.dsxt.bb.remote.instance.LoggerInstance;
+import uk.dsxt.bb.remote.instance.LoggerInstancesManager;
+import uk.dsxt.bb.remote.instance.RemoteInstance;
+import uk.dsxt.bb.remote.instance.RemoteInstancesManager;
+import uk.dsxt.bb.remote.instance.WorkFinishedTO;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -41,12 +47,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
-import static java.net.HttpURLConnection.*;
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.Collections.singletonList;
 
 /**
@@ -64,7 +73,7 @@ public class TestManager {
     private TestManagerProperties properties;
     private RemoteInstancesManager<RemoteInstance> blockchainInstancesManager;
     private RemoteInstancesManager<RemoteInstance> resourceMonitorsInstancesManager;
-    private RemoteInstancesManager<RemoteInstance> networkManagersInstancesManager;
+    private Optional<RemoteInstancesManager<RemoteInstance>> networkManagersInstancesManager;
     private LoggerInstancesManager loggerInstancesManager;
     private LoadGeneratorInstancesManager loadGeneratorInstancesManager;
     private Path blocksLog;
@@ -188,7 +197,14 @@ public class TestManager {
         return monitorsInstancesManager;
     }
 
-    private RemoteInstancesManager<RemoteInstance> runNetworkManagers() {
+    /**
+     * Instantiates NetworkManagers if NetworkManagerConfigPath exists in properties file and is not empty
+     */
+    private Optional<RemoteInstancesManager<RemoteInstance>> runNetworkManagers() {
+        if (properties.getNetworkManagerConfigPath() == null || properties.getNetworkManagerConfigPath().isEmpty()) {
+            return Optional.empty();
+        }
+
         List<RemoteInstance> networkInstances = allHosts
                 .stream()
                 .map(host -> new RemoteInstance(properties.getUserNameOnRemoteInstances(),
@@ -202,14 +218,14 @@ public class TestManager {
 
         networkInstancesManager.uploadFilesForAll(Arrays.asList(
                 properties.getTestManagerModulesPath().resolve("network-manager.jar"),
-                properties.getNetworkManagerConfigPath(),
+                Paths.get(properties.getNetworkManagerConfigPath()),
                 Paths.get(properties.getModulesInitResourcesPath(), "startNetworkManager.sh"),
                 Paths.get(properties.getInstancesPath())
         ));
 
         // Rename network manager config to predefined name
         networkInstancesManager.executeCommandsForAll(singletonList(String.format("mv %s %s",
-                properties.getNetworkManagerConfigPath().getFileName().toString(), TestManager.NETWORK_MANAGER_CONFIG_PATH)));
+                Paths.get(properties.getNetworkManagerConfigPath()).getFileName().toString(), TestManager.NETWORK_MANAGER_CONFIG_PATH)));
 
         Map<RemoteInstance, List<String>> commands = new HashMap<>();
         for (int i = 0; i < networkInstances.size(); i++) {
@@ -218,7 +234,7 @@ public class TestManager {
         networkInstancesManager.executeCommandsPerInstance(commands);
 
         log.info("network managers started");
-        return networkInstancesManager;
+        return Optional.of(networkInstancesManager);
     }
 
     private RemoteInstancesManager<RemoteInstance> runBlockchain() {
@@ -421,7 +437,7 @@ public class TestManager {
                     () -> loggerInstancesManager.stop(),
                     () -> loadGeneratorInstancesManager.stop(),
                     () -> resourceMonitorsInstancesManager.stop(),
-                    () -> networkManagersInstancesManager.stop(),
+                    () -> networkManagersInstancesManager.ifPresent(RemoteInstancesManager::stop),
                     Spark::stop
             );
 
