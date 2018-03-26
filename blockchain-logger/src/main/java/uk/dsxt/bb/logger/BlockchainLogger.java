@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.util.Strings;
 import uk.dsxt.bb.blockchain.BlockchainManager;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainChainInfo;
@@ -35,7 +36,10 @@ import uk.dsxt.bb.remote.instance.WorkFinishedTO;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.StringJoiner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
@@ -87,11 +91,14 @@ public class BlockchainLogger {
         }
     }
 
-    private void log(long lastLoggedBlockId, long currentBlockId, long time) throws IOException {
+    private void log(long lastLoggedBlockId, long currentBlockId, String currentBlockHash, String previousBlockHash,
+                     long time) throws IOException {
         for (long i = lastLoggedBlockId + 1; i <= currentBlockId; ++i) {
             StringJoiner stringJoiner = new StringJoiner(",");
             stringJoiner.add(String.valueOf(i));
             stringJoiner.add(String.valueOf(time));
+            stringJoiner.add(String.valueOf(currentBlockHash));
+            stringJoiner.add(String.valueOf(previousBlockHash));
             fw.write(stringJoiner.toString() + '\n');
         }
         fw.flush();
@@ -118,22 +125,64 @@ public class BlockchainLogger {
                     StringJoiner stringJoiner = new StringJoiner(",");
                     stringJoiner.add("id");
                     stringJoiner.add("Appeared time");
+                    stringJoiner.add("Current block hash");
+                    stringJoiner.add("Previous block hash");
                     fw.write(stringJoiner.toString() + '\n');
                     fw.flush();
 
+                    ExecutorService executorService = Executors.newCachedThreadPool();
+                    final BlockchainBlock[] currentBlock = new BlockchainBlock[1];
                     long currentBlockId;
                     long previousBlockId = -1;
                     long lastNonEmptyBlockId = -1;
                     long lastNonEmptyBlockTime = System.currentTimeMillis();
 
+                    String currentBlockHash;
+                    final String[] previousBlockHash = {Strings.EMPTY};
+
                     while (true) {
                         long startLoopTime = System.currentTimeMillis();
                         currentBlockId = blockchainManager.getChain().getLastBlockNumber();
                         long currentBlockTime = System.currentTimeMillis();
+                        currentBlock[0] = blockchainManager.getBlockById(currentBlockId);
+                        currentBlockHash = currentBlock[0].getHash();
 
+//                        String previousBlockHash = block.getPreviousBlockHash();
 
-                        if (currentBlockId > previousBlockId) {
-                            log(previousBlockId, currentBlockId, currentBlockTime);
+//                        if (currentBlockId > previousBlockId) {
+//                            log(previousBlockId, currentBlockId, currentBlockHash, previousBlockHash, currentBlockTime);
+//                        }
+                        if (!currentBlockHash.equals(previousBlockHash[0])) {
+
+                            String currentBlockHashSave = currentBlockHash;
+                            if (!previousBlockHash[0].isEmpty()) {
+                                if (!currentBlock[0].getPreviousBlockHash().equals(previousBlockHash[0])) {
+                                    executorService.submit(() -> {
+                                        ArrayList<BlockchainBlock> blockchainMissingBlocks = new ArrayList<>();
+
+                                        while (previousBlockHash[0].equals(currentBlock[0].getPreviousBlockHash())) {
+                                            try {
+                                                currentBlock[0] = blockchainManager.getBlockByHash(previousBlockHash[0]);
+                                                blockchainMissingBlocks.add(currentBlock[0]);
+                                            } catch (IOException e) {
+                                                log.error("Blockchain logger. logInLoop method, IOError while getting block info", e.getMessage());
+                                            }
+                                            previousBlockHash[0] = currentBlock[0].getPreviousBlockHash();
+
+                                        }
+                                        blockchainMissingBlocks.forEach(block -> {
+                                            try {
+                                                log(-1, -1, block.getHash(), block.getPreviousBlockHash(), currentBlockTime);
+                                            } catch (IOException e) {
+                                                log.error("Blockchain logger. logInLoop method, IOError while getting block info", e.getMessage());
+                                            }
+                                        });
+                                    });
+                                } else {
+                                    log(previousBlockId, currentBlockId, currentBlockHash, previousBlockHash[0], currentBlockTime);
+                                }
+                            }
+
                         }
 
                         if ((startLoopTime - lastNonEmptyBlockTime > 10 * 60 * 1000) && !isBlocksInRangeHasTransactions(previousBlockId, currentBlockId)) {
@@ -146,13 +195,14 @@ public class BlockchainLogger {
                         }
 
                         if (currentBlockId > previousBlockId) {
-                            BlockchainBlock currentBlock = blockchainManager.getBlockById(currentBlockId);
-                            if (currentBlock.getTransactions().length != 0) {
+                            currentBlock[0] = blockchainManager.getBlockById(currentBlockId);
+                            if (currentBlock[0].getTransactions().length != 0) {
                                 lastNonEmptyBlockId = currentBlockId;
                                 lastNonEmptyBlockTime = currentBlockTime;
                             }
 
                             previousBlockId = currentBlockId;
+                            previousBlockHash[0] = currentBlockHash;
                         }
 
 
