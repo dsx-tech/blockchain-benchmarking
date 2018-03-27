@@ -9,6 +9,11 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile project(":test-manager")
+}
+
 jar {
     manifest {
         attributes(
@@ -16,8 +21,4 @@ jar {
                 'Main-Class': 'uk.dsxt.bb.Main'
         )
     }
-}
-
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.11'
 }
