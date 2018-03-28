@@ -1,4 +1,4 @@
-package uk.dsxt.bb.model;
+package uk.dsxt.bb.network_manager.model;
 
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -21,7 +21,6 @@ import java.util.List;
 public abstract class NetworkAction {
     private int startMillis;
     private int finishMillis;
-    private int nodeIndex;
 
     public abstract void performStart(List<String> allHosts);
 

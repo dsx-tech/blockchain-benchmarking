@@ -1,4 +1,4 @@
-package uk.dsxt.bb.model;
+package uk.dsxt.bb.network_manager.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,7 +22,7 @@ public class NetworkActionsConfig {
     public NetworkActionsConfig(@JsonProperty("configuration") Map<Integer, NetworkAction[]> configuration,
                                 @JsonProperty("defaultConfiguration") NetworkAction... defaultConfiguration) {
         this.configuration = configuration == null ? Collections.emptyMap() : configuration;
-        this.defaultConfiguration = defaultConfiguration;
+        this.defaultConfiguration = defaultConfiguration == null ? new NetworkAction[0] : defaultConfiguration;
     }
 
     /**

@@ -1,8 +1,8 @@
-package uk.dsxt.bb;
+package uk.dsxt.bb.network_manager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import uk.dsxt.bb.model.NetworkAction;
-import uk.dsxt.bb.model.NetworkActionsConfig;
+import uk.dsxt.bb.network_manager.model.NetworkAction;
+import uk.dsxt.bb.network_manager.model.NetworkActionsConfig;
 import uk.dsxt.bb.test_manager.TestManager;
 
 import java.io.BufferedReader;
@@ -37,8 +37,9 @@ public class Main {
 
         // read instances file
         try {
-            allHosts = Files.readAllLines(Paths.get(
-                    System.getProperty("user.home") + "/" + TestManager.NETWORK_MANAGER_CONFIG_PATH));
+            // TODO: 28.03.2018 This is temporary hack, the problem is that this jar requires sudo privilegies, so user.home is /root, but the file are stored in user folder
+//            allHosts = Files.readAllLines(Paths.get(System.getProperty("user.home") + "/instances"));
+            allHosts = Files.readAllLines(Paths.get("/home/ubuntu/instances"));
         } catch (IOException e) {
             System.out.println("Unable to load instances file, exception=" + e.getMessage());
             return;
@@ -47,8 +48,8 @@ public class Main {
         // read network issues plan
         final ObjectMapper objectMapper = new ObjectMapper();
         try {
-            networkActionsConfig = objectMapper.readValue(new File(
-                    System.getProperty("user.home") + "/" + TestManager.NETWORK_MANAGER_CONFIG_PATH),
+            networkActionsConfig = objectMapper.readValue(
+                    new File("/home/ubuntu/" + TestManager.NETWORK_MANAGER_CONFIG_PATH),
                     NetworkActionsConfig.class);
         } catch (IOException e) {
             System.out.println("Unable to load network manager config, exception=" + e.getMessage());
@@ -62,18 +63,9 @@ public class Main {
             executorService.schedule(() -> networkAction.performFinish(allHosts), networkAction.getFinishMillis(),
                     TimeUnit.MILLISECONDS);
         }
-
-//            exec("sudo iptables -I INPUT -s 1.2.3.4 -j DROP");
-//
-//            int delay_millis = (1 + ThreadLocalRandom.current().nextInt(6)) * 30000;
-//            System.out.println("sleeping for: " + delay_millis);
-//            Thread.sleep(delay_millis);
-//
-//            System.out.println("removing ip");
-//            exec("sudo iptables -D INPUT 1");
     }
 
-    private static String exec(String command) {
+    public static String exec(String command) {
         StringBuilder output = new StringBuilder();
         try {
             Process p = Runtime.getRuntime().exec(command);

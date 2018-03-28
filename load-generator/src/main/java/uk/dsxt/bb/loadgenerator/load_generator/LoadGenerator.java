@@ -14,8 +14,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = LinearDecreaseLoadGenerator.class, name = "LinearDecreaseLoad")
 })
 public abstract class LoadGenerator {
-
-    protected long startTime;
+    private long startTime;
 
     public final int nextDelay() {
         if (startTime == 0) {

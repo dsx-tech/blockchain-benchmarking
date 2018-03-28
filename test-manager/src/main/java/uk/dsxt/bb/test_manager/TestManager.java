@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -73,7 +72,7 @@ public class TestManager {
     private TestManagerProperties properties;
     private RemoteInstancesManager<RemoteInstance> blockchainInstancesManager;
     private RemoteInstancesManager<RemoteInstance> resourceMonitorsInstancesManager;
-    private Optional<RemoteInstancesManager<RemoteInstance>> networkManagersInstancesManager;
+    private RemoteInstancesManager<RemoteInstance> networkManagersInstancesManager;
     private LoggerInstancesManager loggerInstancesManager;
     private LoadGeneratorInstancesManager loadGeneratorInstancesManager;
     private Path blocksLog;
@@ -200,9 +199,9 @@ public class TestManager {
     /**
      * Instantiates NetworkManagers if NetworkManagerConfigPath exists in properties file and is not empty
      */
-    private Optional<RemoteInstancesManager<RemoteInstance>> runNetworkManagers() {
+    private RemoteInstancesManager<RemoteInstance> runNetworkManagers() {
         if (properties.getNetworkManagerConfigPath() == null || properties.getNetworkManagerConfigPath().isEmpty()) {
-            return Optional.empty();
+            return null;
         }
 
         List<RemoteInstance> networkInstances = allHosts
@@ -234,7 +233,7 @@ public class TestManager {
         networkInstancesManager.executeCommandsPerInstance(commands);
 
         log.info("network managers started");
-        return Optional.of(networkInstancesManager);
+        return networkInstancesManager;
     }
 
     private RemoteInstancesManager<RemoteInstance> runBlockchain() {
@@ -437,11 +436,13 @@ public class TestManager {
                     () -> loggerInstancesManager.stop(),
                     () -> loadGeneratorInstancesManager.stop(),
                     () -> resourceMonitorsInstancesManager.stop(),
-                    () -> networkManagersInstancesManager.ifPresent(RemoteInstancesManager::stop),
+                    () -> {
+                        if (networkManagersInstancesManager != null) networkManagersInstancesManager.stop();
+                    },
                     Spark::stop
             );
 
-            boolean success = stopActions.stream().map(this::safeExecute).allMatch(a -> a);
+            boolean success = stopActions.stream().allMatch(this::safeExecute);
             log.info(success ? "Test completed" : "You can stop test, but something went wrong");
         }
     }

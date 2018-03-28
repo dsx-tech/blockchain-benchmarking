@@ -1,4 +1,4 @@
-package uk.dsxt.bb.model;
+package uk.dsxt.bb.network_manager.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,9 +11,9 @@ public class DropPackets extends NetworkAction {
     private int percentage;
 
     @JsonCreator
-    public DropPackets(@JsonProperty int startMillis, @JsonProperty int finishMillis,
-                       @JsonProperty int nodeIndex, @JsonProperty int percentage) {
-        super(startMillis, finishMillis, nodeIndex);
+    public DropPackets(@JsonProperty("startMillis") int startMillis, @JsonProperty("finishMillis") int finishMillis,
+                       @JsonProperty("percentage") int percentage) {
+        super(startMillis, finishMillis);
         this.percentage = percentage;
     }
 

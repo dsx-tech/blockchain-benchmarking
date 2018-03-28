@@ -232,7 +232,9 @@ public class RemoteInstance {
             logger.error(e);
         }
         finally {
-            channelSftp.disconnect();
+            if (channelSftp != null) {
+                channelSftp.disconnect();
+            }
         }
         return false;
     }

@@ -1,1 +1,32 @@
-[]
+{
+  "configuration": {
+    "0": [
+      {
+        "action": "BlockNode",
+        "startMillis": 50000,
+        "finishMillis": 250000
+      }
+    ],
+    "1": [
+      {
+        "action": "BlockNode",
+        "startMillis": 300000,
+        "finishMillis": 500000
+      }
+    ],
+    "2": [
+      {
+        "action": "BlockNode",
+        "startMillis": 550000,
+        "finishMillis": 750000
+      }
+    ],
+    "3": [
+      {
+        "action": "BlockNode",
+        "startMillis": 800000,
+        "finishMillis": 1000000
+      }
+    ]
+  }
+}
