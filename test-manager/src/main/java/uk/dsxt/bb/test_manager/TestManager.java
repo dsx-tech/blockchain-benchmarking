@@ -26,6 +26,8 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import spark.Spark;
+import uk.dsx.accord.ethereum.EthInstanceManager;
+import uk.dsx.accord.ethereum.config.DefaultConfiguration;
 import uk.dsxt.bb.blockchain.BlockchainManager;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
 import uk.dsxt.bb.remote.instance.*;
@@ -37,7 +39,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -163,7 +164,6 @@ public class TestManager {
                 properties.getMasterPort());
         monitorsInstancesManager.setRootInstance(monitorsInstances.get(0));
         monitorsInstancesManager.addCommonInstances(monitorsInstances.subList(1, monitorsInstances.size()));
-
         monitorsInstancesManager.uploadFilesForAll(Arrays.asList(
                 properties.getTestManagerModulesPath().resolve("resource-monitor.jar")
         ));
@@ -196,26 +196,30 @@ public class TestManager {
             blockchainInstancesManager.setRootInstance(blockchainInstances.get(0));
             blockchainInstancesManager.addCommonInstances(blockchainInstances.subList(1, blockchainInstances.size()));
 
-            blockchainInstancesManager.uploadFilesForAll(Arrays.asList(
-                    properties.getBlockchainInitResourcesPath().resolve("initEnv.sh")
-            ));
-
-            blockchainInstancesManager.executeCommandsForAll(singletonList("bash initEnv.sh"));
-
-            blockchainInstancesManager.uploadFolderForRoot(properties.getBlockchainInitResourcesPath().resolve("root"), "root_init_files");
-            blockchainInstancesManager.executeCommandsForRoot(singletonList(
-                    "bash root_init_files/startRoot.sh && touch startRoot.complete")
-            );
-            blockchainInstancesManager.getRootInstance().downloadFolder("~/root_init_result",
-                    Paths.get("tmp", "root_init_result"));
-
-            blockchainInstancesManager.uploadFolderForCommon(properties.getBlockchainInitResourcesPath().resolve("common"), "common_init_files");
-            blockchainInstancesManager.uploadFolderForCommon(Paths.get("tmp", "root_init_result"), "common_init_files/root_init_result");
-            blockchainInstancesManager.executeCommandsForCommon(Collections.singletonList(
-                    "bash common_init_files/startCommon.sh && touch startCommon.complete")
-            );
+            EthInstanceManager instanceManager = new EthInstanceManager();
+            instanceManager.withConfig("/Users/mikhwall/blockchain-benchmarking/ethereum/machine.yaml", DefaultConfiguration.class);
+            instanceManager.run();
+//            instanceManager.terminate();
+//            blockchainInstancesManager.uploadFilesForAll(Arrays.asList(
+//                    properties.getBlockchainInitResourcesPath().resolve("initEnv.sh")
+//            ));
+//
+//            blockchainInstancesManager.executeCommandsForAll(singletonList("bash initEnv.sh"));
+//
+//            blockchainInstancesManager.uploadFolderForRoot(properties.getBlockchainInitResourcesPath().resolve("root"), "root_init_files");
+//            blockchainInstancesManager.executeCommandsForRoot(singletonList(
+//                    "bash root_init_files/startRoot.sh && touch startRoot.complete")
+//            );
+//            blockchainInstancesManager.getRootInstance().downloadFolder("~/root_init_result",
+//                    Paths.get("tmp", "root_init_result"));
+//
+//            blockchainInstancesManager.uploadFolderForCommon(properties.getBlockchainInitResourcesPath().resolve("common"), "common_init_files");
+//            blockchainInstancesManager.uploadFolderForCommon(Paths.get("tmp", "root_init_result"), "common_init_files/root_init_result");
+//            blockchainInstancesManager.executeCommandsForCommon(Collections.singletonList(
+//                    "bash common_init_files/startCommon.sh && touch startCommon.complete")
+//            );
             sleep(properties.getAfterBlockchainInitTimeout());
-            blockchainInstancesManager.executeCommandsForRoot(singletonList("bash root_init_files/on_init_finished.sh"));
+//            blockchainInstancesManager.executeCommandsForRoot(singletonList("bash root_init_files/on_init_finished.sh"));
             Thread.sleep(5 * 1000);
             log.info("Blockchain instances started");
             return blockchainInstancesManager;
