@@ -62,7 +62,6 @@ class LoadManager {
 
     private final int minLength;
     private final int maxLength;
-    private final int delay;
     private List<String> targets;
     private List<Credential> credentials;
     private int amountOfTransactions;
@@ -75,14 +74,13 @@ class LoadManager {
     LoadManager(List<String> targets, List<Credential> credentials,
                 int amountOfTransactions, int amountOfThreadsPerTarget,
                 int minLength, int maxLength,
-                int delay, String blockchainType, String blockchainPort) {
+                String blockchainType, String blockchainPort) {
         this.targets = targets;
         this.credentials = credentials;
         this.amountOfTransactions = amountOfTransactions;
         this.amountOfThreadsPerTarget = amountOfThreadsPerTarget;
         this.minLength = minLength;
         this.maxLength = maxLength;
-        this.delay = delay;
         this.loggers = new ArrayList<>();
         this.blockchainType = blockchainType;
         this.blockchainPort = blockchainPort;
@@ -90,8 +88,8 @@ class LoadManager {
     }
 
     private static String generateMessage(Random random, int minLength, int maxLength) {
-        StringBuilder tmp = new StringBuilder();
         int length = minLength + random.nextInt(maxLength - minLength);
+        StringBuilder tmp = new StringBuilder(length);
         for (int i = 0; i < minLength + length; ++i) {
             tmp.append(symbols[random.nextInt(symbols.length)]);
         }
@@ -113,13 +111,13 @@ class LoadManager {
             final int currentTargetIndex = targetIndex;
             Logger logger = new Logger(Paths.get("load_logs", target + "_load.log"));
             loggers.add(logger);
-            Manager manager = new SpyManager(new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort), String.valueOf(currentTargetIndex));
+//            Manager manager = new SpyManager(new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort), String.valueOf(currentTargetIndex));
 //            Manager manager = new MockManager(String.valueOf(currentTargetIndex));
-//            Manager manager = new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort);
+            Manager manager = new BlockchainManager(blockchainType, "http://" + target + ":" + blockchainPort);
             int credentialFromIndex = -1;
             Credential credentialFrom = null;
 
-            if (credentials.size() > 0) {
+            if (!credentials.isEmpty()) {
                 credentialFromIndex = targetIndex % credentials.size();
                 credentialFrom = credentials.get(credentialFromIndex);
                 manager.authorize(credentialFrom.getAccount(), credentialFrom.getPassword());

@@ -46,22 +46,20 @@ import java.util.List;
 public class LoadGeneratorMain {
     public static void main(String[] args) throws IOException {
         try {
-            if (args.length < 8) {
-                log.error("Incorrect arguments count in LoadGeneratorMain.main(). Need min 10. Actual args: {}", Arrays.toString(args));
+            if (args.length < 9) {
+                log.error("Incorrect arguments count in LoadGeneratorMain.main(). Need min 9. Actual args: {}", Arrays.toString(args));
                 return;
             }
             int amountOfTransactions = Integer.parseInt(args[0]);
             int amountOfThreadsPerTarget = Integer.parseInt(args[1]);
             int minLength = Integer.parseInt(args[2]);
             int maxLength = Integer.parseInt(args[3]);
-            int delay = Integer.parseInt(args[4]);
-            String ip = args[5];
-            String masterHost = args[6];
-            String credentialsPath = args[7];
-            String blockchainType = args[8];
-            String blockchainPort = args[9];
-            List<String> targets = new ArrayList<>();
-            targets.addAll(Arrays.asList(args).subList(10, args.length));
+            String ip = args[4];
+            String masterHost = args[5];
+            String credentialsPath = args[6];
+            String blockchainType = args[7];
+            String blockchainPort = args[8];
+            List<String> targets = new ArrayList<>(Arrays.asList(args).subList(9, args.length));
 
             List<Credential> accounts = new ArrayList<>();
             if (Paths.get(credentialsPath).toFile().exists()) {
@@ -76,7 +74,7 @@ public class LoadGeneratorMain {
                 );
             }
 
-            LoadManager loadManager = new LoadManager(targets, accounts, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, delay, blockchainType, blockchainPort);
+            LoadManager loadManager = new LoadManager(targets, accounts, amountOfTransactions, amountOfThreadsPerTarget, minLength, maxLength, blockchainType, blockchainPort);
 
             loadManager.start();
             loadManager.waitCompletion();

@@ -38,16 +38,14 @@ public class LoadGeneratorInstance extends BlockchainInteractingInstance {
     private int amountOfThreadsPerTarget;
     private int minLength;
     private int maxLength;
-    private int delay;
 
-    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target, String blockchainPort,
-                                 int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength, int delay) {
+    public LoadGeneratorInstance(String userName, String host, int port, String keyPath, Path logPath, String blockchainType, String target,
+                                 String blockchainPort, int amountOfTransactions, int amountOfThreadsPerTarget, int minLength, int maxLength) {
         super(userName, host, port, keyPath, logPath, blockchainType, target, blockchainPort);
         this.amountOfTransactions = amountOfTransactions;
         this.amountOfThreadsPerTarget = amountOfThreadsPerTarget;
         this.minLength = minLength;
         this.maxLength = maxLength;
         this.loadTargets = new ArrayList<>();
-        this.delay = delay;
     }
 }

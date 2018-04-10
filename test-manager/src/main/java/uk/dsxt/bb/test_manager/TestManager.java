@@ -140,7 +140,7 @@ public class TestManager {
                         properties.getBlockchainType(), "",
                         Integer.toString(properties.getBlockchainPort()),
                         properties.getAmountOfTransactionsPerTarget(), properties.getAmountOfThreadsPerTarget(),
-                        properties.getMinMessageLength(), properties.getMaxMessageLength(), properties.getDelayBeetweenRequests()));
+                        properties.getMinMessageLength(), properties.getMaxMessageLength()));
             }
             loadGeneratorInstances.forEach(instance -> this.loadGeneratorInstances.put(instance.getHost(), instance));
             loadGeneratorInstancesManager = runLoadGenerators(loadGeneratorInstances, blockchainInstancesManager.getAllInstances());

@@ -41,7 +41,6 @@ public class TestManagerProperties {
     final private Path testManagerModulesPath;
     final private int amountOfTransactionsPerTarget;
     final private int amountOfThreadsPerTarget;
-    final private int delayBeetweenRequests;
     final private int minMessageLength;
     final private int maxMessageLength;
     final private String blockchainType;
@@ -79,7 +78,6 @@ public class TestManagerProperties {
                 .blockchainInstancesAmount(convertToInt(properties.getProperty("blockchain.instances.amount")))
                 .loadGeneratorInstancesAmount(convertToInt(properties.getProperty("load_generator.instances.amount")))
                 .loadGeneratorConfigPath(Paths.get(properties.getProperty("load_generator.load_config")))
-                .delayBeetweenRequests(convertToInt(properties.getProperty("message.delay")))
                 .userNameOnRemoteInstances(properties.getProperty("remote.instance.user.name"))
                 .masterIpAddress(properties.getProperty("test_manager.ip"))
                 .masterPort(convertToInt(properties.getProperty("test_manager.port")))
