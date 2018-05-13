@@ -153,7 +153,6 @@ public class BlockchainLogger {
 //                            log(previousBlockId, currentBlockId, currentBlockHash, previousBlockHash, currentBlockTime);
 //                        }
                         if (!currentBlockHash.equals(previousBlockHash[0])) {
-
                             String currentBlockHashSave = currentBlockHash;
                             if (!previousBlockHash[0].isEmpty()) {
                                 if (!currentBlock[0].getPreviousBlockHash().equals(previousBlockHash[0])) {

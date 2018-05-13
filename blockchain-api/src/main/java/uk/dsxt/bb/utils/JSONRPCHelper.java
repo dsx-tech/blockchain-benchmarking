@@ -42,8 +42,8 @@ public class JSONRPCHelper {
     public static HttpHelper httpHelper = new HttpHelper(120000, 120000);
 
     public static String post(String url, String method, Object... parameters) throws InternalLogicException {
+        String request = Strings.EMPTY;
         try {
-
             Gson gson = new Gson();
 
             JsonObject req = new JsonObject();
@@ -58,17 +58,15 @@ public class JSONRPCHelper {
             }
 
             req.add("params", params);
-
             String requestData = req.toString();
-
-            String request = httpHelper.request(url, requestData, RequestType.POST);
+            String response = httpHelper.request(url, requestData, RequestType.POST);
             JsonParser parser = new JsonParser();
-            JsonObject resp = (JsonObject) parser.parse(new StringReader(request));
+            JsonObject resp = (JsonObject) parser.parse(new StringReader(response));
             JsonElement result = resp.get("result");
             id.getAndIncrement();
             return result.toString();
         } catch (Exception e) {
-            log.error("post method failed", e);
+            log.error("post method failed, url: {}, request: {}", url, request, e);
         }
         return null;
     }

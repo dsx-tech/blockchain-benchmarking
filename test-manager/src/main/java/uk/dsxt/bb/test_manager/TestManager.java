@@ -98,7 +98,6 @@ public class TestManager {
 
     public void start() {
         try {
-
             Spark.port(properties.getMasterPort());
             Spark.threadPool(10, 3, 20000);
             initLoggersListener();
@@ -112,7 +111,7 @@ public class TestManager {
             blockchainInstancesManager.getAllInstances().forEach(i -> loggerInstances.add(new LoggerInstance(
                     properties.getUserNameOnRemoteInstances(), i.getHost(), 22, properties.getPemKeyPath(),
                     Paths.get(properties.getResultLogsPath()), properties.getBlockchainType(),
-                    i.getHost(), Integer.toString(properties.getBlockchainPort()),
+                    i.getHost(), Integer.toString(i.getPort()),
                     properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
             loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
             resourceMonitorsInstancesManager = runResourceMonitors();
@@ -120,15 +119,14 @@ public class TestManager {
             Thread.sleep(10000);
 
             List<LoadGeneratorInstance> loadGeneratorInstances = new ArrayList<>();
-            for (int i = 0; i < properties.getLoadGeneratorInstancesAmount(); ++i) {
-                loadGeneratorInstances.add(new LoadGeneratorInstance(properties.getUserNameOnRemoteInstances(),
-                        allHosts.get(i + properties.getBlockchainInstancesAmount()), 22,
-                        properties.getPemKeyPath(), Paths.get(properties.getResultLogsPath()),
-                        properties.getBlockchainType(), "",
-                        Integer.toString(properties.getBlockchainPort()),
-                        properties.getAmountOfTransactionsPerTarget(), properties.getAmountOfThreadsPerTarget(),
-                        properties.getMinMessageLength(), properties.getMaxMessageLength(), properties.getDelayBeetweenRequests()));
-            }
+            blockchainInstancesManager.getAllInstances().forEach(i ->
+                    loadGeneratorInstances.add(new LoadGeneratorInstance(
+                            properties.getUserNameOnRemoteInstances(), i.getHost(), 22 ,
+                            properties.getPemKeyPath(), Paths.get(properties.getResultLogsPath()),
+                            properties.getBlockchainType(), "", Integer.toString(i.getPort()),
+                            properties.getAmountOfTransactionsPerTarget(), properties.getAmountOfThreadsPerTarget(),
+                            properties.getMinMessageLength(), properties.getMaxMessageLength(), properties.getDelayBeetweenRequests()
+                    )));
             loadGeneratorInstances.forEach(instance -> this.loadGeneratorInstances.put(instance.getHost(), instance));
             loadGeneratorInstancesManager = runLoadGenerators(loadGeneratorInstances, blockchainInstancesManager.getAllInstances());
             initTimeoutForFinishTest();
@@ -183,43 +181,26 @@ public class TestManager {
     }
 
     private RemoteInstancesManager<RemoteInstance> runBlockchain() {
-        List<RemoteInstance> blockchainInstances = allHosts.subList(0, properties.getBlockchainInstancesAmount())
-                .stream()
-                .map(host -> new RemoteInstance(properties.getUserNameOnRemoteInstances(),
-                        host, 22,
-                        properties.getPemKeyPath(), Paths.get(properties.getResultLogsPath())))
-                .collect(Collectors.toList());
         try {
+            EthInstanceManager instanceManager = new EthInstanceManager();
+            instanceManager.withConfig(properties.getBlockchainConfigPath(), DefaultConfiguration.class);
+            instanceManager.run();
+            List<RemoteInstance> blockchainInstances = instanceManager.getRpcIpPorts()
+                    .entrySet().stream()
+                    .map(ipPort -> new RemoteInstance(
+                            ipPort.getKey(),
+                            ipPort.getValue(),
+                            properties.getPemKeyPath(),
+                            Paths.get(properties.getResultLogsPath())))
+                    .collect(Collectors.toList());
+
             RemoteInstancesManager<RemoteInstance> blockchainInstancesManager = new RemoteInstancesManager<>(
                     properties.getMasterIpAddress(),
                     properties.getMasterPort());
             blockchainInstancesManager.setRootInstance(blockchainInstances.get(0));
             blockchainInstancesManager.addCommonInstances(blockchainInstances.subList(1, blockchainInstances.size()));
 
-            EthInstanceManager instanceManager = new EthInstanceManager();
-            instanceManager.withConfig("/Users/mikhwall/blockchain-benchmarking/ethereum/machine.yaml", DefaultConfiguration.class);
-            instanceManager.run();
-//            instanceManager.terminate();
-//            blockchainInstancesManager.uploadFilesForAll(Arrays.asList(
-//                    properties.getBlockchainInitResourcesPath().resolve("initEnv.sh")
-//            ));
-//
-//            blockchainInstancesManager.executeCommandsForAll(singletonList("bash initEnv.sh"));
-//
-//            blockchainInstancesManager.uploadFolderForRoot(properties.getBlockchainInitResourcesPath().resolve("root"), "root_init_files");
-//            blockchainInstancesManager.executeCommandsForRoot(singletonList(
-//                    "bash root_init_files/startRoot.sh && touch startRoot.complete")
-//            );
-//            blockchainInstancesManager.getRootInstance().downloadFolder("~/root_init_result",
-//                    Paths.get("tmp", "root_init_result"));
-//
-//            blockchainInstancesManager.uploadFolderForCommon(properties.getBlockchainInitResourcesPath().resolve("common"), "common_init_files");
-//            blockchainInstancesManager.uploadFolderForCommon(Paths.get("tmp", "root_init_result"), "common_init_files/root_init_result");
-//            blockchainInstancesManager.executeCommandsForCommon(Collections.singletonList(
-//                    "bash common_init_files/startCommon.sh && touch startCommon.complete")
-//            );
             sleep(properties.getAfterBlockchainInitTimeout());
-//            blockchainInstancesManager.executeCommandsForRoot(singletonList("bash root_init_files/on_init_finished.sh"));
             Thread.sleep(5 * 1000);
             log.info("Blockchain instances started");
             return blockchainInstancesManager;
@@ -423,7 +404,7 @@ public class TestManager {
                         .resolve("transactionsPerBlock").toFile())) {
             fw.write("blockID, transactionID\n");
             BlockchainManager blockchainManager = new BlockchainManager(properties.getBlockchainType(),
-                    "http://" +blockchainInstancesManager.getRootInstance().getHost() + ":" + properties.getBlockchainPort());
+                    "http://" + blockchainInstancesManager.getRootInstance().getHost() + ":" + blockchainInstancesManager.getRootInstance().getPort());
             long lastBlock = blockchainManager.getChain().getLastBlockNumber();
             for (int i = 0; i <= lastBlock; ++i) {
                 for (BlockchainTransaction blockchainTransaction: blockchainManager.getBlockById(i).getTransactions()) {

@@ -1,0 +1,101 @@
+#!/bin/bash
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+cd $DIR
+
+
+COMMAND=${1}
+
+#if [ "$COMMAND" == "init" ]; then
+#    git clone https://github.com/andbul/ethereum.git
+#    cp -r ./ethereum/* .
+#    rm -rf ./ethereum/
+#    sh ./genesis.sh
+#    exit
+#fi
+
+if [ ! -f $(pwd)/runnode.sh ]; then
+    git clone https://github.com/andbul/ethereum.git
+    cp -r ./ethereum/* .
+    rm -rf ./ethereum/
+    sh ./genesis.sh
+fi
+
+if [ ! -f $(pwd)/genesis.json ]; then
+    sh ./genesis.sh
+fi
+
+
+if [ "$COMMAND" == "attach" ]; then
+    NODE_NAME=${2}
+    ./attach.sh ${NODE_NAME}
+    exit
+fi
+
+if [ "$COMMAND" == "run" ]; then
+    NODE_TYPE=${2}
+    NODE_NAME=${3}
+    [ -z "$NODE_TYPE" ] && echo "[ERROR] Node type is empty!" && exit
+    [ -z "$NODE_NAME" ] && echo "[ERROR] Node name is empty!" && exit
+    echo "[INFO] Runnig node: $NODE_NAME, type: $NODE_TYPE"
+    [ "$NODE_TYPE" == "boot" ] && sh ./runbootnode.sh
+    [ "$NODE_TYPE" == "miner" ] && sh ./runminer.sh ${NODE_NAME}
+    [ "$NODE_TYPE" == "observer" ] && sh ./runnode.sh ${NODE_NAME}
+    [ "$NODE_TYPE" == "sealer" ] && sh ./runsealer.sh ${NODE_NAME}
+    exit
+fi
+
+if [ "$COMMAND" == "get" ]; then
+    OBJECT_TYPE=${2}
+    NODE_NAME=${3}
+    [ -z "$OBJECT_TYPE" ] && echo "[ERROR] Object type is empty!" && exit
+    [ -z "$NODE_NAME" ] && echo "[ERROR] Node name is empty!" && exit
+    echo "[INFO] Getting : $OBJECT_TYPE from node: $NODE_NAME"
+    [ "$OBJECT_TYPE" == "enode" ] && sh ./getenode.sh ${NODE_NAME}
+    [ "$OBJECT_TYPE" == "bootenode" ] && sh ./getbootnodeurl.sh ${NODE_NAME}
+    [ "$OBJECT_TYPE" == "peers" ] && sh ./showpeers.sh ${NODE_NAME}
+    [ "$OBJECT_TYPE" == "logs" ] && sh ./showlogs.sh ${NODE_NAME}
+    [ "$OBJECT_TYPE" == "ports" ] && sh ./showports.sh ${NODE_NAME}
+    exit
+fi
+
+if [ "$COMMAND" == "add" ]; then
+    OBJECT_TYPE=${2}
+    NODE_NAME=${3}
+    OBJEECT=${4}
+    [ -z "$OBJECT_TYPE" ] && echo "[ERROR] Object type is empty!" && exit
+    [ -z "$NODE_NAME" ] && echo "[ERROR] Node name is empty!" && exit
+    echo "Adding : $OBJECT_TYPE to node: $NODE_NAME"
+    [ "$OBJECT_TYPE" == "peer" ] && sh ./addpeer.sh ${NODE_NAME} ${OBJEECT}
+    exit
+fi
+
+if [ "$COMMAND" == "kill" ]; then
+    KILL_TYPE=${2}
+    NODE_NAME=${3}
+    [ -z "$KILL_TYPE" ] && echo "[ERROR] You must set killing type!" && exit
+#    [ -z "$NODE_NAME" ] && echo "[ERROR] Node name is empty!" && exit
+    echo "[INFO] Killing node: $NODE_NAME"
+    [ "$KILL_TYPE" == "node" ] && sh ./killnode.sh ${NODE_NAME}
+    [ "$KILL_TYPE" == "all" ] && sh ./killall.sh
+    exit
+fi
+
+
+if [ "$COMMAND" == "wipe" ]; then
+    KILL_TYPE=${2}
+    NODE_NAME=${3}
+    [ -z "$KILL_TYPE" ] && echo "[ERROR] You must set killing type!" && exit
+#    [ -z "$NODE_NAME" ] && echo "[ERROR] Node name is empty!" && exit
+    echo "[INFO] Killing node: $NODE_NAME"
+    [ "$KILL_TYPE" == "node" ] && echo "Unsupported operation."
+    [ "$KILL_TYPE" == "all" ] && sudo $(sh ./wipeall.sh)
+    exit
+fi

@@ -25,8 +25,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.util.Strings;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,6 +50,7 @@ public class RemoteInstance {
 
     private String userName;
     private String host;
+    @Getter
     private int port;
 
     //hyperledger specific
@@ -68,6 +72,37 @@ public class RemoteInstance {
 
 
     public RemoteInstance(String userName, String host, int port, String keyPath, Path logPath) {
+        this.userName = userName;
+        this.host = host;
+        this.port = port;
+        this.id = globalCounter.getAndIncrement();
+        this.logPath = logPath;
+        this.isRunning = true;
+        jsch = new JSch();
+        try {
+            jsch.addIdentity(keyPath);
+        } catch (JSchException e) {
+            logger.error(e);
+        }
+    }
+
+    public RemoteInstance(String userName, String hostWithPort, String keyPath, Path logPath) {
+        String host = Strings.EMPTY;
+        int port = -1;
+
+        try {
+            URI uri = new URI("http://" + hostWithPort); // may throw URISyntaxException
+            host = uri.getHost();
+            port = uri.getPort();
+
+            if (uri.getHost() == null || uri.getPort() == -1) {
+                throw new URISyntaxException(uri.toString(),
+                        "URI must have host and port parts");
+            }
+
+        } catch (URISyntaxException ex) {
+            logger.error("RemoteInstance port and host initialization failed, hostWithPort: {}", hostWithPort);
+        }
         this.userName = userName;
         this.host = host;
         this.port = port;

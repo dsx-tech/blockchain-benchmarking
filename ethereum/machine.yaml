@@ -1,44 +1,63 @@
-#all-nodes-files:
-#  - path1
-#  - path2
-
 instances:
   - name: ec-2-one
-    user: ec2-user
-    ip: 52.57.210.242
+    user: ubuntu
+    ip: 18.195.233.185
     port : 22
     fingerprint: ethereum/BB.pem
+    working-dir: /home/ubuntu/shared_dir
     prepare-env-commands:
-      - sudo yum update -y
-      - sudo yum install -y docker
+      - sudo apt-get update -y
+      - sudo apt-get install -y docker.io git
       - sudo service docker start
       - sudo groupadd docker
       - sudo gpasswd -a $USER docker
       - sudo usermod -aG docker $USER
     # Files that not-shared (maybe need for env initialization)
     instance-files:
-      - ethereum/init.sh
+      - ethereum/genesis.json
+    post-init-commands:
+      - echo ~/shared_dir/genesis.json
+    post-init-files:
+      - ethereum/genesis.json
+
+    nodes:
+      - name: first
+        type: observer
+        peers:
+          - second
+
+      - name: second
+        port: 30305
+        rpc-port: 8102
+        type: observer
+
+      - name: third
+        port: 30306
+        rpc-port: 8103
+        type: observer
+
+  - name: ec-2-two
+    user: ubuntu
+    ip: 18.184.109.188
+    port : 22
+    fingerprint: ethereum/BB.pem
+    working-dir: /home/ubuntu/shared_dir
+    prepare-env-commands:
+      - sudo apt-get update -y
+      - sudo apt-get install -y docker.io git
+      - sudo service docker start
+      - sudo groupadd docker
+      - sudo gpasswd -a $USER docker
+      - sudo usermod -aG docker $USER
+    # Files that not-shared (maybe need for env initialization)
+    instance-files:
       - ethereum/genesis.json
     # Files that put on each node (maybe need for env initialization)
 #    instance-specified-nodes-files:
 #      - mock-node-file1
 #      - mock-node-file2
     nodes:
-      - name: boot
-        port: 30304
-        rpc-port: 8101
-        type: ETH
-
-      - name: first
-        port: 30305
-        rpc-port: 8102
-        type: ETH
-
-      - name: second
-        port: 30306
-        rpc-port: 8103
-        type: ETH
-        # Node-specified files
-#        node-files:
-#          - specific-file
-#          - specific-file2
+      - name: first2
+        type: miner
+        peers:
+          - second
