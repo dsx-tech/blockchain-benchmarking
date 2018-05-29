@@ -147,7 +147,8 @@ public class BlockchainLogger {
 
                         if (currentBlockId > previousBlockId) {
                             BlockchainBlock currentBlock = blockchainManager.getBlockById(currentBlockId);
-                            if (currentBlock.getTransactions().length != 0) {
+                            if (currentBlock != null && currentBlock.getTransactions() != null
+                                    && currentBlock.getTransactions().length != 0) {
                                 lastNonEmptyBlockId = currentBlockId;
                                 lastNonEmptyBlockTime = currentBlockTime;
                             }
