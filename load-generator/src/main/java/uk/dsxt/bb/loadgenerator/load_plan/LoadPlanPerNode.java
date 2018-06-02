@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.log4j.Log4j2;
 import uk.dsxt.bb.loadgenerator.load_generator.LoadGenerator;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,9 +13,15 @@ import java.util.Map;
 public class LoadPlanPerNode extends LoadPlan {
     private final Map<Integer, LoadGeneratorWithDuration[]> configuration;
     private final LoadGeneratorWithDuration[] defaultConfiguration;
-    // Contains millis from start for each node, in general it is different for all nodes,
-    // because millis are set to 0 on each loadGenerator switch.
+    /**
+     * Contains millis from start for each node. In general time is different for all nodes,
+     * because millis are relative to start of LoadGenerator's period. So when one period of
+     * load generation for node finishes, millis become 0.
+     */
     private final Map<Integer, Long> millisSinceStartPerNode = new HashMap<>();
+    /**
+     * Stores index of LoadGenerator's period for each node.
+     */
     private final Map<Integer, Integer> loadGeneratorIndexPerNode = new HashMap<>();
 
     /**
@@ -36,7 +43,7 @@ public class LoadPlanPerNode extends LoadPlan {
     @JsonCreator
     public LoadPlanPerNode(@JsonProperty("configuration") Map<Integer, LoadGeneratorWithDuration[]> configuration,
                            @JsonProperty("defaultConfiguration") LoadGeneratorWithDuration... defaultConfiguration) {
-        this.configuration = configuration;
+        this.configuration = configuration == null ? Collections.emptyMap() : configuration;
         this.defaultConfiguration = defaultConfiguration;
     }
 
@@ -50,7 +57,7 @@ public class LoadPlanPerNode extends LoadPlan {
         int currentLoadGeneratorIndex = loadGeneratorIndexPerNode.get(nodeIndex);
         LoadGeneratorWithDuration[] currentConfiguration = configuration.getOrDefault(nodeIndex, defaultConfiguration);
         if (currentLoadGeneratorIndex >= currentConfiguration.length) {
-            log.info(String.format("Load generation plan at node %d is finished", nodeIndex));
+            log.warn(String.format("Load generation plan at node %d is finished", nodeIndex));
             return Integer.MAX_VALUE;
         }
         LoadGenerator currentLoadGenerator = currentConfiguration[currentLoadGeneratorIndex].getLoadGenerator();
