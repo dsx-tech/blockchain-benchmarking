@@ -27,13 +27,27 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.fabric.sdk.*;
-import org.hyperledger.fabric.sdk.exception.*;
+import org.hyperledger.fabric.sdk.BlockInfo;
+import org.hyperledger.fabric.sdk.BlockchainInfo;
+import org.hyperledger.fabric.sdk.ChaincodeID;
+import org.hyperledger.fabric.sdk.Channel;
+import org.hyperledger.fabric.sdk.HFClient;
+import org.hyperledger.fabric.sdk.Peer;
+import org.hyperledger.fabric.sdk.ProposalResponse;
+import org.hyperledger.fabric.sdk.QueryByChaincodeRequest;
+import org.hyperledger.fabric.sdk.SDKUtils;
+import org.hyperledger.fabric.sdk.TransactionProposalRequest;
+import org.hyperledger.fabric.sdk.User;
+import org.hyperledger.fabric.sdk.exception.BaseException;
+import org.hyperledger.fabric.sdk.exception.CryptoException;
+import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
+import org.hyperledger.fabric.sdk.exception.ProposalException;
+import org.hyperledger.fabric.sdk.exception.TransactionException;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
-import uk.dsxt.bb.datamodel.fabric.FabricChain;
 import uk.dsxt.bb.datamodel.fabric.FabricBlock;
+import uk.dsxt.bb.datamodel.fabric.FabricChain;
 import uk.dsxt.bb.datamodel.fabric.FabricPeer;
 import uk.dsxt.bb.datamodel.fabric.FabricTransaction;
 import uk.dsxt.bb.utils.PropertiesHelper;
@@ -222,13 +236,13 @@ public class FabricManager implements Manager {
     }
 
     @Override
-    public FabricPeer[] getPeers() throws IOException {
+    public FabricPeer[] getPeers() {
 
         return channel.getPeers().stream().map(FabricPeer::new).toArray(FabricPeer[]::new);
     }
 
     @Override
-    public FabricChain getChain() throws IOException {
+    public FabricChain getChain() {
         try {
             BlockchainInfo channelInfo = channel.queryBlockchainInfo(peer);
 

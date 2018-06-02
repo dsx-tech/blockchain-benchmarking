@@ -62,46 +62,26 @@ public class MultichainManager implements Manager {
         SENDWITHDATA,
     }
 
-    public String sendMessage(String address, long amount) throws IOException {
-        try {
-            return JSONRPCHelper.post(url, MultichainMethods.SEND.name().toLowerCase(),
-                    address, new BigDecimal(amount));
-        } catch (InternalLogicException e) {
-            log.error("Cannot send transaction", e);
-        }
-        return Strings.EMPTY;
+    public String sendMessage(String address, long amount) {
+        return JSONRPCHelper.post(url, MultichainMethods.SEND.name().toLowerCase(),
+                address, new BigDecimal(amount));
     }
 
     @Override
     public String sendTransaction(String to, String from, long amount) {
-        try {
-            return sendMessage(to, amount);
-        } catch (IOException e) {
-            log.error("Sending transaction failed", e);
-        }
-        return null;
+        return sendMessage(to, amount);
     }
 
     @Override
     public String sendMessage(byte[] body) {
-        try {
-            return JSONRPCHelper.post(url, MultichainMethods.SENDWITHDATA.toString().toLowerCase(),
-                    ADDRESS, 0, bytesToHex(body));
-        } catch (InternalLogicException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return JSONRPCHelper.post(url, MultichainMethods.SENDWITHDATA.toString().toLowerCase(),
+                ADDRESS, 0, bytesToHex(body));
     }
 
     @Override
     public String sendMessage(String from, String to, String message) {
-        try {
-            return JSONRPCHelper.post(url, MultichainMethods.SENDWITHDATA.toString().toLowerCase(),
-                    to, 0, bytesToHex(message.getBytes()));
-        } catch (InternalLogicException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return JSONRPCHelper.post(url, MultichainMethods.SENDWITHDATA.toString().toLowerCase(),
+                to, 0, bytesToHex(message.getBytes()));
     }
 
     @Override
@@ -110,23 +90,23 @@ public class MultichainManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlockById(long blockId) throws IOException {
+    public BlockchainBlock getBlockById(long blockId) {
         return JSONRPCHelper.post(url, MultichainMethods.GETBLOCK.name().toLowerCase(), MultichainBlock.class, blockId);
     }
 
     @Override
-    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+    public BlockchainBlock getBlockByHash(String hash) {
         return null;
     }
 
     @Override
-    public BlockchainPeer[] getPeers() throws IOException {
+    public BlockchainPeer[] getPeers() {
         return JSONRPCHelper.post(url, MultichainMethods.GETPEERINFO.name().toLowerCase(),
                 MultichainPeer[].class);
     }
 
     @Override
-    public BlockchainChainInfo getChain() throws IOException {
+    public BlockchainChainInfo getChain() {
         return JSONRPCHelper.post(url, MultichainMethods.GETINFO.name().toLowerCase(), MultichainInfo.class);
     }
 
@@ -140,14 +120,10 @@ public class MultichainManager implements Manager {
         });
     }
 
-    public String getNewAddress() throws IOException {
-        try {
-            String postResult = JSONRPCHelper.post(url, MultichainMethods.GETNEWADDRESS.name().toLowerCase());
-            if (postResult != null) {
-                return postResult.replaceAll("^.|.$", "");
-            }
-        } catch (InternalLogicException e) {
-            log.error("Cannot get new bitcoin wallet address", e);
+    public String getNewAddress() {
+        String postResult = JSONRPCHelper.post(url, MultichainMethods.GETNEWADDRESS.name().toLowerCase());
+        if (postResult != null) {
+            return postResult.replaceAll("^.|.$", "");
         }
         return Strings.EMPTY;
     }

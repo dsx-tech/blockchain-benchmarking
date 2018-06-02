@@ -41,7 +41,10 @@ import uk.dsxt.bb.datamodel.blockchain.BlockchainPeer;
 import uk.dsxt.bb.datamodel.eris.ErisBlock;
 import uk.dsxt.bb.datamodel.eris.ErisChainInfo;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -110,7 +113,7 @@ public class ErisManager implements Manager {
     }
 
     public static String sendPostHttpRequestTransactMonax(String request, String key, String data, String address,
-                                                          BigDecimal fee, BigDecimal gasLimit) throws IOException {
+                                                          BigDecimal fee, BigDecimal gasLimit) {
         try {
             URL url = new URL(request);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -152,7 +155,7 @@ public class ErisManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlockById(long id) throws IOException {
+    public BlockchainBlock getBlockById(long id) {
         try {
             String block = Request.Get(url+String.format("/blockchain/blocks?q=height:%d", id)).execute().returnContent().asString();
             System.out.println(block);
@@ -165,17 +168,17 @@ public class ErisManager implements Manager {
     }
 
     @Override
-    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+    public BlockchainBlock getBlockByHash(String hash) {
         return null;
     }
 
     @Override
-    public BlockchainPeer[] getPeers() throws IOException {
+    public BlockchainPeer[] getPeers() {
         return new BlockchainPeer[0];
     }
 
     @Override
-    public BlockchainChainInfo getChain() throws IOException {
+    public BlockchainChainInfo getChain() {
         try {
             String chain = Request.Get(url+"/blockchain").execute().returnContent().asString();
             System.out.println(chain);

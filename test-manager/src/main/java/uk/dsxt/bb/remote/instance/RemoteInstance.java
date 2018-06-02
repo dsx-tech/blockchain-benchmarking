@@ -20,13 +20,22 @@
  ******************************************************************************/
 package uk.dsxt.bb.remote.instance;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelShell;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -87,6 +96,7 @@ public class RemoteInstance {
             session = jsch.getSession(userName, host, port);
             session.setConfig("StrictHostKeyChecking", "no");
             session.setDaemonThread(true);
+//            session.setTimeout(300_000); // millis
             session.connect();
         }
         return session;
@@ -127,9 +137,8 @@ public class RemoteInstance {
                 shellStream.println(command);
                 shellStream.flush();
             }
-            while(channel.isConnected())
-            {
-                logger.info("----- Executing commads... ----");
+            while (channel.isConnected()) {
+                logger.info("----- Executing commands... ----");
                 Thread.sleep(10000);
                 shellStream.println("exit");
                 shellStream.flush();
@@ -164,7 +173,9 @@ public class RemoteInstance {
             logger.error(e);
         }
         finally {
-            channelSftp.disconnect();
+            if (channelSftp != null) {
+                channelSftp.disconnect();
+            }
         }
         return false;
     }
@@ -179,7 +190,9 @@ public class RemoteInstance {
         } catch (SftpException | JSchException e) {
             logger.error(e);
         } finally {
-            channelSftp.disconnect();
+            if (channelSftp != null) {
+                channelSftp.disconnect();
+            }
         }
         return false;
     }
@@ -212,7 +225,9 @@ public class RemoteInstance {
             logger.error(e);
         }
         finally {
-            channelSftp.disconnect();
+            if (channelSftp != null) {
+                channelSftp.disconnect();
+            }
         }
         return false;
     }

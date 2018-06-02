@@ -28,9 +28,13 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Strings;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
-import uk.dsxt.bb.datamodel.bitcoin.*;
+import uk.dsxt.bb.datamodel.bitcoin.BitcoinBlock;
+import uk.dsxt.bb.datamodel.bitcoin.BitcoinChain;
+import uk.dsxt.bb.datamodel.bitcoin.BitcoinPeer;
+import uk.dsxt.bb.datamodel.bitcoin.BitcoinTransaction;
+import uk.dsxt.bb.datamodel.bitcoin.BitcoinTransactionInList;
+import uk.dsxt.bb.datamodel.bitcoin.BitcoinUnspentTransaction;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
-import uk.dsxt.bb.utils.InternalLogicException;
 import uk.dsxt.bb.utils.JSONRPCHelper;
 
 import java.io.IOException;
@@ -64,22 +68,12 @@ public class BitcoinManager implements Manager {
 
     @Override
     public String sendTransaction(String to, String from, long amount) {
-        try {
-            return sendMessage(to, Long.toString(amount).getBytes());
-        } catch (IOException e) {
-            log.error("Sending transaction failed", e);
-        }
-        return null;
+        return sendMessage(to, Long.toString(amount).getBytes());
     }
 
     @Override
     public String sendMessage(byte[] body) {
-        try {
-            return sendMessage(BITCOIN_WALLET_ADDRESS, body);
-        } catch (IOException e) {
-            log.error("Error while sending message", e);
-        }
-        return null;
+        return sendMessage(BITCOIN_WALLET_ADDRESS, body);
     }
 
     @Override
@@ -87,36 +81,27 @@ public class BitcoinManager implements Manager {
         return null;
     }
 
-    private String sendMessage(String address, byte[] body) throws IOException {
-        try {
-            return JSONRPCHelper.post(url, BitcoinMethods.SENDTOADDRESS.name().toLowerCase(),
-                    address, BitcoinManager.toBigDecimal(body));
-        } catch (InternalLogicException e) {
-            log.error("Cannot send transaction", e);
-        }
-        return Strings.EMPTY;
+    private String sendMessage(String address, byte[] body) {
+        return JSONRPCHelper.post(url, BitcoinMethods.SENDTOADDRESS.name().toLowerCase(),
+                address, BitcoinManager.toBigDecimal(body));
     }
 
     @Override
     public List<Message> getNewMessages() {
         List<BitcoinTransaction> transactions = new ArrayList<>();
-        try {
-            List<BitcoinTransactionInList> transactionsInList = Arrays.stream(getLastTransactions())
-                    .collect(Collectors.toList());
-            if (transactionsInList != null) {
-                transactions.addAll(transactionsInList);
-            }
-        } catch (IOException e) {
-            log.error("Error while getting new transactions", e);
+        List<BitcoinTransactionInList> transactionsInList = Arrays.stream(getLastTransactions())
+                .collect(Collectors.toList());
+        if (transactionsInList != null) {
+            transactions.addAll(transactionsInList);
         }
         return transactionsToResult(transactions);
     }
 
-    private BitcoinUnspentTransaction[] getUnspentTransactions() throws IOException {
+    private BitcoinUnspentTransaction[] getUnspentTransactions() {
         return JSONRPCHelper.post(url, BitcoinMethods.LISTUNSPENT.name().toLowerCase(), BitcoinUnspentTransaction[].class);
     }
 
-    private BitcoinTransactionInList[] getLastTransactions() throws IOException {
+    private BitcoinTransactionInList[] getLastTransactions() {
         return JSONRPCHelper.post(url, BitcoinMethods.LISTTRANSACTIONS.name().toLowerCase(),
                 BitcoinTransactionInList[].class);
     }
@@ -132,7 +117,7 @@ public class BitcoinManager implements Manager {
         return transactionsToResult(transactions);
     }
 
-    public List<Message> getUnspentTransactionsList() throws IOException {
+    public List<Message> getUnspentTransactionsList() {
         List<BitcoinTransaction> transactions = new ArrayList<>();
         List<BitcoinUnspentTransaction> transactionList = Arrays.stream(getUnspentTransactions())
                 .collect(Collectors.toList());
@@ -154,38 +139,33 @@ public class BitcoinManager implements Manager {
         return result;
     }
 
-    private BitcoinTransactionInList[] getTransactions(String account, int count, int from) throws IOException {
+    private BitcoinTransactionInList[] getTransactions(String account, int count, int from) {
         return JSONRPCHelper.post(url, BitcoinMethods.LISTTRANSACTIONS.name().toLowerCase(),
                 BitcoinTransactionInList[].class, account, count, from);
     }
 
     @Override
-    public BitcoinBlock getBlockById(long blockId) throws IOException {
-        String blockHash = null;
-        try {
-            blockHash = JSONRPCHelper.post(url, BitcoinMethods.GETBLOCKHASH.name().toLowerCase(), blockId);
-            if (blockHash != null) {
-                blockHash = blockHash.replaceAll("^.|.$", "");
-            }
-        } catch (InternalLogicException e) {
-            log.error("Cannot get block", e);
+    public BitcoinBlock getBlockById(long blockId) {
+        String blockHash = JSONRPCHelper.post(url, BitcoinMethods.GETBLOCKHASH.name().toLowerCase(), blockId);
+        if (blockHash != null) {
+            blockHash = blockHash.replaceAll("^.|.$", "");
         }
         return JSONRPCHelper.post(url, BitcoinMethods.GETBLOCK.name().toLowerCase(), BitcoinBlock.class, blockHash);
     }
 
     @Override
-    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+    public BlockchainBlock getBlockByHash(String hash) {
         return null;
     }
 
     @Override
-    public BitcoinPeer[] getPeers() throws IOException {
+    public BitcoinPeer[] getPeers() {
         return JSONRPCHelper.post(url, BitcoinMethods.GETPEERINFO.name().toLowerCase(),
                 BitcoinPeer[].class);
     }
 
     @Override
-    public BitcoinChain getChain() throws IOException {
+    public BitcoinChain getChain() {
         return JSONRPCHelper.post(url, BitcoinMethods.GETINFO.name().toLowerCase(), BitcoinChain.class);
     }
 
@@ -199,14 +179,10 @@ public class BitcoinManager implements Manager {
         });
     }
 
-    public String getNewAddress() throws IOException {
-        try {
-            String postResult = JSONRPCHelper.post(url, BitcoinMethods.GETNEWADDRESS.name().toLowerCase());
-            if (postResult != null) {
-                return postResult.replaceAll("^.|.$", "");
-            }
-        } catch (InternalLogicException e) {
-            log.error("Cannot get new bitcoin wallet address", e);
+    public String getNewAddress() {
+        String postResult = JSONRPCHelper.post(url, BitcoinMethods.GETNEWADDRESS.name().toLowerCase());
+        if (postResult != null) {
+            return postResult.replaceAll("^.|.$", "");
         }
         return Strings.EMPTY;
     }

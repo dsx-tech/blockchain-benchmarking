@@ -33,11 +33,8 @@ import uk.dsxt.bb.datamodel.ethereum.EthereumBlock;
 import uk.dsxt.bb.datamodel.ethereum.EthereumInfo;
 import uk.dsxt.bb.datamodel.ethereum.EthereumPeer;
 import uk.dsxt.bb.datamodel.ethereum.EthereumTransaction;
-import uk.dsxt.bb.utils.InternalLogicException;
 import uk.dsxt.bb.utils.JSONRPCHelper;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,8 +45,7 @@ public class EthereumManager implements Manager {
 
     private String url;
 
-    private String unlockAccount(String address, String passphrase, Long duration)
-            throws MalformedURLException, InternalLogicException {
+    private String unlockAccount(String address, String passphrase, Long duration) {
         return JSONRPCHelper.post(url, EthereumMethods.UNLOCK_ACCOUNT.getMethod(), address, passphrase, duration);
     }
 
@@ -63,29 +59,19 @@ public class EthereumManager implements Manager {
     }
 
     public String sendTransactionWithMessage(String from, String to, String message, String amount) {
-        try {
-            return JSONRPCHelper.postToSendMessageEthereum(url, from, to, message, amount);
-        } catch (IOException e) {
-            log.error("Cannot send message", e);
-        }
-        return Strings.EMPTY;
+        return JSONRPCHelper.postToSendMessageEthereum(url, from, to, message, amount);
     }
 
     @Override
     public String sendTransaction(String from, String to, long amount) {
-        try {
-            return JSONRPCHelper.postToSendTransactionEthereum(url, from, to, Long.toString(amount));
-        } catch (IOException e) {
-            log.error("Cannot send message", e);
-        }
-        return Strings.EMPTY;
+        return JSONRPCHelper.postToSendTransactionEthereum(url, from, to, Long.toString(amount));
     }
 
-    public String mineBlocks() throws MalformedURLException, InternalLogicException {
+    public String mineBlocks() {
         return JSONRPCHelper.post(url, EthereumMethods.START_MINING.getMethod());
     }
 
-    public String stopMiningBlocks() throws MalformedURLException, InternalLogicException {
+    public String stopMiningBlocks() {
         return JSONRPCHelper.post(url, EthereumMethods.STOP_MINING.getMethod());
     }
 
@@ -94,29 +80,21 @@ public class EthereumManager implements Manager {
         List<Message> transactions = new ArrayList<>();
         List<String> pendingTransactions = null;
 
-        try {
-            pendingTransactions = getPendingTransaction();
-        } catch (IOException | InternalLogicException e) {
-            log.error("Cannot get pending transactions", e);
-        }
+        pendingTransactions = getPendingTransaction();
 
         if (pendingTransactions != null) {
             pendingTransactions.forEach(pendingTransaction -> {
-                try {
-                    EthereumTransaction transaction = JSONRPCHelper.post(url, EthereumMethods.GET_TRANSACTION.getMethod(),
-                            EthereumTransaction.class, pendingTransaction);
-                    Message message = new Message(transaction.getTransactionIndex(), transaction.getValue(), false);
-                    transactions.add(message);
-                } catch (IOException e) {
-                    log.error("Cannot get transaction", e);
-                }
+                EthereumTransaction transaction = JSONRPCHelper.post(url, EthereumMethods.GET_TRANSACTION.getMethod(),
+                        EthereumTransaction.class, pendingTransaction);
+                Message message = new Message(transaction.getTransactionIndex(), transaction.getValue(), false);
+                transactions.add(message);
             });
         }
 
         return transactions;
     }
 
-    public List<String> getPendingTransaction() throws IOException, InternalLogicException {
+    public List<String> getPendingTransaction() {
         EthereumBlock block = JSONRPCHelper.post(url, EthereumMethods.GET_BLOCK_BY_NUMBER.getMethod(), EthereumBlock.class,
                 "pending", true);
         ArrayList<String> transactionsHash = new ArrayList<>();
@@ -125,53 +103,49 @@ public class EthereumManager implements Manager {
         return transactionsHash;
     }
 
-    public EthereumTransaction[] getTransactionsFromBlock(long id) throws IOException {
+    public EthereumTransaction[] getTransactionsFromBlock(long id) {
         return getBlockById(id).getTransactions();
     }
 
     @Override
-    public EthereumBlock getBlockById(long id) throws IOException {
+    public EthereumBlock getBlockById(long id) {
         return JSONRPCHelper.post(url, EthereumMethods.GET_BLOCK_BY_NUMBER.getMethod(), EthereumBlock.class,
                 "0x" + Long.toHexString(id), true);
     }
 
     @Override
-    public BlockchainBlock getBlockByHash(String hash) throws IOException {
+    public BlockchainBlock getBlockByHash(String hash) {
         return null;
     }
 
     @Override
-    public EthereumPeer[] getPeers() throws IOException {
+    public EthereumPeer[] getPeers() {
         return JSONRPCHelper.post(url, EthereumMethods.GET_PEERS.getMethod(), EthereumPeer[].class);
     }
 
-    public EthereumTransaction[] getTransactionsFromTxPool() throws IOException {
+    public EthereumTransaction[] getTransactionsFromTxPool() {
         return JSONRPCHelper.post(url, EthereumMethods.GET_TRANSACTIONS_FROM_POOL.getMethod(), EthereumTransaction[].class);
     }
 
-    public String getLastBlockNumber() throws MalformedURLException, InternalLogicException {
+    public String getLastBlockNumber() {
         return JSONRPCHelper.post(url, EthereumMethods.GET_BLOCK_BY_NUMBER.getMethod());
     }
 
     @Override
-    public EthereumInfo getChain() throws IOException {
+    public EthereumInfo getChain() {
         String numberOfPeers = null;
         String numberOfBlock = null;
 
         int amountOfPeers = 0;
         int amountOfBlocks = 0;
 
-        try {
-            numberOfPeers = JSONRPCHelper.post(url, EthereumMethods.GET_AMOUNT_OF_PEERS.getMethod());
-            if (numberOfPeers != null) {
-                numberOfPeers = numberOfPeers.replaceAll("^.|.$", "");
-            }
-            numberOfBlock = JSONRPCHelper.post(url, EthereumMethods.GET_LAST_BLOCK_NUMBER.getMethod());
-            if (numberOfBlock != null) {
-                numberOfBlock = numberOfBlock.replaceAll("^.|.$", "");
-            }
-        } catch (InternalLogicException e) {
-            log.error("Cannot get chain", e);
+        numberOfPeers = JSONRPCHelper.post(url, EthereumMethods.GET_AMOUNT_OF_PEERS.getMethod());
+        if (numberOfPeers != null) {
+            numberOfPeers = numberOfPeers.replaceAll("^.|.$", "");
+        }
+        numberOfBlock = JSONRPCHelper.post(url, EthereumMethods.GET_LAST_BLOCK_NUMBER.getMethod());
+        if (numberOfBlock != null) {
+            numberOfBlock = numberOfBlock.replaceAll("^.|.$", "");
         }
 
         if (numberOfPeers != null) {
@@ -187,11 +161,9 @@ public class EthereumManager implements Manager {
 
     @Override
     public void authorize(String address, String password) {
-        try {
-            unlockAccount(address, password, 1000L);
-        } catch (MalformedURLException | InternalLogicException e) {
-            log.error("Failed to initialize", e);
-        }
+        // Unlock with 0 duration unlocks account until geth exists
+        // https://github.com/ethereum/go-ethereum/wiki/Management-APIs#personal_unlockaccount
+        unlockAccount(address, password, 0L);
     }
 
     private enum EthereumMethods {
