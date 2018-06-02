@@ -38,7 +38,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 class LoadManager {
     private static final int BATCH_SIZE = 100;
     private static final char[] symbols;
+    private static final int TRANSACTION_WARNING_LIMIT_MILLIS = 100;
 
     static {
         StringBuilder tmp = new StringBuilder();
@@ -137,13 +137,21 @@ class LoadManager {
                     List<String> logs = new ArrayList<>(BATCH_SIZE);
                     Random random = new Random();
                     int failed = 0;
+                    int previousExecutionTimeMillis = 0;
                     for (int transactionId = 0; transactionId < amountOfTransactions; ++transactionId) {
                         try {
-                            Thread.sleep(loadPlan.nextDelay(currentTargetIndex));
-                            String message = generateMessage(random, minLength, maxLength);
-                            long startTime = System.currentTimeMillis();
+                            int generatedDelay = loadPlan.nextDelay(currentTargetIndex);
+                            int sleepMillis = generatedDelay - previousExecutionTimeMillis;
+                            if (sleepMillis > 0) {
+                                Thread.sleep(sleepMillis);
+                            } else if (sleepMillis < -5) {
+                                log.info(String.format("Too much time to execute: expected=%d, actual=%d, timestamp=%d",
+                                        generatedDelay, previousExecutionTimeMillis, System.currentTimeMillis()));
+                            }
+                            long startTimeNanos = System.nanoTime();
 
-                            String id = null;
+                            String message = generateMessage(random, minLength, maxLength);
+                            String id;
                             if (finalCredentialFrom != null) {
                                 int credentialToIndex = getRandomIntExcept(random, credentials.size(), finalCredentialFromIndex);
                                 Credential credentialTo = credentials.get(credentialToIndex);
@@ -152,12 +160,8 @@ class LoadManager {
                                 id = manager.sendMessage(message.getBytes());
                             }
 
-                            StringJoiner stringJoiner = new StringJoiner(",");
-                            stringJoiner.add(id);
-                            stringJoiner.add(Long.toString(startTime));
-                            stringJoiner.add(Integer.toString(message.getBytes().length));
-                            stringJoiner.add(id != null && !id.isEmpty() ? "OK" : "FAIL");
-                            logs.add(stringJoiner.toString());
+                            logs.add(String.format("%s,%d,%d,%s", id, System.currentTimeMillis(),
+                                    message.length(), id != null && !id.isEmpty() ? "OK" : "FAIL"));
                             if (transactionId == amountOfTransactions - 1 || transactionId % BATCH_SIZE == 0) {
                                 logger.addLogs(logs);
                                 logs = new ArrayList<>(BATCH_SIZE);
@@ -169,10 +173,16 @@ class LoadManager {
                                 failed = 0;
                             }
                             if (failed > 5) {
+                                log.warn(String.format("Failed too much times(%d), timestamp=%d", failed, System.currentTimeMillis()));
                                 manager.authorize(finalCredentialFrom.getAccount(), finalCredentialFrom.getPassword());
                                 failed = 0;
                             }
 
+                            previousExecutionTimeMillis = (int)((System.nanoTime() - startTimeNanos) / 1000000L);
+                            if (previousExecutionTimeMillis > TRANSACTION_WARNING_LIMIT_MILLIS) {
+                                log.info(String.format("Too much time to execute: %d, timestamp=%d",
+                                        previousExecutionTimeMillis, System.currentTimeMillis()));
+                            }
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
