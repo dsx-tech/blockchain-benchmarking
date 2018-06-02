@@ -16,7 +16,8 @@ import java.util.List;
         property = "action")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = BlockNode.class, name = "BlockNode"),
-        @JsonSubTypes.Type(value = DropPackets.class, name = "DropPackets")
+        @JsonSubTypes.Type(value = DropPackets.class, name = "DropPackets"),
+        @JsonSubTypes.Type(value = DelayPackets.class, name = "DelayPackets")
 })
 public abstract class NetworkAction {
     private int startMillis;

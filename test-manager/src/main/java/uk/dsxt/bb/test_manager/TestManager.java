@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import spark.Spark;
 import uk.dsxt.bb.blockchain.BlockchainManager;
+import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainTransaction;
 import uk.dsxt.bb.remote.instance.LoadGeneratorInstance;
 import uk.dsxt.bb.remote.instance.LoadGeneratorInstancesManager;
@@ -128,9 +129,9 @@ public class TestManager {
                     properties.getFileToLogBlocks(), properties.getRequestBlocksPeriod())));
             loggerInstances.forEach(instance -> this.loggerInstances.put(instance.getHost(), instance));
             resourceMonitorsInstancesManager = runResourceMonitors();
-            networkManagersInstancesManager = runNetworkManagers();
             loggerInstancesManager = runLoggers(loggerInstances);
             Thread.sleep(10000);
+            networkManagersInstancesManager = runNetworkManagers();
 
             List<LoadGeneratorInstance> loadGeneratorInstances = new ArrayList<>();
             for (int i = 0; i < properties.getLoadGeneratorInstancesAmount(); ++i) {
@@ -204,7 +205,7 @@ public class TestManager {
             return null;
         }
 
-        List<RemoteInstance> networkInstances = allHosts
+        List<RemoteInstance> networkInstances = allHosts.subList(0, properties.getBlockchainInstancesAmount())
                 .stream()
                 .map(host -> new RemoteInstance(properties.getUserNameOnRemoteInstances(),
                         host, 22, properties.getPemKeyPath(), networkManagersLog))
@@ -224,11 +225,13 @@ public class TestManager {
 
         // Rename network manager config to predefined name
         networkInstancesManager.executeCommandsForAll(singletonList(String.format("mv %s %s",
-                Paths.get(properties.getNetworkManagerConfigPath()).getFileName().toString(), TestManager.NETWORK_MANAGER_CONFIG_PATH)));
+                Paths.get(properties.getNetworkManagerConfigPath()).getFileName().toString(),
+                TestManager.NETWORK_MANAGER_CONFIG_PATH)));
 
         Map<RemoteInstance, List<String>> commands = new HashMap<>();
         for (int i = 0; i < networkInstances.size(); i++) {
-            commands.put(networkInstances.get(i), singletonList("bash startNetworkManager.sh " + i));
+            commands.put(networkInstances.get(i), singletonList(
+                    String.format("bash startNetworkManager.sh %d %d", i, networkInstances.size())));
         }
         networkInstancesManager.executeCommandsPerInstance(commands);
 
@@ -474,13 +477,14 @@ public class TestManager {
         try (FileWriter fw = new FileWriter(
                 getEmptyFolder(Paths.get(properties.getResultLogsPath(), "transactionsPerBlock"))
                         .resolve("transactionsPerBlock").toFile())) {
-            fw.write("blockID, transactionID\n");
+            fw.write("blockID, transactionID, blockHash\n");
             BlockchainManager blockchainManager = new BlockchainManager(properties.getBlockchainType(),
-                    "http://" +blockchainInstancesManager.getRootInstance().getHost() + ":" + properties.getBlockchainPort());
+                    "http://" + blockchainInstancesManager.getRootInstance().getHost() + ":" + properties.getBlockchainPort());
             long lastBlock = blockchainManager.getChain().getLastBlockNumber();
             for (int i = 0; i <= lastBlock; ++i) {
-                for (BlockchainTransaction blockchainTransaction: blockchainManager.getBlockById(i).getTransactions()) {
-                    fw.write(i + "," + blockchainTransaction.getTxId() + '\n');
+                final BlockchainBlock block = blockchainManager.getBlockById(i);
+                for (BlockchainTransaction blockchainTransaction: block.getTransactions()) {
+                    fw.write(String.format("%d,%s,%s\n", i, blockchainTransaction.getTxId(), block.getHash()));
                 }
                 fw.flush();
             }

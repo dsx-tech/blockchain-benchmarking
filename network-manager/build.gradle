@@ -20,7 +20,7 @@ task fatJar(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'Network manager',
                 'Implementation-Version': version,
-                'Main-Class': 'uk.dsxt.bb.network_manager.Main'
+                'Main-Class': 'uk.dsxt.bb.network_manager.NetworkManagerMain'
     }
     baseName = project.name
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }

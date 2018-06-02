@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class Main {
+public class NetworkManagerMain {
     public static void main(String[] args) {
         System.out.println("Starting network-manager main");
         System.out.println("Received arguments=" + Arrays.toString(args));
@@ -35,11 +35,21 @@ public class Main {
             return;
         }
 
+        // We won't block, delay, or do something else with connection to Load generators, so exclude their IPs
+        int countOfBlockchainInstances;
+        try {
+            countOfBlockchainInstances = Integer.valueOf(args[1]);
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
+            System.out.printf("Unable to find countOfBlockchainInstances, caught exception=%s, exiting%n", e.getMessage());
+            return;
+        }
+
         // read instances file
         try {
             // TODO: 28.03.2018 This is temporary hack, the problem is that this jar requires sudo privilegies, so user.home is /root, but the file are stored in user folder
 //            allHosts = Files.readAllLines(Paths.get(System.getProperty("user.home") + "/instances"));
-            allHosts = Files.readAllLines(Paths.get("/home/ubuntu/instances"));
+            allHosts = Files.readAllLines(Paths.get("/home/ubuntu/instances")).subList(0, countOfBlockchainInstances);
         } catch (IOException e) {
             System.out.println("Unable to load instances file, exception=" + e.getMessage());
             return;
@@ -57,6 +67,8 @@ public class Main {
         }
 
         NetworkAction[] currentNodeNetworkActions = networkActionsConfig.getActions(nodeIndex);
+        // don't block, delay, or do something else with connection instance itself, so exclude IP of current instance
+        allHosts.remove(nodeIndex);
         for (NetworkAction networkAction : currentNodeNetworkActions) {
             executorService.schedule(() -> networkAction.performStart(allHosts), networkAction.getStartMillis(),
                     TimeUnit.MILLISECONDS);

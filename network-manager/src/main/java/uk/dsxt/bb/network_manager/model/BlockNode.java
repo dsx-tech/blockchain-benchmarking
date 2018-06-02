@@ -3,7 +3,7 @@ package uk.dsxt.bb.network_manager.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
-import uk.dsxt.bb.network_manager.Main;
+import uk.dsxt.bb.network_manager.NetworkManagerMain;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class BlockNode extends NetworkAction {
     @Override
     public void performStart(List<String> allHosts) {
         for (String host : allHosts) {
-            Main.exec("sudo iptables -A INPUT -s " + host + " -j DROP");
+            NetworkManagerMain.exec("sudo iptables -A INPUT -s " + host + " -j DROP");
         }
     }
 
@@ -26,7 +26,7 @@ public class BlockNode extends NetworkAction {
     @Override
     public void performFinish(List<String> allHosts) {
         for (String host : allHosts) {
-            Main.exec("sudo iptables -D INPUT -s " + host + " -j DROP");
+            NetworkManagerMain.exec("sudo iptables -D INPUT -s " + host + " -j DROP");
         }
     }
 }
