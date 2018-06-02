@@ -35,13 +35,15 @@ import uk.dsxt.bb.remote.instance.WorkFinishedTO;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.StringJoiner;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 @Log4j2
 public class BlockchainLogger {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
     private BlockchainManager blockchainManager;
     private long requestFrequency;
     private FileWriter fw;
@@ -87,13 +89,8 @@ public class BlockchainLogger {
         }
     }
 
-    private void log(long lastLoggedBlockId, long currentBlockId, long time) throws IOException {
-        for (long i = lastLoggedBlockId + 1; i <= currentBlockId; ++i) {
-            StringJoiner stringJoiner = new StringJoiner(",");
-            stringJoiner.add(String.valueOf(i));
-            stringJoiner.add(String.valueOf(time));
-            fw.write(stringJoiner.toString() + '\n');
-        }
+    private void log(long blockId, long time, String blockHash) throws IOException {
+        fw.write(String.format("%d,%d,%s\n", blockId, time, blockHash));
         fw.flush();
     }
 
@@ -102,7 +99,8 @@ public class BlockchainLogger {
                 .parallel()
                 .anyMatch(i -> {
                     try {
-                        return blockchainManager.getBlockById(i).getTransactions().length > 0;
+                        BlockchainBlock block = blockchainManager.getBlockById(i);
+                        return block != null && block.getTransactions() != null && block.getTransactions().length > 0;
                     } catch (IOException e) {
                         log.error(e);
                         return false;
@@ -110,52 +108,42 @@ public class BlockchainLogger {
                 });
     }
 
-    public void logInLoop() {
+    private void logInLoop() {
         try {
             if (blockchainManager != null) {
                 BlockchainChainInfo info = blockchainManager.getChain();
                 if (info != null) {
-                    StringJoiner stringJoiner = new StringJoiner(",");
-                    stringJoiner.add("id");
-                    stringJoiner.add("Appeared time");
-                    fw.write(stringJoiner.toString() + '\n');
+                    fw.write("id,Appeared time,Current block hash\n");
                     fw.flush();
 
-                    long currentBlockId;
-                    long previousBlockId = -1;
-                    long lastNonEmptyBlockId = -1;
                     long lastNonEmptyBlockTime = System.currentTimeMillis();
+                    // stores all hashes of blocks, that were viewed previously
+                    Set<String> processedBlocksHashes = new HashSet<>();
+                    processedBlocksHashes.add("");
 
                     while (true) {
                         long startLoopTime = System.currentTimeMillis();
-                        currentBlockId = blockchainManager.getChain().getLastBlockNumber();
-                        long currentBlockTime = System.currentTimeMillis();
-
-
-                        if (currentBlockId > previousBlockId) {
-                            log(previousBlockId, currentBlockId, currentBlockTime);
+                        long blockIdToImport = blockchainManager.getChain().getLastBlockNumber();
+                        BlockchainBlock blockToImport = blockchainManager.getBlockById(blockIdToImport);
+                        String blockHashToImport = blockToImport == null ? "" : blockToImport.getHash();
+                        // Check if last block was already processed, if not, save it and check previous block
+                        while (!processedBlocksHashes.contains(blockHashToImport) && blockIdToImport > 0) {
+                            log.debug(String.format("New block, blockHash=%s, blockId=%d", blockHashToImport, blockIdToImport));
+                            if (blockToImport != null && blockToImport.getTransactions() != null
+                                    && blockToImport.getTransactions().length > 0) {
+                                lastNonEmptyBlockTime = startLoopTime;
+                            }
+                            log(blockIdToImport, startLoopTime, blockHashToImport);
+                            processedBlocksHashes.add(blockHashToImport);
+                            blockToImport = blockchainManager.getBlockById(--blockIdToImport);
+                            blockHashToImport = blockToImport == null ? "" : blockToImport.getHash();
                         }
 
-                        if ((startLoopTime - lastNonEmptyBlockTime > 10 * 60 * 1000) && !isBlocksInRangeHasTransactions(previousBlockId, currentBlockId)) {
-                            ObjectMapper mapper = new ObjectMapper();
-                            WorkFinishedTO remoteInstanceStateTO = new WorkFinishedTO(ip);
-
+                        if (startLoopTime - lastNonEmptyBlockTime > 10 * 60 * 1000) { // && !isBlocksInRangeHasTransactions(blockIdToImport, ...)) {
                             Unirest.post("http://" + masterHost + "/logger/state")
-                                    .body(mapper.writeValueAsString(remoteInstanceStateTO)).asJson();
+                                    .body(mapper.writeValueAsString(new WorkFinishedTO(ip))).asJson();
                             break;
                         }
-
-                        if (currentBlockId > previousBlockId) {
-                            BlockchainBlock currentBlock = blockchainManager.getBlockById(currentBlockId);
-                            if (currentBlock != null && currentBlock.getTransactions() != null
-                                    && currentBlock.getTransactions().length != 0) {
-                                lastNonEmptyBlockId = currentBlockId;
-                                lastNonEmptyBlockTime = currentBlockTime;
-                            }
-
-                            previousBlockId = currentBlockId;
-                        }
-
 
                         long endLoopTime = System.currentTimeMillis();
                         long loopTime = endLoopTime - startLoopTime;
