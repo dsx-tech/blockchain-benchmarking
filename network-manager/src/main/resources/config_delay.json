@@ -1,0 +1,16 @@
+{
+  "defaultConfiguration": [
+    {
+      "action": "DelayPackets",
+      "startMillis": 600000,
+      "finishMillis": 1200000,
+      "delayMillis": 40
+    },
+    {
+      "action": "DelayPackets",
+      "startMillis": 1201000,
+      "finishMillis": 1800000,
+      "delayMillis": 80
+    }
+  ]
+}
