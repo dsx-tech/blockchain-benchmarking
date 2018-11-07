@@ -6,8 +6,8 @@ apply plugin: 'java'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-ext.log4jVersion = "2.7"
-ext.lombockVersion = "1.16.6"
+ext.log4jVersion = "2.11"
+ext.lombockVersion = "1.18.2"
 
 repositories {
     mavenCentral()

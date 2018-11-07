@@ -26,7 +26,6 @@ package uk.dsxt.bb.multichain;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Strings;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.dsxt.bb.blockchain.Manager;
 import uk.dsxt.bb.blockchain.Message;
 import uk.dsxt.bb.datamodel.blockchain.BlockchainBlock;
@@ -106,7 +105,7 @@ public class MultichainManager implements Manager {
 
     @Override
     public List<Message> getNewMessages() {
-        throw new NotImplementedException();
+        throw new RuntimeException("Not Implemented");
     }
 
     @Override
